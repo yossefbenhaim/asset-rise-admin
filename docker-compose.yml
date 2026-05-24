@@ -11,8 +11,8 @@ services:
       - SUPABASE_URL=http://supabase-kong:8000
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - SUPABASE_DB_URL=postgresql://postgres:${POSTGRES_PASSWORD}@supabase-db:5432/postgres
-      - ALLOWED_ORIGINS=https://asset-rise-admin.byclick.co.il
-      - PUBLIC_APP_URL=https://asset-rise-admin.byclick.co.il
+      - ALLOWED_ORIGINS=https://admin.byclick.co.il
+      - PUBLIC_APP_URL=https://admin.byclick.co.il
     networks:
       - asset-rise
       - coolify
@@ -28,7 +28,7 @@ services:
       - api
     labels:
       - traefik.enable=true
-      - traefik.http.routers.asset-rise-admin.rule=Host(`asset-rise-admin.byclick.co.il`)
+      - traefik.http.routers.asset-rise-admin.rule=Host(`admin.byclick.co.il`)
       - traefik.http.routers.asset-rise-admin.entrypoints=https
       - traefik.http.routers.asset-rise-admin.tls=true
       - traefik.http.routers.asset-rise-admin.tls.certresolver=letsencrypt
