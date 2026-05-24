@@ -23,6 +23,22 @@ const STATUS_PILL: Record<string, 'info' | 'warning' | 'success' | 'gold' | 'neu
   lost: 'neutral',
 }
 
+const SOURCE_LABEL: Record<string, string> = {
+  landing: 'אתר ראשי',
+  analyzer: 'מנתח היתכנות',
+  phone: 'טלפון',
+  referral: 'הפנייה',
+  other: 'אחר',
+}
+
+const SOURCE_PILL: Record<string, 'info' | 'gold' | 'navy' | 'neutral'> = {
+  landing: 'info',
+  analyzer: 'gold',
+  phone: 'navy',
+  referral: 'navy',
+  other: 'neutral',
+}
+
 export default function AdminLeads() {
   const [status, setStatus] = useState<string>('')
   const list = trpc.leads.list.useQuery({
@@ -72,18 +88,21 @@ export default function AdminLeads() {
                   onClick={() => setActive(l)}
                   className="w-full text-right p-3 rounded-sc-input border border-sc-border bg-white hover:bg-sc-bg/60 transition-colors"
                 >
-                  <div className="flex items-baseline gap-2">
+                  <div className="flex items-baseline gap-2 flex-wrap">
                     <div className="font-semibold text-[14px]">{l.name}</div>
                     <div className="text-[12px] text-sc-text-secondary">{l.phone}</div>
                     <div className="flex-1" />
+                    <Pill kind={SOURCE_PILL[l.source] ?? 'neutral'}>{SOURCE_LABEL[l.source] ?? l.source}</Pill>
                     <Pill kind={STATUS_PILL[l.status]}>{STATUS_LABEL[l.status]}</Pill>
                   </div>
                   {l.message && (
                     <div className="text-[12px] text-sc-text-secondary mt-1 line-clamp-2">{l.message}</div>
                   )}
-                  <div className="text-[11px] text-sc-text-muted mt-1">
-                    {new Date(l.created_at).toLocaleString('he-IL')}
-                    {l.city && ` · ${l.city}`}
+                  <div className="text-[11px] text-sc-text-muted mt-1 flex flex-wrap gap-2">
+                    <span>{new Date(l.created_at).toLocaleString('he-IL')}</span>
+                    {l.city && <span>· {l.city}</span>}
+                    {l.building_address && <span>· {l.building_address}</span>}
+                    {l.email && <span>· {l.email}</span>}
                   </div>
                 </button>
               ))}
@@ -134,6 +153,7 @@ function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () => void }) {
         {lead.city && <Row label="עיר" value={lead.city} />}
         {lead.building_address && <Row label="כתובת בניין" value={lead.building_address} />}
         {lead.message && <Row label="הודעה" value={<div className="whitespace-pre-wrap">{lead.message}</div>} />}
+        <Row label="מקור" value={<Pill kind={SOURCE_PILL[lead.source] ?? 'neutral'}>{SOURCE_LABEL[lead.source] ?? lead.source}</Pill>} />
         <Row label="נוצר" value={new Date(lead.created_at).toLocaleString('he-IL')} />
 
         <div>

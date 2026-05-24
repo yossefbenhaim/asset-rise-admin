@@ -13,6 +13,9 @@ export const CreateLeadInput = z.object({
   message: z.string().max(1000).optional(),
   utm_source: z.string().max(80).optional(),
   utm_campaign: z.string().max(80).optional(),
+  // Optional source tag. Defaults to 'landing' when omitted (Silver Castle
+  // marketing form). Trusted servers can pass 'analyzer' / 'referral' / etc.
+  source: LeadSourceSchema.optional(),
 })
 export type CreateLeadInput = z.infer<typeof CreateLeadInput>
 

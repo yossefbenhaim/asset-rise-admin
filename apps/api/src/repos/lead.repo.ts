@@ -18,7 +18,7 @@ export async function insertLead(
     city: input.city || null,
     building_address: input.building_address || null,
     message: input.message || null,
-    source: 'landing',
+    source: input.source || 'landing',
     status: 'new',
     utm_source: input.utm_source || null,
     utm_campaign: input.utm_campaign || null,
