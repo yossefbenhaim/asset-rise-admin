@@ -1,0 +1,79 @@
+/* @import MUST be the first rule per CSS spec — otherwise the import is dropped
+ * silently. Earlier we had @font-face blocks above the @import, which made
+ * tokens.css invisible at runtime — every var(--sc-*) resolved to "undefined",
+ * so buttons rendered with no background and white text on white. */
+@import './tokens.css';
+
+/* Local Heebo TTFs — supplement the Google Fonts import in tokens.css. */
+@font-face {
+  font-family: 'Heebo';
+  src: url('/fonts/Heebo-Regular.ttf') format('truetype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Heebo';
+  src: url('/fonts/Heebo-Bold.ttf') format('truetype');
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+html, body {
+  /* Lock horizontal scrolling on the document — any horizontal overflow
+   * must opt-in at the component level (e.g. the project-stages strip
+   * inside ProjectStatusCard, which wraps a div.overflow-x-auto). */
+  overflow-x: hidden;
+}
+body {
+  font-family: var(--sc-font);
+  background: var(--sc-bg);
+  color: var(--sc-text);
+  direction: rtl;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  -webkit-font-smoothing: antialiased;
+  overflow-y: auto;
+}
+
+/* ───────────────────────────────────────────────────────────────────
+ * Custom scrollbar — applied globally so every scrollable surface (the
+ * sidebar, modals, the project-stages strip, etc.) gets the same look.
+ *
+ * Chromium/WebKit: ::-webkit-scrollbar primitives.
+ * Firefox: scrollbar-width + scrollbar-color (only one knob each, so the
+ *          colors are tuned to look close to the WebKit variant).
+ * ─────────────────────────────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sc-primary-light) var(--sc-bg);
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track {
+  background: var(--sc-bg);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--sc-primary-light), var(--sc-primary));
+  border: 2px solid var(--sc-bg);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--sc-primary), var(--sc-navy));
+}
+*::-webkit-scrollbar-corner { background: transparent; }
+button { font-family: inherit; cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+
+/* Accessibility: high-contrast mode — black bg / yellow text everywhere. Toggled
+ * by AccessibilityWidget via body.a11y-hc. Forced with !important so it overrides
+ * Tailwind utility classes. */
+body.a11y-hc, body.a11y-hc * {
+  background-color: #000 !important;
+  color: #ff0 !important;
+  border-color: #ff0 !important;
+}
+body.a11y-hc img, body.a11y-hc svg { filter: brightness(0) invert(1) !important; }
+body.a11y-hc a { text-decoration: underline !important; }
