@@ -1,4 +1,4 @@
-export type LeadSource = 'landing' | 'phone' | 'referral' | 'other'
+export type LeadSource = 'landing' | 'phone' | 'referral' | 'other' | 'analyzer'
 export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'converted' | 'lost'
 
 export interface Lead {

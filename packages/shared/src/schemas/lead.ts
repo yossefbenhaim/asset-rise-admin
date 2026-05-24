@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const LeadSourceSchema = z.enum(['landing', 'phone', 'referral', 'other'])
+export const LeadSourceSchema = z.enum(['landing', 'phone', 'referral', 'other', 'analyzer'])
 export const LeadStatusSchema = z.enum(['new', 'contacted', 'qualified', 'converted', 'lost'])
 
 // Public contact-form input — anonymous, hits leads.create.
