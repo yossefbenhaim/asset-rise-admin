@@ -5,7 +5,7 @@ export const buildingsRouter = router({
   listAll: requireAction('admin.buildings.list').query(async ({ ctx }) => {
     const { data: buildings, error } = await ctx.db
       .from('sc_buildings')
-      .select('id, address, city, created_at')
+      .select('id, city, street, building_number, invite_code, created_at')
       .order('created_at', { ascending: false })
       .limit(500)
     if (error) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message })
@@ -14,7 +14,7 @@ export const buildingsRouter = router({
     const ids = buildings.map((b: any) => b.id)
     const [{ data: tenants }, { data: projects }] = await Promise.all([
       ctx.db.from('sc_tenant_profiles').select('building_id').in('building_id', ids),
-      ctx.db.from('sc_projects').select('id, building_id, current_stage_id, name').in('building_id', ids),
+      ctx.db.from('sc_projects').select('id, building_id, current_stage, name, target_quarter').in('building_id', ids),
     ])
     const tenantCount = new Map<string, number>()
     for (const t of tenants ?? []) {
@@ -27,6 +27,7 @@ export const buildingsRouter = router({
     }
     return buildings.map((b: any) => ({
       ...b,
+      address: [b.street, b.building_number].filter(Boolean).join(' '),
       tenant_count: tenantCount.get(b.id) ?? 0,
       project: projectByBuilding.get(b.id) ?? null,
     }))

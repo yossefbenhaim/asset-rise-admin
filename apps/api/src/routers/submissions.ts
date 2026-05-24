@@ -19,10 +19,13 @@ export const submissionsRouter = router({
       const buildingIds = Array.from(new Set(data.map((r: any) => r.building_id)))
       const submitterIds = Array.from(new Set(data.map((r: any) => r.submitter_id)))
       const [{ data: bldgs }, { data: profs }] = await Promise.all([
-        ctx.db.from('sc_buildings').select('id, address, city').in('id', buildingIds),
+        ctx.db.from('sc_buildings').select('id, city, street, building_number').in('id', buildingIds),
         ctx.db.from('sc_profiles').select('id, full_name, email').in('id', submitterIds),
       ])
-      const bldgMap = new Map((bldgs ?? []).map((b: any) => [b.id, b]))
+      const bldgMap = new Map((bldgs ?? []).map((b: any) => [b.id, {
+        ...b,
+        address: [b.street, b.building_number].filter(Boolean).join(' '),
+      }]))
       const profMap = new Map((profs ?? []).map((p: any) => [p.id, p]))
       return data.map((r: any) => ({
         ...r,
