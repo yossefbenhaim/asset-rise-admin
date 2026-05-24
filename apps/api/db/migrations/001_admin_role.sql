@@ -1,29 +1,50 @@
 -- 001 — Admin role + sc_admin_profiles + sc_can() update.
 -- Adds a third top-level role ('admin') to the shared Supabase, with three
--- additive sub-levels (is_admin / is_admin_support / is_admin_sales). The
--- Silver Castle app is unaware of admins — its route guards reject anyone
--- whose role isn't 'tenant' or 'provider', so admins simply can't enter SC.
--- Idempotent.
+-- additive sub-levels (is_admin / is_admin_support / is_admin_sales).
+-- Idempotent: skips work if the constraint already permits 'admin'.
 
--- 1. Allow role='admin' on sc_profiles
+-- 1. Replace the role CHECK so it allows 'admin'.
+--    Drop ANY existing CHECK constraint on sc_profiles whose definition
+--    mentions 'role' (regardless of whether it uses IN or ANY syntax), then
+--    re-add the explicit one. Only the first run does work; subsequent
+--    runs see the new constraint already in place and exit early.
 do $$
-declare c text;
+declare
+  c text;
+  needs_replace boolean := true;
 begin
-  for c in
-    select conname from pg_constraint
+  -- If a constraint already lists 'admin', we're done.
+  if exists (
+    select 1 from pg_constraint
     where conrelid = 'sc_profiles'::regclass
       and contype = 'c'
-      and pg_get_constraintdef(oid) ilike '%role%in%(%tenant%provider%)%'
-  loop
-    execute format('alter table sc_profiles drop constraint %I', c);
-  end loop;
+      and pg_get_constraintdef(oid) like '%admin%'
+      and pg_get_constraintdef(oid) like '%role%'
+  ) then
+    needs_replace := false;
+  end if;
+
+  if needs_replace then
+    for c in
+      select conname from pg_constraint
+      where conrelid = 'sc_profiles'::regclass
+        and contype = 'c'
+        and (
+          pg_get_constraintdef(oid) ilike '%role%' and
+          pg_get_constraintdef(oid) like '%tenant%' and
+          pg_get_constraintdef(oid) like '%provider%'
+        )
+    loop
+      execute format('alter table sc_profiles drop constraint %I', c);
+    end loop;
+
+    alter table sc_profiles
+      add constraint sc_profiles_role_check
+      check (role in ('tenant','provider','admin'));
+  end if;
 end $$;
 
-alter table sc_profiles
-  add constraint sc_profiles_role_check
-  check (role in ('tenant','provider','admin'));
-
--- 2. sc_admin_profiles — parallel arm to sc_tenant_profiles / sc_provider_profiles
+-- 2. sc_admin_profiles
 create table if not exists sc_admin_profiles (
   id                uuid primary key references sc_profiles(id) on delete cascade,
   is_admin          boolean not null default true,
@@ -36,8 +57,6 @@ create table if not exists sc_admin_profiles (
 create index if not exists sc_admin_profiles_level_idx
   on sc_admin_profiles (is_admin, is_admin_support, is_admin_sales);
 
--- RLS: service-role only. Reads happen exclusively via the API context
--- (adminClient), never directly from the browser.
 alter table sc_admin_profiles enable row level security;
 
 -- 3. sc_can() — recognise admin role-keys
