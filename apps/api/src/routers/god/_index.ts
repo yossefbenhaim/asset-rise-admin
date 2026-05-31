@@ -9,6 +9,10 @@ import { godNegotiationsRouter } from './negotiations.js'
 import { godTendersRouter } from './tenders.js'
 import { godPollsRouter } from './polls.js'
 import { godWorkflowRouter } from './workflow.js'
+import { godDocumentsRouter } from './documents.js'
+import { godChatRouter } from './chat.js'
+import { godNotificationsRouter } from './notifications.js'
+import { godMiscRouter } from './misc.js'
 
 // God read endpoints. Gated on requireLevel('admin.super') — DIRECT roleKey
 // membership, which CANNOT be loosened by a future sc_permissions seed (a
@@ -26,6 +30,12 @@ export const godRouter = router({
   tenders: godTendersRouter,
   polls: godPollsRouter,
   workflow: godWorkflowRouter,
+
+  // Wave 3 — content + communication (each an isolated sibling router).
+  documents: godDocumentsRouter,
+  chat: godChatRouter,
+  notifications: godNotificationsRouter,
+  misc: godMiscRouter,
 
   search: requireLevel('admin.super')
     .input(GodSearchInput)

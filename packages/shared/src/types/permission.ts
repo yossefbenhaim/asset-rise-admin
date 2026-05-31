@@ -45,6 +45,17 @@ export type Action =
   | 'god.workflow.reassign_task'
   | 'god.workflow.set_baton'
   | 'god.workflow.resolve_dual_approval'
+  // god-mode Wave 3 — content + communication. Seeded by migration 013_god_wave3_perms.
+  | 'god.documents.set_visibility'
+  | 'god.documents.remove'
+  | 'god.chat.delete_message'
+  | 'god.chat.restore_message'
+  | 'god.broadcast.send'
+  | 'god.broadcast.resend'
+  | 'god.misc.remove_family_member'
+  | 'god.misc.cancel_inspection'
+  | 'god.misc.set_rating_verified'
+  | 'god.misc.remove_rating'
 
 export interface Permission {
   role_key: string

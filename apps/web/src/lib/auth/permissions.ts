@@ -45,6 +45,17 @@ const map: Record<string, Action[]> = {
     'god.workflow.reassign_task',
     'god.workflow.set_baton',
     'god.workflow.resolve_dual_approval',
+    // Wave 3 — content + communication (mirror of migration 013_god_wave3_perms).
+    'god.documents.set_visibility',
+    'god.documents.remove',
+    'god.chat.delete_message',
+    'god.chat.restore_message',
+    'god.broadcast.send',
+    'god.broadcast.resend',
+    'god.misc.remove_family_member',
+    'god.misc.cancel_inspection',
+    'god.misc.set_rating_verified',
+    'god.misc.remove_rating',
   ],
   'admin.support': [
     'admin.dashboard',
