@@ -5,6 +5,7 @@ import { leadsRouter } from './leads.js'
 import { buildingsRouter } from './buildings.js'
 import { submissionsRouter } from './submissions.js'
 import { summaryRouter } from './summary.js'
+import { godRouter } from './god/_index.js'
 
 export const appRouter = router({
   auth: authRouter,
@@ -13,6 +14,7 @@ export const appRouter = router({
   leads: leadsRouter,
   buildings: buildingsRouter,
   submissions: submissionsRouter,
+  god: godRouter,
 })
 
 export type AppRouter = typeof appRouter

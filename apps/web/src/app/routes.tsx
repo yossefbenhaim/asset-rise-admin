@@ -1,5 +1,5 @@
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
-import { useSession } from '@/lib/auth/session'
+import { useSession, useRoleKeys } from '@/lib/auth/session'
 import AppShell from './AppShell'
 import Login from '@/pages/auth/Login'
 import OAuthCallback from '@/pages/auth/OAuthCallback'
@@ -8,6 +8,8 @@ import AdminUsers from '@/pages/admin/Users'
 import AdminLeads from '@/pages/admin/Leads'
 import AdminBuildings from '@/pages/admin/Buildings'
 import AdminSubmissions from '@/pages/admin/Submissions'
+import AdminAudit from '@/pages/admin/Audit'
+import AdminSearch from '@/pages/admin/Search'
 
 // Gate: this entire app is admin-only. Anyone else bounces to /login.
 function RequireAdmin() {
@@ -15,6 +17,15 @@ function RequireAdmin() {
   if (auth.state === 'loading') return null
   if (auth.state !== 'authenticated') return <Navigate to="/login" replace />
   if (auth.user.role !== 'admin') return <Navigate to="/login" replace />
+  return <Outlet />
+}
+
+// Defense-in-depth gate for god-mode pages. The API already enforces this via
+// requireAction('god.*'), but this avoids the page shell flashing before the
+// query 403s, and keeps non-super admins out of the route entirely.
+function RequireSuperAdmin() {
+  const roleKeys = useRoleKeys()
+  if (!roleKeys.includes('admin.super')) return <Navigate to="/" replace />
   return <Outlet />
 }
 
@@ -31,6 +42,13 @@ export const router = createBrowserRouter([
         { path: 'leads', element: <AdminLeads /> },
         { path: 'buildings', element: <AdminBuildings /> },
         { path: 'submissions', element: <AdminSubmissions /> },
+        {
+          element: <RequireSuperAdmin />,
+          children: [
+            { path: 'audit', element: <AdminAudit /> },
+            { path: 'search', element: <AdminSearch /> },
+          ],
+        },
       ],
     }],
   },

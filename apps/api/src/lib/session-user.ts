@@ -20,7 +20,7 @@ export async function loadSessionUser(
   if (profile.role === 'admin') {
     const { data: ap } = await db
       .from('sc_admin_profiles')
-      .select('is_admin, is_admin_support, is_admin_sales')
+      .select('is_admin, is_admin_support, is_admin_sales, is_super_admin')
       .eq('id', userId)
       .maybeSingle()
     if (ap) {
@@ -28,6 +28,7 @@ export async function loadSessionUser(
         is_admin: ap.is_admin,
         is_admin_support: ap.is_admin_support,
         is_admin_sales: ap.is_admin_sales,
+        is_super_admin: ap.is_super_admin,
       }
     }
   }

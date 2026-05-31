@@ -29,4 +29,14 @@ export const ADMIN_NAV: NavGroup[] = [
       { id: 'buildings', label: 'בניינים',  to: '/buildings', icon: 'Building2', requires: ['admin.buildings.list'] },
     ],
   },
+  // 'שליטה' (god-mode) — visible ONLY to the super-admin. Each item gates on a
+  // god.* action; Sidebar drops the whole group when no item is visible, so no
+  // extra gating code is needed here.
+  {
+    group: 'שליטה',
+    items: [
+      { id: 'audit',  label: 'יומן ביקורת', to: '/audit',  icon: 'ScrollText', requires: ['god.audit.list'] },
+      { id: 'search', label: 'חיפוש גלובלי', to: '/search', icon: 'Search',     requires: ['god.search'] },
+    ],
+  },
 ]

@@ -10,6 +10,11 @@ export type Action =
   | 'admin.leads.update'
   | 'admin.buildings.list'
   | 'admin.submissions.list'
+  // god.* — super-admin (role_key 'admin.super') capabilities. Future waves
+  // add more god actions here; they must stay in lockstep with migration 006's
+  // seed and the frontend can() mirror.
+  | 'god.search'
+  | 'god.audit.list'
 
 export interface Permission {
   role_key: string

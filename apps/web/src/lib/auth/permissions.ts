@@ -10,6 +10,12 @@ const map: Record<string, Action[]> = {
     'admin.buildings.list',
     'admin.submissions.list',
   ],
+  // Super-admin god capabilities. MUST mirror migration 006's seed exactly.
+  // Only 'admin.super' gets god.* — plain 'admin' deliberately does not.
+  'admin.super': [
+    'god.search',
+    'god.audit.list',
+  ],
   'admin.support': [
     'admin.dashboard',
     'admin.users.list',

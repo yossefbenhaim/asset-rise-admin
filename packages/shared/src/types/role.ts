@@ -23,6 +23,7 @@ export interface AdminLevels {
   is_admin: boolean
   is_admin_support: boolean
   is_admin_sales: boolean
+  is_super_admin: boolean
 }
 
 export type RoleKey =
@@ -38,6 +39,7 @@ export type RoleKey =
   | 'provider.coordinator'
   | 'provider.generic'
   | 'admin'
+  | 'admin.super'
   | 'admin.support'
   | 'admin.sales'
 
@@ -59,6 +61,8 @@ export function roleKeysFor(input: {
   } else if (input.role === 'admin') {
     keys.push('admin')
     const lvl = input.admin_levels
+    // Super-admin is additive — it sits on top of 'admin', never replaces it.
+    if (lvl?.is_super_admin) keys.push('admin.super')
     if (lvl?.is_admin_support) keys.push('admin.support')
     if (lvl?.is_admin_sales) keys.push('admin.sales')
   }
