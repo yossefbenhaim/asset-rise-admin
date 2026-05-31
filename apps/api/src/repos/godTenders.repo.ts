@@ -351,10 +351,14 @@ export async function forceAward(
       .update({ status: 'accepted' })
       .eq('id', bidId)
     if (accErr) throw accErr
+    // Reject only the still-open ('submitted') competing bids. A bid that was
+    // already 'withdrawn' (or otherwise terminal) keeps its status so the deal
+    // history stays honest — we don't rewrite a withdrawal into a rejection.
     const { error: rejErr } = await db
       .from('sc_tender_bids')
       .update({ status: 'rejected' })
       .eq('tender_id', tenderId)
+      .eq('status', 'submitted')
       .neq('id', bidId)
     if (rejErr) throw rejErr
   }
