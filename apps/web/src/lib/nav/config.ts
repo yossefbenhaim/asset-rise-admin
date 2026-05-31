@@ -35,9 +35,13 @@ export const ADMIN_NAV: NavGroup[] = [
   {
     group: 'שליטה',
     items: [
-      { id: 'god-buildings', label: 'בניינים (על)', to: '/god/buildings', icon: 'Building2', requires: ['god.buildings.list'] },
-      { id: 'god-tenants',   label: 'דיירים וועד',  to: '/god/tenants',   icon: 'Users',     requires: ['god.tenants.list'] },
-      { id: 'god-providers', label: 'ספקים (על)',   to: '/god/providers', icon: 'Briefcase', requires: ['god.providers.update'] },
+      { id: 'god-buildings',     label: 'בניינים (על)', to: '/god/buildings',     icon: 'Building2', requires: ['god.buildings.list'] },
+      { id: 'god-tenants',       label: 'דיירים וועד',  to: '/god/tenants',       icon: 'Users',     requires: ['god.tenants.list'] },
+      { id: 'god-providers',     label: 'ספקים (על)',   to: '/god/providers',     icon: 'Briefcase', requires: ['god.providers.update'] },
+      { id: 'god-negotiations',  label: 'משא ומתן (על)', to: '/god/negotiations', icon: 'Handshake', requires: ['god.negotiations.force_status'] },
+      { id: 'god-tenders',       label: 'מכרזים (על)',  to: '/god/tenders',       icon: 'Gavel',     requires: ['god.tenders.set_status'] },
+      { id: 'god-polls',         label: 'הצבעות (על)',  to: '/god/polls',         icon: 'Vote',      requires: ['god.polls.force_finalize'] },
+      { id: 'god-workflow',      label: 'תהליך עבודה (על)', to: '/god/workflow',  icon: 'ListChecks', requires: ['god.workflow.set_task_status'] },
       { id: 'audit',  label: 'יומן ביקורת', to: '/audit',  icon: 'ScrollText', requires: ['god.audit.list'] },
       { id: 'search', label: 'חיפוש גלובלי', to: '/search', icon: 'Search',     requires: ['god.search'] },
     ],

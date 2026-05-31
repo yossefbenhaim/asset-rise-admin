@@ -13,6 +13,10 @@ import AdminSearch from '@/pages/admin/Search'
 import GodBuildings from '@/pages/admin/god/Buildings'
 import GodTenants from '@/pages/admin/god/Tenants'
 import GodProviders from '@/pages/admin/god/Providers'
+import GodNegotiations from '@/pages/admin/god/Negotiations'
+import GodTenders from '@/pages/admin/god/Tenders'
+import GodPolls from '@/pages/admin/god/Polls'
+import GodWorkflow from '@/pages/admin/god/Workflow'
 
 // Gate: this entire app is admin-only. Anyone else bounces to /login.
 function RequireAdmin() {
@@ -53,6 +57,10 @@ export const router = createBrowserRouter([
             { path: 'god/buildings', element: <GodBuildings /> },
             { path: 'god/tenants', element: <GodTenants /> },
             { path: 'god/providers', element: <GodProviders /> },
+            { path: 'god/negotiations', element: <GodNegotiations /> },
+            { path: 'god/tenders', element: <GodTenders /> },
+            { path: 'god/polls', element: <GodPolls /> },
+            { path: 'god/workflow', element: <GodWorkflow /> },
           ],
         },
       ],

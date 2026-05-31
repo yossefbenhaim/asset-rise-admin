@@ -5,6 +5,10 @@ import { godSearch, listAudit } from '../../repos/god.repo.js'
 import { godBuildingsRouter } from './buildings.js'
 import { godTenantsRouter } from './tenants.js'
 import { godProvidersRouter } from './providers.js'
+import { godNegotiationsRouter } from './negotiations.js'
+import { godTendersRouter } from './tenders.js'
+import { godPollsRouter } from './polls.js'
+import { godWorkflowRouter } from './workflow.js'
 
 // God read endpoints. Gated on requireLevel('admin.super') — DIRECT roleKey
 // membership, which CANNOT be loosened by a future sc_permissions seed (a
@@ -16,6 +20,12 @@ export const godRouter = router({
   buildings: godBuildingsRouter,
   tenants: godTenantsRouter,
   providers: godProvidersRouter,
+
+  // Wave 2 — workflow + deals (each an isolated sibling router).
+  negotiations: godNegotiationsRouter,
+  tenders: godTendersRouter,
+  polls: godPollsRouter,
+  workflow: godWorkflowRouter,
 
   search: requireLevel('admin.super')
     .input(GodSearchInput)
