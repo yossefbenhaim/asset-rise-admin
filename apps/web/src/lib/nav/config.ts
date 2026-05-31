@@ -35,6 +35,9 @@ export const ADMIN_NAV: NavGroup[] = [
   {
     group: 'שליטה',
     items: [
+      { id: 'god-buildings', label: 'בניינים (על)', to: '/god/buildings', icon: 'Building2', requires: ['god.buildings.list'] },
+      { id: 'god-tenants',   label: 'דיירים וועד',  to: '/god/tenants',   icon: 'Users',     requires: ['god.tenants.list'] },
+      { id: 'god-providers', label: 'ספקים (על)',   to: '/god/providers', icon: 'Briefcase', requires: ['god.providers.update'] },
       { id: 'audit',  label: 'יומן ביקורת', to: '/audit',  icon: 'ScrollText', requires: ['god.audit.list'] },
       { id: 'search', label: 'חיפוש גלובלי', to: '/search', icon: 'Search',     requires: ['god.search'] },
     ],

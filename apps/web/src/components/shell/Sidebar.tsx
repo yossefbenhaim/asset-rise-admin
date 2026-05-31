@@ -1,12 +1,12 @@
 import { NavLink } from 'react-router-dom'
-import { Home, Mail, Inbox, Users, Building2, ScrollText, Search, Circle } from 'lucide-react'
+import { Home, Mail, Inbox, Users, Building2, ScrollText, Search, Briefcase, Circle } from 'lucide-react'
 import { ADMIN_NAV } from '@/lib/nav/config'
 import { useUser, useRoleKeys } from '@/lib/auth/session'
 import { can } from '@/lib/auth/permissions'
 
 // lucide-react's typed component is awkward to constrain — `any` here is fine,
 // runtime is identical.
-const ICONS: Record<string, any> = { Home, Mail, Inbox, Users, Building2, ScrollText, Search }
+const ICONS: Record<string, any> = { Home, Mail, Inbox, Users, Building2, ScrollText, Search, Briefcase }
 function Ic({ name }: { name: string }) {
   const C = ICONS[name] ?? Circle
   return <C size={18} />

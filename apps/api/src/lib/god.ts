@@ -39,8 +39,10 @@ import type { AppContext } from '../context.js'
 import { requireLevel } from '../trpc.js'
 import { audit } from './audit.js'
 
-// The single gated base procedure for god writes. Reserved for mutations in
-// later waves; reads use requireAction('god.*') so they route through can().
+// The single gated base procedure for god endpoints (reads AND writes).
+// BOTH use requireLevel('admin.super') — DIRECT roleKey membership, never
+// requireAction — so the gate can never be loosened by a stray sc_permissions
+// seed. The 'god.*' actions exist solely for the frontend nav can() mirror.
 export const godProcedure = requireLevel('admin.super')
 
 type GodLogArgs = {

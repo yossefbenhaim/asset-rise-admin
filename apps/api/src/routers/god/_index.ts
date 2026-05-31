@@ -2,6 +2,9 @@ import { TRPCError } from '@trpc/server'
 import { GodSearchInput, GodAuditListInput } from '@asset-rise/shared'
 import { router, requireLevel } from '../../trpc.js'
 import { godSearch, listAudit } from '../../repos/god.repo.js'
+import { godBuildingsRouter } from './buildings.js'
+import { godTenantsRouter } from './tenants.js'
+import { godProvidersRouter } from './providers.js'
 
 // God read endpoints. Gated on requireLevel('admin.super') — DIRECT roleKey
 // membership, which CANNOT be loosened by a future sc_permissions seed (a
@@ -9,6 +12,11 @@ import { godSearch, listAudit } from '../../repos/god.repo.js'
 // The 'god.search'/'god.audit.list' actions still exist solely for the
 // frontend nav/route can() mirror, which only grants them to admin.super.
 export const godRouter = router({
+  // Wave 1 core-entity domains (each an isolated sibling router).
+  buildings: godBuildingsRouter,
+  tenants: godTenantsRouter,
+  providers: godProvidersRouter,
+
   search: requireLevel('admin.super')
     .input(GodSearchInput)
     .query(async ({ ctx, input }) => {

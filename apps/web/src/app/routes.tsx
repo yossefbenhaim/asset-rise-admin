@@ -10,6 +10,9 @@ import AdminBuildings from '@/pages/admin/Buildings'
 import AdminSubmissions from '@/pages/admin/Submissions'
 import AdminAudit from '@/pages/admin/Audit'
 import AdminSearch from '@/pages/admin/Search'
+import GodBuildings from '@/pages/admin/god/Buildings'
+import GodTenants from '@/pages/admin/god/Tenants'
+import GodProviders from '@/pages/admin/god/Providers'
 
 // Gate: this entire app is admin-only. Anyone else bounces to /login.
 function RequireAdmin() {
@@ -21,8 +24,8 @@ function RequireAdmin() {
 }
 
 // Defense-in-depth gate for god-mode pages. The API already enforces this via
-// requireAction('god.*'), but this avoids the page shell flashing before the
-// query 403s, and keeps non-super admins out of the route entirely.
+// requireLevel('admin.super') on every god endpoint, but this avoids the page
+// shell flashing before the query 403s, and keeps non-super admins out entirely.
 function RequireSuperAdmin() {
   const roleKeys = useRoleKeys()
   if (!roleKeys.includes('admin.super')) return <Navigate to="/" replace />
@@ -47,6 +50,9 @@ export const router = createBrowserRouter([
           children: [
             { path: 'audit', element: <AdminAudit /> },
             { path: 'search', element: <AdminSearch /> },
+            { path: 'god/buildings', element: <GodBuildings /> },
+            { path: 'god/tenants', element: <GodTenants /> },
+            { path: 'god/providers', element: <GodProviders /> },
           ],
         },
       ],

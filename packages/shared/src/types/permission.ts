@@ -15,6 +15,20 @@ export type Action =
   // seed and the frontend can() mirror.
   | 'god.search'
   | 'god.audit.list'
+  // god-mode Wave 1 — core entities. Seeded by migrations 009/010/011.
+  | 'god.buildings.list'
+  | 'god.buildings.update'
+  | 'god.buildings.force_stage'
+  | 'god.buildings.reassign_role'
+  | 'god.buildings.delete'
+  | 'god.tenants.list'
+  | 'god.tenants.update'
+  | 'god.tenants.set_vaad'
+  | 'god.tenants.move_building'
+  | 'god.tenants.set_banned'
+  | 'god.tenants.delete'
+  | 'god.providers.update'
+  | 'god.providers.set_banned'
 
 export interface Permission {
   role_key: string
