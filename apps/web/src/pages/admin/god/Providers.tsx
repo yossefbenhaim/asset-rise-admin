@@ -7,6 +7,7 @@ import { Modal } from '@/components/ui/Modal'
 import { DataTable } from '@/components/ui/DataTable'
 import { useToast } from '@/components/ui/Toast'
 import { UserProgressPanel } from '@/features/progress/UserProgressPanel'
+import { SupportChat } from '@/features/support/SupportChat'
 import { Star, Ban } from 'lucide-react'
 import {
   PROVIDER_TYPES,
@@ -298,6 +299,11 @@ function ProviderDetailBody({
         {/* Progress + tasks across the 14 stages */}
         <Section title="התקדמות ומשימות">
           <UserProgressPanel userId={p.id} />
+        </Section>
+
+        {/* Two-way system chat */}
+        <Section title="צ'אט מערכת">
+          <SupportChat userId={p.id} userName={p.full_name} />
         </Section>
 
         {/* Edit common profile */}

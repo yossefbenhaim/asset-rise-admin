@@ -8,6 +8,7 @@ import { DangerConfirm } from '@/components/ui/DangerConfirm'
 import { DataTable } from '@/components/ui/DataTable'
 import { useToast } from '@/components/ui/Toast'
 import { UserProgressPanel } from '@/features/progress/UserProgressPanel'
+import { SupportChat } from '@/features/support/SupportChat'
 import { Crown, ShieldCheck, Flag, Ban, Trash2 } from 'lucide-react'
 import type { GodTenantListItem, GodTenantDetail } from '@asset-rise/shared'
 
@@ -293,6 +294,11 @@ function TenantDetailBody({
         {/* Progress + tasks across the 14 stages */}
         <Section title="התקדמות ומשימות">
           <UserProgressPanel userId={t.id} />
+        </Section>
+
+        {/* Two-way system chat */}
+        <Section title="צ'אט מערכת">
+          <SupportChat userId={t.id} userName={t.full_name} />
         </Section>
 
         {/* Edit profile */}
