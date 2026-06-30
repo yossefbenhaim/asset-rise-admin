@@ -12,6 +12,7 @@ import { godWorkflowRouter } from './workflow.js'
 import { godDocumentsRouter } from './documents.js'
 import { godChatRouter } from './chat.js'
 import { godNotificationsRouter } from './notifications.js'
+import { godProgressRouter } from './progress.js'
 import { godMiscRouter } from './misc.js'
 
 // God read endpoints. Gated on requireLevel('admin.super') — DIRECT roleKey
@@ -30,6 +31,7 @@ export const godRouter = router({
   tenders: godTendersRouter,
   polls: godPollsRouter,
   workflow: godWorkflowRouter,
+  progress: godProgressRouter,
 
   // Wave 3 — content + communication (each an isolated sibling router).
   documents: godDocumentsRouter,

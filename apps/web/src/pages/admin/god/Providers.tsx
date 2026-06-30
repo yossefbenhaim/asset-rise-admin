@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { DataTable } from '@/components/ui/DataTable'
 import { useToast } from '@/components/ui/Toast'
+import { UserProgressPanel } from '@/features/progress/UserProgressPanel'
 import { Star, Ban } from 'lucide-react'
 import {
   PROVIDER_TYPES,
@@ -293,6 +294,11 @@ function ProviderDetailBody({
             }
           />
         </div>
+
+        {/* Progress + tasks across the 14 stages */}
+        <Section title="התקדמות ומשימות">
+          <UserProgressPanel userId={p.id} />
+        </Section>
 
         {/* Edit common profile */}
         <Section title="עריכת פרופיל">

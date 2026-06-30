@@ -12,6 +12,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { trpc } from '@/lib/api/trpc'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
 import { ControlPanel } from '@/components/ui/ControlPanel'
+import { BuildingProgressPanel } from '@/features/progress/BuildingProgressPanel'
 import { Button } from '@/components/ui/Button'
 import { Pill } from '@/components/ui/Pill'
 import { Modal } from '@/components/ui/Modal'
@@ -196,6 +197,11 @@ function BuildingDetail({ id, onBack }: { id: string; onBack: () => void }) {
           חזרה לרשימה
         </Button>
       </div>
+
+      {/* Project progress across the 14 stages */}
+      <ControlPanel title="התקדמות הפרויקט" description="מיקום הבניין מתוך 14 השלבים, מחזיק/ת השרביט ומשימות תקועות." tone="navy">
+        <BuildingProgressPanel buildingId={id} />
+      </ControlPanel>
 
       {/* Address / building edit */}
       <ControlPanel

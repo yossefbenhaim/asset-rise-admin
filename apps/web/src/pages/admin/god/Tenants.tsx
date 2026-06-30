@@ -7,6 +7,7 @@ import { Modal } from '@/components/ui/Modal'
 import { DangerConfirm } from '@/components/ui/DangerConfirm'
 import { DataTable } from '@/components/ui/DataTable'
 import { useToast } from '@/components/ui/Toast'
+import { UserProgressPanel } from '@/features/progress/UserProgressPanel'
 import { Crown, ShieldCheck, Flag, Ban, Trash2 } from 'lucide-react'
 import type { GodTenantListItem, GodTenantDetail } from '@asset-rise/shared'
 
@@ -288,6 +289,11 @@ function TenantDetailBody({
             <VaadPills t={{ is_committee_chair: !!tp.is_committee_chair, is_committee_member: !!tp.is_committee_member, is_organizer: !!tp.is_organizer }} />
           </div>
         </div>
+
+        {/* Progress + tasks across the 14 stages */}
+        <Section title="התקדמות ומשימות">
+          <UserProgressPanel userId={t.id} />
+        </Section>
 
         {/* Edit profile */}
         <Section title="עריכת פרופיל">
