@@ -30,7 +30,7 @@ export default function AdminProcessing() {
       <div className="sc-page__head">
         <div>
           <h1>מרכז העיבוד</h1>
-          <div className="sub">מעקב חי אחר צנרת ניתוח הדוחות · מתרענן כל 4 שניות</div>
+          <div className="sub">מעקב חי אחר צנרת ניתוח הדוחות · מתרענן כל 2 שניות</div>
         </div>
         <Button variant="ghost" onClick={() => q.refetch()} disabled={q.isFetching}>
           <RefreshCw size={15} className={q.isFetching ? 'animate-spin' : ''} />
@@ -94,8 +94,8 @@ export default function AdminProcessing() {
           <div className="flex items-start gap-2 rounded-sc-input bg-sc-light-blue text-sc-primary px-3 py-2 text-[11.5px]">
             <Info size={14} className="shrink-0 mt-0.5" />
             <span>
-              מתעדכן חי כל 2 שניות. «מחקר AI בתהליך» = משימות המחקר האסינכרוניות שרצות כעת; ריצות
-              שהושלמו (עם משך אמיתי ומקורות) מופיעות למטה ב«ריצות אנליזה אחרונות».
+              מתעדכן חי כל 2 שניות. «בדיקות שרצות כעת» = חישובי היתכנות ומשימות מחקר שרצים ברגע זה;
+              ריצות שהושלמו (עם משך אמיתי ומקורות) מופיעות למטה ב«ריצות אנליזה אחרונות».
             </span>
           </div>
 
@@ -134,15 +134,15 @@ export default function AdminProcessing() {
             <div className="lg:col-span-2 flex flex-col gap-3">
               <div className="flex items-center gap-1.5 text-[14px] font-bold text-sc-text">
                 <Activity size={15} className="text-sc-primary" />
-                מחקר AI בתהליך
+                בדיקות שרצות כעת
                 <span className="text-sc-text-secondary font-semibold sc-num">({d.running.length})</span>
               </div>
               {d.running.length === 0 ? (
                 <div className="sc-glass p-4">
                   <EmptyState
                     icon={<Activity size={26} />}
-                    title="אין מחקר AI פעיל כרגע"
-                    body="כשתיכנס בקשה חדשה, משימת המחקר תופיע כאן בזמן אמת."
+                    title="אין בדיקה פעילה כרגע"
+                    body="כשתרוץ בדיקת היתכנות חדשה, היא תופיע כאן בזמן אמת."
                   />
                 </div>
               ) : (

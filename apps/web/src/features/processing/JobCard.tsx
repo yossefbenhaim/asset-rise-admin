@@ -69,7 +69,7 @@ export function JobCard({ job, index = 0 }: {
       {/* Honest in-progress indicator for the async AI research (one step). */}
       <div className="flex items-center gap-2 text-[12px] text-sc-primary font-semibold">
         <Sparkles size={14} className="shrink-0" />
-        מחקר AI מתבצע…
+        הבדיקה רצה כעת…
       </div>
       <div className="h-1.5 rounded-full bg-sc-light-blue overflow-hidden">
         <motion.div

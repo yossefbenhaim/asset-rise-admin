@@ -206,6 +206,7 @@ export const processingRouter = router({
       runsRes,
       timelineRunsRes,
       sourcesRes,
+      liveRunsRes,
     ] = await Promise.all([
       // Queue: pending jobs, oldest first (next to run).
       ctx.db
@@ -252,6 +253,7 @@ export const processingRouter = router({
       ctx.db
         .from('sc_report_runs')
         .select('id,address_display,status,duration_ms,error,created_at,stages')
+        .neq('status', 'processing')
         .order('created_at', { ascending: false })
         .limit(20),
       // Runs for the timeline — just timestamps + duration over the window.
@@ -266,10 +268,42 @@ export const processingRouter = router({
         .from('sc_source_health')
         .select('source,status,latency_ms,last_ok_at')
         .order('source', { ascending: true }),
+      // In-flight cold computes — runs stamped 'processing' at the start of an
+      // evaluate (the customer app's startRun). These are the live "a check is
+      // running NOW" items. A 5-minute window drops orphaned rows from a
+      // crashed/restarted compute that never got its finishRun update.
+      ctx.db
+        .from('sc_report_runs')
+        .select('id,address_display,created_at')
+        .eq('status', 'processing')
+        .gte('created_at', new Date(nowMs - 5 * 60_000).toISOString())
+        .order('created_at', { ascending: true })
+        .limit(50),
     ])
 
     const queue = (queueRes.data ?? []).map((r) => toProcessingJob(r as JobRow, nowMs))
-    const running = (runningRes.data ?? []).map((r) => toProcessingJob(r as JobRow, nowMs))
+    // In-flight cold computes (sc_report_runs status='processing') — the live
+    // "a check is running now" items — mapped into the running-job shape so the
+    // monitor shows them alongside any in-flight AI-research jobs.
+    const liveRunJobs: ProcessingJob[] = ((liveRunsRes.data ?? []) as any[]).map((r) => ({
+      id: r.id,
+      research_key: null,
+      status: 'running',
+      label: (r.address_display as string | null)?.trim() || 'בדיקת היתכנות',
+      city: null,
+      attempts: null,
+      created_at: r.created_at,
+      updated_at: null,
+      completed_at: null,
+      elapsedSec: elapsedSeconds(r.created_at, nowMs),
+      stageIndex: -1,
+      failedStage: null,
+      error: null,
+    }))
+    const running = [
+      ...liveRunJobs,
+      ...(runningRes.data ?? []).map((r) => toProcessingJob(r as JobRow, nowMs)),
+    ]
     const recentDone = (recentDoneRes.data ?? []).map((r) => toProcessingJob(r as JobRow, nowMs))
     const recentFailed = (recentFailedRes.data ?? []).map((r) => toProcessingJob(r as JobRow, nowMs))
     // Dedupe by address (keep the latest — rows arrive newest-first) so the same
