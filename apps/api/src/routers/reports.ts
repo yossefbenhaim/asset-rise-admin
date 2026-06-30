@@ -114,7 +114,71 @@ async function enqueueResearch(
   if (error && !/duplicate|unique|conflict/i.test(error.message)) throw error
 }
 
+// Compact shape for the dashboard "pinned reports" card. Token + a few report
+// columns + the admin's note. Standalone (not in shared) so we don't reach
+// outside our files; the web side infers it from the router type.
+export interface PinnedReportRow {
+  token: string
+  address_display: string | null
+  score: number | null
+  lead_name: string | null
+  created_at: string | null
+  note: string | null
+  updated_at: string | null
+}
+
 export const reportsRouter = router({
+  // Pinned reports for the *current* admin → the Dashboard "דוחות שסומנו" card.
+  // Reads this admin's pinned flags, then side-loads the matching report columns
+  // in one `in()` query. Newest-pin first.
+  listFlagged: requireAction('admin.reports.list').query(
+    async ({ ctx }): Promise<PinnedReportRow[]> => {
+      const { data: flags, error } = await ctx.db
+        .from('sc_report_flags')
+        .select('report_token,note,updated_at')
+        .eq('pinned', true)
+        .eq('admin_id', ctx.user.id)
+        .order('updated_at', { ascending: false })
+        .limit(50)
+      if (error) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message })
+
+      const rows = (flags ?? []) as { report_token: string; note: string | null; updated_at: string | null }[]
+      if (rows.length === 0) return []
+
+      const tokens = rows.map(f => f.report_token)
+      const { data: reports, error: repErr } = await ctx.db
+        .from('sc_analyzer_reports')
+        .select('token,address_display,score,lead_name,created_at')
+        .in('token', tokens)
+      if (repErr) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: repErr.message })
+
+      const byToken = new Map(
+        ((reports ?? []) as {
+          token: string
+          address_display: string | null
+          score: number | null
+          lead_name: string | null
+          created_at: string | null
+        }[]).map(r => [r.token, r]),
+      )
+
+      // Preserve the pin order, drop flags whose report was deleted.
+      return rows.flatMap((f): PinnedReportRow[] => {
+        const r = byToken.get(f.report_token)
+        if (!r) return []
+        return [{
+          token: r.token,
+          address_display: r.address_display ?? null,
+          score: typeof r.score === 'number' ? r.score : null,
+          lead_name: r.lead_name ?? null,
+          created_at: r.created_at ?? null,
+          note: f.note ?? null,
+          updated_at: f.updated_at ?? null,
+        }]
+      })
+    },
+  ),
+
   // Full list for the DataTable. Newest first; flattened + joined.
   list: requireAction('admin.reports.list').query(async ({ ctx }): Promise<ReportRow[]> => {
     const { data: reports, error } = await ctx.db

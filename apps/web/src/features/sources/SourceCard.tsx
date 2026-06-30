@@ -1,7 +1,7 @@
 // One data source in the health grid: tinted icon, name + description,
 // StatusBadge (active/degraded/down), and a footer strip of metrics
-// (latency / error count / last-updated). Live-derived sources are visually
-// distinct from ones still "pending instrumentation".
+// (latency / error count / last-updated). Sources with a real persisted health
+// signal are visually distinct from ones still awaiting their first check.
 import { motion } from 'framer-motion'
 import {
   Map, Building2, FileText, Landmark, MapPin, Bot,
@@ -60,8 +60,8 @@ export function SourceCard({ source }: { source: SourceHealth; index?: number })
         <StatusBadge status={source.status} />
       </div>
 
-      {/* Live-derived vs pending-instrumentation marker */}
-      <div className="flex items-center gap-1.5 text-[10.5px] font-semibold">
+      {/* Instrumented (real signal) vs awaiting-first-check marker */}
+      <div className="flex items-center justify-between gap-2 text-[10.5px] font-semibold">
         {source.instrumented ? (
           <span className="inline-flex items-center gap-1 text-sc-success">
             <Activity size={12} />
@@ -70,7 +70,13 @@ export function SourceCard({ source }: { source: SourceHealth; index?: number })
         ) : (
           <span className="inline-flex items-center gap-1 text-sc-text-muted">
             <HelpCircle size={12} />
-            ממתין להטמעת ניטור
+            ממתין לבדיקה ראשונה
+          </span>
+        )}
+        {source.checkedAt && (
+          <span className="inline-flex items-center gap-1 text-sc-text-muted font-medium">
+            <Clock size={11} />
+            נבדק {timeAgo(source.checkedAt)}
           </span>
         )}
       </div>
@@ -80,7 +86,7 @@ export function SourceCard({ source }: { source: SourceHealth; index?: number })
         <Metric
           icon={<Gauge size={13} />}
           label="זמן תגובה"
-          value={source.instrumented ? fmtLatency(source.latencyMs) : '—'}
+          value={fmtLatency(source.latencyMs)}
         />
         <Metric
           icon={<AlertTriangle size={13} className={source.errorCount ? 'text-sc-danger' : ''} />}
@@ -90,10 +96,21 @@ export function SourceCard({ source }: { source: SourceHealth; index?: number })
         />
         <Metric
           icon={<Clock size={13} />}
-          label="עודכן"
+          label="הצלחה אחרונה"
           value={source.lastUpdated ? timeAgo(source.lastUpdated) : '—'}
         />
       </div>
+
+      {/* Last error (only when the source recorded one) */}
+      {source.lastError && (
+        <div
+          className="flex items-start gap-1.5 rounded-sc-input bg-sc-danger-bg text-sc-danger px-2 py-1.5 text-[11px] leading-snug"
+          title={source.lastError}
+        >
+          <AlertTriangle size={12} className="shrink-0 mt-0.5" />
+          <span className="line-clamp-2">{source.lastError}</span>
+        </div>
+      )}
 
       {/* Note / diagnostic */}
       {source.note && (

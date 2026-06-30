@@ -2,8 +2,9 @@
 // Thin page: poll sourcesRouter.health, lay out a KPI summary strip + the
 // SourceHealthGrid. Heavy UI lives in features/sources/*.
 //
-// Only the AI provider is live-derived today; the rest are marked
-// "pending instrumentation" until sc_source_health lands.
+// Health now comes from the real sc_source_health table (written by the
+// customer pipeline). A source without a row yet is shown as awaiting its
+// first health check.
 import { motion } from 'framer-motion'
 import { RefreshCw, Info, CheckCircle2, AlertTriangle, ServerCrash, Activity } from 'lucide-react'
 import { trpc } from '@/lib/api/trpc'
@@ -89,15 +90,16 @@ export default function AdminSources() {
             />
           </div>
 
-          {/* Instrumentation caveat */}
-          <div className="flex items-start gap-2 rounded-sc-input bg-sc-light-blue text-sc-primary px-3 py-2 text-[11.5px]">
-            <Info size={14} className="shrink-0 mt-0.5" />
-            <span>
-              כרגע רק <span className="font-bold">ספק ה-AI</span> מנוטר בזמן אמת (נגזר מעבודות הניתוח).
-              שאר המקורות מסומנים «ממתין להטמעת ניטור» עד שטבלת בריאות ייעודית תיכנס בשלב הבא —{' '}
-              {d.summary.instrumented}/{d.summary.total} מקורות מנוטרים.
-            </span>
-          </div>
+          {/* Instrumentation caveat — only when some sources haven't reported yet */}
+          {d.summary.instrumented < d.summary.total && (
+            <div className="flex items-start gap-2 rounded-sc-input bg-sc-light-blue text-sc-primary px-3 py-2 text-[11.5px]">
+              <Info size={14} className="shrink-0 mt-0.5" />
+              <span>
+                {d.summary.instrumented}/{d.summary.total} מקורות מדווחים בריאות בזמן אמת מטבלת הניטור.
+                שאר המקורות מסומנים «ממתין לבדיקה ראשונה» עד שייכתב עבורם אות בריאות ראשון.
+              </span>
+            </div>
+          )}
 
           {/* Grid */}
           <SourceHealthGrid sources={d.sources} />

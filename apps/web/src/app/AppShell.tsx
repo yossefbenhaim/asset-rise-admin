@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { Sidebar } from '@/components/shell/Sidebar'
 import { TopBar } from '@/components/shell/TopBar'
 import { CommandPalette } from '@/components/command/CommandPalette'
+import { NotificationCenter } from '@/components/notifications/NotificationCenter'
 
 export default function AppShell() {
   const [sideOpen, setSideOpen] = useState(false)
@@ -19,6 +20,7 @@ export default function AppShell() {
         <Outlet />
       </div>
       <CommandPalette />
+      <NotificationCenter />
     </div>
   )
 }

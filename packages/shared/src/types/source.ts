@@ -1,23 +1,26 @@
 // Data Sources Monitor — health of the external/internal data sources the
-// analyzer pipeline depends on. Backs apps/api/src/routers/sources.ts and
-// apps/web/src/features/sources/*.
+// analyzer/customer pipeline depends on. Backs apps/api/src/routers/sources.ts
+// and apps/web/src/features/sources/*.
 //
-// IMPORTANT: most sources have NO persisted health signal yet. A dedicated
-// sc_source_health table lands in a later phase. Until then we derive what we
-// can BEST-EFFORT from existing tables (today only the AI provider, inferred
-// from sc_analyzer_jobs done/failed ratios + last completion). Sources without
-// a live signal report a sensible default status and are flagged
-// `instrumented: false` so the UI can clearly mark them as "pending
-// instrumentation".
+// Real health signals now land in the sc_source_health table (the customer
+// pipeline writes one row per canonical source: status / latency_ms /
+// error_count / last_ok_at / last_error / checked_at). The router builds the
+// canonical six-source list from those rows. A source that has no row yet is
+// reported as 'down' + `instrumented: false` so the UI can mark it as
+// not-yet-reporting rather than faking a healthy default.
+//
+// The AI provider keeps a SECONDARY cross-derivation from sc_analyzer_jobs
+// (done/failed ratios + last completion) — used to enrich its note and fill
+// gaps when its persisted row is missing or stale.
 
 // Stable identifiers for each platform data source. Kept in sync with the
-// SOURCE_DEFS catalog in the router.
+// SOURCE_DEFS catalog in the router AND the sc_source_health.source enum.
 export type SourceId =
   | 'govmap'      // GovMap / GIS spatial layers
   | 'renewal'     // מתחמי התחדשות עירונית
   | 'mavat'       // MAVAT / תב״ע planning data
   | 'municipal'   // נתוני עירייה
-  | 'geocode'     // Google geocoding
+  | 'geocode'     // Geocoding
   | 'ai'          // AI provider (analyzer summaries / research)
 
 // Health status for a source. Mirrors the StatusBadge keys active/degraded/down.
@@ -33,20 +36,27 @@ export type SourceHealth = {
   // catalog is the single source of truth). e.g. 'Map', 'Building2', 'Bot'.
   icon: string
   status: SourceStatus
-  // Round-trip / processing latency in ms, when we have a real measurement.
-  // null = no measurement available yet.
+  // Round-trip / processing latency in ms, from sc_source_health.latency_ms
+  // (or AI-derived avg run time). null = no measurement available.
   latencyMs: number | null
-  // Number of recent errors attributed to this source (live-derived sources
-  // only). null when not instrumented.
+  // Recent error count attributed to this source (sc_source_health.error_count,
+  // or AI-derived failures). null when there is no instrumented signal.
   errorCount: number | null
-  // When this source last produced a successful result (ISO), best-effort.
+  // When this source last produced a successful result (ISO) — from
+  // sc_source_health.last_ok_at (AI falls back to last analyzer completion).
   // null when unknown.
   lastUpdated: string | null
-  // true → status/latency/errors are derived from real data right now.
-  // false → placeholder defaults; awaiting the sc_source_health table.
+  // Last error text recorded for this source (sc_source_health.last_error).
+  // null when there is none / not instrumented.
+  lastError: string | null
+  // When this source was last health-checked (sc_source_health.checked_at, ISO).
+  // null when the source has no persisted row yet.
+  checkedAt: string | null
+  // true → status/latency/errors come from a real persisted signal right now.
+  // false → no sc_source_health row yet (reported 'down', awaiting first check).
   instrumented: boolean
-  // Short Hebrew note (e.g. "ממתין להטמעת ניטור" for non-instrumented sources,
-  // or a derived diagnostic for live ones).
+  // Short Hebrew note (derived diagnostic for instrumented sources, or
+  // "ממתין לבדיקה ראשונה" for sources without a row yet).
   note: string | null
 }
 

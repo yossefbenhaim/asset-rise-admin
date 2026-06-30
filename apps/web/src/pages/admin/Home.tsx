@@ -13,6 +13,7 @@ import { DonutChartCard } from '@/components/charts/DonutChartCard'
 import { nis } from '@/lib/format'
 import { KpiRow } from '@/features/dashboard/KpiRow'
 import { AlertsPanel } from '@/features/dashboard/AlertsPanel'
+import { PinnedReports } from '@/features/dashboard/PinnedReports'
 import { DashboardSkeleton } from '@/features/dashboard/DashboardSkeleton'
 
 export default function AdminHome() {
@@ -48,6 +49,8 @@ export default function AdminHome() {
           variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
         >
           <KpiRow d={q.data} />
+
+          <PinnedReports index={0} />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             <AreaChartCard

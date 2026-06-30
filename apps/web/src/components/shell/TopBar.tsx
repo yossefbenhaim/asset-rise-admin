@@ -3,11 +3,13 @@ import { useSession } from '@/lib/auth/session'
 import { useNavigate } from 'react-router-dom'
 import { useUi } from '@/lib/store'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { useNotifCount } from '@/components/notifications/NotificationCenter'
 
 export function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
   const { signOut } = useSession()
   const nav = useNavigate()
   const setCmdkOpen = useUi(s => s.setCmdkOpen)
+  const notifCount = useNotifCount()
 
   return (
     <header className="sc-top">
@@ -36,8 +38,17 @@ export function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
       <div className="sc-top__spacer" />
 
       <ThemeToggle />
-      <button className="sc-top__icon-btn relative" aria-label="התראות" onClick={() => useUi.getState().setNotifOpen(true)}>
+      <button
+        className="sc-top__icon-btn relative"
+        aria-label={notifCount > 0 ? `התראות (${notifCount})` : 'התראות'}
+        onClick={() => useUi.getState().setNotifOpen(true)}
+      >
         <Bell size={18} />
+        {notifCount > 0 && (
+          <span className="absolute -top-1 -left-1 min-w-[16px] h-[16px] px-1 grid place-items-center rounded-full bg-sc-danger text-white text-[10px] font-bold leading-none tabular-nums">
+            {notifCount > 99 ? '99+' : notifCount}
+          </span>
+        )}
       </button>
       <button
         className="sc-top__icon-btn"
