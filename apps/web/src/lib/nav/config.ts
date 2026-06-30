@@ -55,6 +55,7 @@ export const ADMIN_NAV: NavGroup[] = [
       { id: 'god-polls',         label: 'הצבעות (על)',  to: '/god/polls',         icon: 'Vote',      requires: ['god.polls.force_finalize'] },
       { id: 'god-workflow',      label: 'תהליך עבודה (על)', to: '/god/workflow',  icon: 'ListChecks', requires: ['god.workflow.set_task_status'] },
       { id: 'god-stuck',         label: 'תקיעות', to: '/god/stuck',  icon: 'AlertTriangle', requires: ['god.buildings.list'] },
+      { id: 'god-support',       label: 'צ׳אט מערכת', to: '/god/support', icon: 'MessageCircle', requires: ['god.buildings.list'] },
       { id: 'god-documents',     label: 'מסמכים (על)',   to: '/god/documents',  icon: 'FileText',       requires: ['god.documents.set_visibility'] },
       { id: 'god-chat',          label: 'צ׳אטים (על)',   to: '/god/chat',       icon: 'MessagesSquare', requires: ['god.chat.delete_message'] },
       { id: 'god-broadcast',     label: 'שידור הודעות',  to: '/god/broadcast',  icon: 'Megaphone',      requires: ['god.broadcast.send'] },

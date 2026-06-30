@@ -1,5 +1,61 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { GodSupportThread, GodSupportMessage } from '@asset-rise/shared'
+import type { GodSupportThread, GodSupportMessage, GodSupportThreadListItem } from '@asset-rise/shared'
+
+function addressOf(b: { street?: string | null; building_number?: string | null; city?: string | null } | null | undefined): string | null {
+  if (!b) return null
+  const line = [b.street, b.building_number].filter(Boolean).join(' ')
+  return [line, b.city].filter(Boolean).join(', ').trim() || null
+}
+
+// Admin support inbox — every thread, newest activity first, with the last
+// message preview + who sent it (awaiting_reply = the user spoke last).
+export async function listThreads(db: SupabaseClient): Promise<GodSupportThreadListItem[]> {
+  const { data: threads } = await db
+    .from('sc_support_threads')
+    .select('id, user_id, building_id, last_message_at')
+    .order('last_message_at', { ascending: false, nullsFirst: false })
+    .limit(300)
+  const tRows = (threads ?? []) as any[]
+  if (!tRows.length) return []
+
+  const threadIds = tRows.map(t => t.id)
+  const userIds = Array.from(new Set(tRows.map(t => t.user_id).filter(Boolean)))
+  const buildingIds = Array.from(new Set(tRows.map(t => t.building_id).filter(Boolean)))
+
+  const [{ data: msgs }, { data: profs }, { data: builds }] = await Promise.all([
+    db.from('sc_support_messages').select('thread_id, sender_kind, body, created_at').in('thread_id', threadIds).order('created_at', { ascending: true }),
+    userIds.length ? db.from('sc_profiles').select('id, full_name, email, role').in('id', userIds) : Promise.resolve({ data: [] as any[] }),
+    buildingIds.length ? db.from('sc_buildings').select('id, city, street, building_number').in('id', buildingIds) : Promise.resolve({ data: [] as any[] }),
+  ])
+
+  const lastByThread = new Map<string, { sender_kind: string; body: string }>()
+  const countByThread = new Map<string, number>()
+  for (const m of (msgs ?? []) as any[]) {
+    lastByThread.set(m.thread_id, { sender_kind: m.sender_kind, body: m.body })  // asc → last wins
+    countByThread.set(m.thread_id, (countByThread.get(m.thread_id) ?? 0) + 1)
+  }
+  const profById = new Map<string, any>(); for (const p of (profs ?? []) as any[]) profById.set(p.id, p)
+  const bById = new Map<string, any>(); for (const b of (builds ?? []) as any[]) bById.set(b.id, b)
+
+  return tRows.map((t): GodSupportThreadListItem => {
+    const last = lastByThread.get(t.id) ?? null
+    const p = profById.get(t.user_id)
+    const preview = last ? (last.body.length > 80 ? last.body.slice(0, 80) + '…' : last.body) : null
+    return {
+      thread_id: t.id,
+      user_id: t.user_id,
+      user_name: p?.full_name ?? null,
+      user_email: p?.email ?? null,
+      user_role: p?.role ?? null,
+      building_address: addressOf(t.building_id ? bById.get(t.building_id) : null),
+      last_message_at: t.last_message_at ?? null,
+      last_message_preview: preview,
+      last_sender_kind: (last?.sender_kind as 'admin' | 'user' | undefined) ?? null,
+      awaiting_reply: last?.sender_kind === 'user',
+      message_count: countByThread.get(t.id) ?? 0,
+    }
+  })
+}
 
 // god.support repo (service-role). The admin↔user system chat: get/create a
 // user's thread, load it, and post an admin message (+ ping the user via

@@ -25,6 +25,7 @@ import GodTenders from '@/pages/admin/god/Tenders'
 import GodPolls from '@/pages/admin/god/Polls'
 import GodWorkflow from '@/pages/admin/god/Workflow'
 import GodStuck from '@/pages/admin/god/Stuck'
+import GodSupport from '@/pages/admin/god/Support'
 import GodDocuments from '@/pages/admin/god/Documents'
 import GodChat from '@/pages/admin/god/Chat'
 import GodBroadcast from '@/pages/admin/god/Broadcast'
@@ -82,6 +83,7 @@ export const router = createBrowserRouter([
             { path: 'god/polls', element: <GodPolls /> },
             { path: 'god/workflow', element: <GodWorkflow /> },
             { path: 'god/stuck', element: <GodStuck /> },
+            { path: 'god/support', element: <GodSupport /> },
             { path: 'god/documents', element: <GodDocuments /> },
             { path: 'god/chat', element: <GodChat /> },
             { path: 'god/broadcast', element: <GodBroadcast /> },

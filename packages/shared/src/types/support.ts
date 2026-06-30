@@ -17,6 +17,21 @@ export interface GodSupportThread {
   messages: GodSupportMessage[]
 }
 
+// One row in the admin support inbox (all threads, newest activity first).
+export interface GodSupportThreadListItem {
+  thread_id: string
+  user_id: string
+  user_name: string | null
+  user_email: string | null
+  user_role: string | null
+  building_address: string | null
+  last_message_at: string | null
+  last_message_preview: string | null
+  last_sender_kind: 'admin' | 'user' | null
+  awaiting_reply: boolean   // the last message was from the user → needs a reply
+  message_count: number
+}
+
 // Pre-set message templates the admin can drop into the composer. {{name}} is
 // substituted with the recipient's name client-side.
 export interface MessageTemplate {

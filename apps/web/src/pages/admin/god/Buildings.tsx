@@ -13,6 +13,8 @@ import { trpc } from '@/lib/api/trpc'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
 import { ControlPanel } from '@/components/ui/ControlPanel'
 import { BuildingProgressPanel } from '@/features/progress/BuildingProgressPanel'
+import { SupportChat } from '@/features/support/SupportChat'
+import { MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Pill } from '@/components/ui/Pill'
 import { Modal } from '@/components/ui/Modal'
@@ -149,6 +151,7 @@ function BuildingDetail({ id, onBack }: { id: string; onBack: () => void }) {
 
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [chatTarget, setChatTarget] = useState<{ id: string; name: string | null } | null>(null)
 
   function refresh() {
     utils.god.buildings.get.invalidate({ id })
@@ -200,8 +203,18 @@ function BuildingDetail({ id, onBack }: { id: string; onBack: () => void }) {
 
       {/* Project progress across the 14 stages */}
       <ControlPanel title="התקדמות הפרויקט" description="מיקום הבניין מתוך 14 השלבים, מחזיק/ת השרביט ומשימות תקועות." tone="navy">
-        <BuildingProgressPanel buildingId={id} />
+        <BuildingProgressPanel buildingId={id} onOpenChat={(uid, name) => setChatTarget({ id: uid, name })} />
       </ControlPanel>
+
+      <Modal
+        open={!!chatTarget}
+        onClose={() => setChatTarget(null)}
+        title={chatTarget?.name ? `צ'אט עם ${chatTarget.name}` : 'צ\'אט מערכת'}
+        icon={<MessageSquare size={18} />}
+        size="lg"
+      >
+        {chatTarget && <SupportChat userId={chatTarget.id} userName={chatTarget.name} />}
+      </Modal>
 
       {/* Address / building edit */}
       <ControlPanel

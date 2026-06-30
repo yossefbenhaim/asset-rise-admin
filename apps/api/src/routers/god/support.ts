@@ -5,12 +5,21 @@ import {
   GodSupportThreadInput,
   GodSupportSendInput,
   type GodSupportThread,
+  type GodSupportThreadListItem,
 } from '@asset-rise/shared'
-import { getThread, sendAdminMessage } from '../../repos/godSupport.repo.js'
+import { getThread, sendAdminMessage, listThreads } from '../../repos/godSupport.repo.js'
 
 // god.support — the admin↔user two-way system chat. Read gated on admin.super;
 // the send write goes through godMutation (audited).
 export const godSupportRouter = router({
+  list: requireLevel('admin.super').query(async ({ ctx }): Promise<GodSupportThreadListItem[]> => {
+    try {
+      return await listThreads(ctx.db)
+    } catch (e: any) {
+      throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: e.message })
+    }
+  }),
+
   thread: requireLevel('admin.super')
     .input(GodSupportThreadInput)
     .query(async ({ ctx, input }): Promise<GodSupportThread> => {
