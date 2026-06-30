@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { AreaChartCard } from '@/components/charts/AreaChartCard'
 import { BarChartCard } from '@/components/charts/BarChartCard'
 import { DonutChartCard } from '@/components/charts/DonutChartCard'
+import { RankedBarsCard } from '@/components/charts/RankedBarsCard'
 import { nis } from '@/lib/format'
 import { KpiRow } from '@/features/dashboard/KpiRow'
 import { AlertsPanel } from '@/features/dashboard/AlertsPanel'
@@ -81,14 +82,13 @@ export default function AdminHome() {
               nameKey="name"
               valueKey="value"
             />
-            <BarChartCard
+            <RankedBarsCard
               index={1}
               title="מקורות מובילים"
               sub="לפי מספר פניות"
               data={q.data.topSources}
-              xKey="name"
-              yKey="value"
-              horizontal
+              nameKey="name"
+              valueKey="value"
             />
             <AlertsPanel index={2} alerts={q.data.alerts} />
           </div>
