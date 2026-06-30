@@ -4,13 +4,17 @@
 // for. This page is a READ-ONLY window: KPI counters from wong.stats + a table
 // of recent verifications (wong.list) with a verdict drawer.
 import { useState } from 'react'
-import { ShieldCheck, Clock3, CheckCircle2, XCircle } from 'lucide-react'
+import { ShieldCheck, Clock3, CheckCircle2, XCircle, ListChecks, History } from 'lucide-react'
 import { trpc } from '@/lib/api/trpc'
 import { KpiCard } from '@/components/ui/KpiCard'
 import { VerificationsTable, type WongStatusFilter } from '@/features/wong/VerificationsTable'
+import { PromptVersionsPanel } from '@/features/ai/PromptVersionsPanel'
+
+type WongTab = 'verifications' | 'prompts'
 
 export default function AdminWong() {
   const [status, setStatus] = useState<WongStatusFilter>('all')
+  const [tab, setTab] = useState<WongTab>('verifications')
 
   const stats = trpc.wong.stats.useQuery(undefined, { refetchOnWindowFocus: false })
   const list = trpc.wong.list.useQuery(
@@ -68,12 +72,39 @@ export default function AdminWong() {
         />
       </div>
 
-      <VerificationsTable
-        rows={list.data ?? []}
-        loading={list.isLoading}
-        status={status}
-        onStatusChange={setStatus}
-      />
+      {/* Tabs: verifications table | prompt versions */}
+      <div className="flex items-center gap-1.5 mb-4 border-b border-sc-border">
+        {([
+          { key: 'verifications' as const, label: 'אימותים', icon: <ListChecks size={15} /> },
+          { key: 'prompts' as const, label: 'גרסאות פרומפט', icon: <History size={15} /> },
+        ]).map(t => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-bold border-b-2 -mb-px transition-colors ${
+              tab === t.key
+                ? 'border-sc-primary text-sc-primary'
+                : 'border-transparent text-sc-text-secondary hover:text-sc-text'
+            }`}
+          >
+            {t.icon}
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'verifications' ? (
+        <VerificationsTable
+          rows={list.data ?? []}
+          loading={list.isLoading}
+          status={status}
+          onStatusChange={setStatus}
+        />
+      ) : (
+        <div className="max-w-2xl">
+          <PromptVersionsPanel agent="wong" />
+        </div>
+      )}
     </div>
   )
 }

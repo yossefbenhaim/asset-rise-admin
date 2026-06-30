@@ -5,6 +5,8 @@ import {
   AiResearchKeyInput,
   AiRegenerateInput,
   AiEditPromptInput,
+  AiPromptVersionsInput,
+  type AiAgent,
   type AiSummaryRow,
   type AiSummaryDetail,
   type AiJobStatus,
@@ -13,18 +15,59 @@ import {
   type AiPromptVersionsResult,
 } from '@asset-rise/shared'
 
-// Live RESEARCH_VERSION in the customer app (silver-castle jobs.ts). Bump when
-// the worker's version moves; drives `current` in the prompt-versions panel.
-const CURRENT_VERSION = 'v10'
+// Live version per agent. Analyzer tracks RESEARCH_VERSION in the customer app
+// (silver-castle jobs.ts); Wong starts at a v1 baseline. Bump when the matching
+// worker's version moves; drives `current` in the prompt-versions panel.
+const CURRENT_VERSION: Record<AiAgent, string> = {
+  analyzer: 'v10',
+  wong: 'v1',
+}
+
+// How many versions of history to surface per agent (v1..vN, newest first).
+const VERSION_COUNT: Record<AiAgent, number> = {
+  analyzer: 10,
+  wong: 1,
+}
 
 // Short Hebrew note per known version, shown in the versions list. Best-effort;
 // unknown versions just show no note.
-const VERSION_NOTES: Record<string, string> = {
-  v1: 'גרסה ראשונית של מנוע המחקר.',
-  v5: 'שיפור זיהוי זכויות בנייה מהתקנון.',
-  v8: 'הוספת לוח ה-3 כובעים (שמאי / אדריכל / יזם).',
-  v9: 'הציון לא מבוסס על קיום דוח קודם — תיקון הטיה.',
-  v10: 'זכויות בנייה סטטוטוריות + חניה לפי תקן, פאנל פרספקטיבות מורחב.',
+const VERSION_NOTES: Record<AiAgent, Record<string, string>> = {
+  analyzer: {
+    v1: 'גרסה ראשונית של מנוע המחקר.',
+    v5: 'שיפור זיהוי זכויות בנייה מהתקנון.',
+    v8: 'הוספת לוח ה-3 כובעים (שמאי / אדריכל / יזם).',
+    v9: 'הציון לא מבוסס על קיום דוח קודם — תיקון הטיה.',
+    v10: 'זכויות בנייה סטטוטוריות + חניה לפי תקן, פאנל פרספקטיבות מורחב.',
+  },
+  wong: {
+    v1: 'בסיס אימות מסמכים — התאמת מסמך שהועלה למשימת ה-workflow.',
+  },
+}
+
+// Read-only description of the engine base prompt for each agent. Shown in the
+// panel so it is clear WHAT the override is appended to (the base lives in the
+// host worker and is not edited from here).
+const BASE_PROMPT_NOTE: Record<AiAgent, string> = {
+  analyzer:
+    'פרומפט המחקר הדטרמיניסטי חי ב-worker באירוח (analyzer-codex-worker): הוא מורה ל-LLM ' +
+    'לאסוף נתונים מהמקורות, לחשב זכויות/כלכלה ולכתוב חוות דעת מובנית (summary_he / opinion_he / ' +
+    'פאנל 3 הכובעים). ה-override שנשמר כאן מתווסף לבסיס כ-rubric תחום ב-fences.',
+  wong:
+    'פרומפט אימות המסמכים חי ב-worker באירוח (document-verify-worker): הוא מורה ל-LLM לבדוק האם ' +
+    'המסמך שהועלה אכן תואם למסמך שמשימת ה-workflow מבקשת, ולהחזיר verdict ' +
+    '{ approved, reason_he, confidence }. ה-override שנשמר כאן מתווסף לבסיס כ-rubric תחום ב-fences.',
+}
+
+// Composition note (where edits go + how the worker consumes them) per agent.
+const COMPOSE_NOTE: Record<AiAgent, string> = {
+  analyzer:
+    'פרומפט המחקר הבסיסי מוגדר ב-worker באירוח ואינו נערך מכאן. ה-override שנערך כאן ' +
+    'נשמר לטבלת sc_ai_prompts (agent=analyzer, service-role בלבד), מתווסף לבסיס כ-rubric תחום ב-fences, ' +
+    'וה-worker קורא אותו בריצה הבאה. השינוי אינו מפיל גרסה חדשה אוטומטית.',
+  wong:
+    'פרומפט אימות המסמכים הבסיסי מוגדר ב-worker באירוח ואינו נערך מכאן. ה-override שנערך כאן ' +
+    'נשמר לטבלת sc_ai_prompts (agent=wong, service-role בלבד), מתווסף לבסיס כ-rubric תחום ב-fences, ' +
+    'וה-worker קורא אותו בריצה הבאה. השינוי אינו מפיל גרסה חדשה אוטומטית.',
 }
 
 // ── jsonb extraction helpers ────────────────────────────────────────────
@@ -191,64 +234,75 @@ export const aiRouter = router({
       return { research_key: input.research_key }
     }),
 
-  // Known RESEARCH_VERSION history (v1..current) + any stored editable prompt
-  // text per version from sc_ai_prompts. Stub list — the source of truth for the
-  // live version is CURRENT_VERSION above.
-  promptVersions: requireAction('admin.ai.view').query(
-    async ({ ctx }): Promise<AiPromptVersionsResult> => {
-      const currentNum = Number(CURRENT_VERSION.replace(/^v/, '')) || 10
+  // Per-agent version history (v1..current) + any stored editable OVERRIDE text
+  // per version from sc_ai_prompts, filtered by `agent`. Returns the override
+  // text so the UI can SHOW each version's actual prompt content.
+  promptVersions: requireAction('admin.ai.view')
+    .input(AiPromptVersionsInput)
+    .query(async ({ ctx, input }): Promise<AiPromptVersionsResult> => {
+      const agent = input.agent
+      const current = CURRENT_VERSION[agent]
+      const count = VERSION_COUNT[agent]
+      const notes = VERSION_NOTES[agent]
+
       const { data: stored } = await ctx.db
         .from('sc_ai_prompts')
-        .select('version,text,note,updated_at')
-      const byVersion = new Map<string, { text: string | null; note: string | null; updated_at: string | null }>()
+        .select('version,text,note,updated_by,updated_at')
+        .eq('agent', agent)
+      const byVersion = new Map<
+        string,
+        { text: string | null; note: string | null; updated_by: string | null; updated_at: string | null }
+      >()
       for (const s of (stored ?? []) as any[]) {
         byVersion.set(s.version as string, {
           text: str(s.text),
           note: str(s.note),
+          updated_by: (s.updated_by as string | null) ?? null,
           updated_at: (s.updated_at as string | null) ?? null,
         })
       }
 
       const versions: AiPromptVersion[] = []
-      for (let n = currentNum; n >= 1; n--) {
+      for (let n = count; n >= 1; n--) {
         const v = `v${n}`
         const s = byVersion.get(v)
         versions.push({
           version: v,
-          current: v === CURRENT_VERSION,
-          note: s?.note ?? VERSION_NOTES[v] ?? null,
+          current: v === current,
+          note: s?.note ?? notes[v] ?? null,
           prompt: s?.text ?? null,
+          hasOverride: !!s?.text,
+          base_note: BASE_PROMPT_NOTE[agent],
+          updated_by: s?.updated_by ?? null,
           updated_at: s?.updated_at ?? null,
         })
       }
 
       return {
-        current: CURRENT_VERSION,
+        agent,
+        current,
         versions,
-        note:
-          'פרומפט המחקר הבסיסי מוגדר ב-worker באירוח ואינו נערך מכאן. ה-override שנערך כאן ' +
-          'נשמר לטבלת sc_ai_prompts (service-role בלבד), מתווסף לבסיס כ-rubric תחום ב-fences, ' +
-          'וה-worker קורא אותו בריצה הבאה. השינוי אינו מפיל גרסה חדשה אוטומטית.',
+        note: COMPOSE_NOTE[agent],
       }
-    },
-  ),
+    }),
 
-  // Edit a version's prompt → upsert into sc_ai_prompts (read by host worker).
-  // Super-only via admin.ai.edit_prompt.
+  // Edit a version's prompt → upsert into sc_ai_prompts (read by host worker),
+  // scoped per agent. Super-only via admin.ai.edit_prompt.
   editPrompt: requireAction('admin.ai.edit_prompt')
     .input(AiEditPromptInput)
-    .mutation(async ({ ctx, input }): Promise<{ version: string }> => {
+    .mutation(async ({ ctx, input }): Promise<{ agent: AiAgent; version: string }> => {
       const { error } = await ctx.db
         .from('sc_ai_prompts')
         .upsert(
           {
+            agent: input.agent,
             version: input.version,
             text: input.text,
             note: input.note ?? null,
             updated_by: ctx.user.id,
             updated_at: new Date().toISOString(),
           },
-          { onConflict: 'version' },
+          { onConflict: 'agent,version' },
         )
       if (error) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message })
 
@@ -256,10 +310,10 @@ export const aiRouter = router({
         actor_id: ctx.user.id,
         action: 'ai.edit_prompt',
         target_type: 'ai_prompt',
-        target_id: input.version,
-        meta: { version: input.version, len: input.text.length, has_note: !!input.note },
+        target_id: `${input.agent}:${input.version}`,
+        meta: { agent: input.agent, version: input.version, len: input.text.length, has_note: !!input.note },
         ip: ctx.ip,
       })
-      return { version: input.version }
+      return { agent: input.agent, version: input.version }
     }),
 })

@@ -2,11 +2,13 @@ import { useMemo, useState } from 'react'
 import {
   Building2,
   ArrowRight,
+  ArrowLeft,
   Pencil,
   GitBranch,
   UserCog,
   Trash2,
   Users as UsersIcon,
+  FileUp,
 } from 'lucide-react'
 import { trpc } from '@/lib/api/trpc'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
@@ -119,7 +121,11 @@ function BuildingList({ onSelect }: { onSelect: (id: string) => void }) {
                 </thead>
                 <tbody>
                   {rows.map(b => (
-                    <tr key={b.id}>
+                    <tr
+                      key={b.id}
+                      onClick={() => onSelect(b.id)}
+                      className="cursor-pointer hover:bg-sc-light-blue/40 transition-colors"
+                    >
                       <td className="font-semibold">{b.city ?? '—'}</td>
                       <td>{b.address || '—'}</td>
                       <td>{b.tenant_count}</td>
@@ -131,9 +137,14 @@ function BuildingList({ onSelect }: { onSelect: (id: string) => void }) {
                           <Pill kind="neutral">ללא פרויקט</Pill>
                         )}
                       </td>
-                      <td>
-                        <Button size="sm" variant="ghost" onClick={() => onSelect(b.id)}>
-                          פתח
+                      <td className="text-left">
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          icon={<ArrowLeft size={14} />}
+                          onClick={(e) => { e.stopPropagation(); onSelect(b.id) }}
+                        >
+                          פתח ופרט
                         </Button>
                       </td>
                     </tr>
@@ -307,6 +318,26 @@ function BuildingDetail({ id, onBack }: { id: string; onBack: () => void }) {
           )}
         </CardBody>
       </Card>
+
+      {/* Documents — upload action (god upload mutation not yet available) */}
+      <div className="mt-4">
+        <ControlPanel
+          title="מסמכי בניין"
+          description="העלאת מסמך ישירות לבניין/לפרויקט ממסך מנהל-העל."
+          tone="navy"
+        >
+          <div className="flex flex-wrap items-center gap-3">
+            <Button size="sm" variant="secondary" icon={<FileUp size={14} />} disabled>
+              העלה מסמך
+            </Button>
+            <Pill kind="gold">בקרוב</Pill>
+            <span className="text-[12px] text-sc-text-secondary">
+              העלאת מסמכים ממנהל-העל עדיין אינה זמינה (אין פעולת העלאה בצד השרת). ניהול מסמכים
+              קיימים (שינוי נראוּת / הסרה) מתבצע כעת במסך «מסמכים».
+            </span>
+          </div>
+        </ControlPanel>
+      </div>
 
       {/* Committee members */}
       <Card className="mt-4">

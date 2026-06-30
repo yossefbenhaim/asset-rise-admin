@@ -8,7 +8,7 @@ import { Modal } from '@/components/ui/Modal'
 import { DangerConfirm } from '@/components/ui/DangerConfirm'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useToast } from '@/components/ui/Toast'
-import { FileText, Eye, Trash2, FolderOpen, ShieldAlert } from 'lucide-react'
+import { FileText, Eye, Trash2, FolderOpen, ShieldAlert, ExternalLink, Download } from 'lucide-react'
 import {
   DOCUMENT_VISIBILITIES,
   DOCUMENT_VISIBILITY_LABEL,
@@ -68,6 +68,19 @@ const god = trpc as unknown as {
         }
         invalidate: (input: { id: string }) => Promise<void>
       }
+      signedUrl: {
+        useQuery: (
+          input: { id: string },
+          opts?: { enabled?: boolean; staleTime?: number },
+        ) => {
+          data?: { url: string; storage_path: string }
+          isLoading: boolean
+          isFetching: boolean
+          isError: boolean
+          error: { message: string } | null
+          refetch: () => void
+        }
+      }
       setVisibility: {
         useMutation: (
           o: MutOpts,
@@ -96,6 +109,17 @@ function sourceLabel(s: string | null | undefined): string {
   if (!s) return '—'
   return (DOCUMENT_SOURCE_KIND_LABEL as Record<string, string>)[s] ?? s
 }
+// What we can render inline in the Drawer/Modal via the signed URL. Images and
+// PDFs preview in-place; everything else (docx, xlsx, zip…) only gets an
+// open-in-new-tab / download affordance.
+function previewKindOf(mime: string | null | undefined, fileName: string | null | undefined): 'image' | 'pdf' | 'none' {
+  const m = (mime ?? '').toLowerCase()
+  const name = (fileName ?? '').toLowerCase()
+  if (m.startsWith('image/') || /\.(png|jpe?g|gif|webp|svg|bmp)$/.test(name)) return 'image'
+  if (m === 'application/pdf' || /\.pdf$/.test(name)) return 'pdf'
+  return 'none'
+}
+
 function visibilityPillKind(v: string | null | undefined): string {
   switch (v) {
     case 'private':
@@ -307,6 +331,9 @@ function DocumentDetailBody({ d, onClose }: { d: GodDocumentDetail; onClose: () 
             )}
           </div>
 
+          {/* Preview / open the actual document via a short-lived signed URL */}
+          <DocumentPreview d={d} />
+
           {/* Set visibility */}
           <Section title="שינוי חשיפה" icon={<Eye size={15} />} danger>
             <p className="text-sc-text-secondary text-[12px] m-0 mb-2">
@@ -395,6 +422,77 @@ function DocumentDetailBody({ d, onClose }: { d: GodDocumentDetail; onClose: () 
         }
       />
     </>
+  )
+}
+
+// Fetches a short-lived signed URL for the doc's stored object and renders the
+// actual file: images + PDFs preview inline; other types get a prominent
+// open-in-new-tab Button. The signed URL is fetched lazily (only once the
+// detail modal is open) and is never persisted.
+function DocumentPreview({ d }: { d: GodDocumentDetail }) {
+  const hasObject = !!d.storage_path
+  const signed = god.god.documents.signedUrl.useQuery(
+    { id: d.id },
+    { enabled: hasObject, staleTime: 4 * 60 * 1000 },
+  )
+  const url = signed.data?.url ?? null
+  const previewKind = previewKindOf(d.mime_type, d.file_name)
+
+  return (
+    <Section title="תצוגת המסמך" icon={<FileText size={15} />}>
+      {!hasObject ? (
+        <p className="text-sc-text-secondary text-[12px] m-0">
+          למסמך אין קובץ מאוחסן (נתיב אחסון חסר), לכן אין מה להציג.
+        </p>
+      ) : signed.isLoading ? (
+        <div className="text-center py-6 text-sc-text-secondary text-[13px]">מפיק קישור מאובטח…</div>
+      ) : signed.isError || !url ? (
+        <div className="space-y-2">
+          <p className="text-sc-danger text-[12px] m-0">
+            {signed.error?.message ?? 'לא ניתן להפיק קישור לקובץ.'}
+          </p>
+          <Button size="sm" variant="secondary" onClick={() => signed.refetch()}>נסה/י שוב</Button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {previewKind === 'image' ? (
+            <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+              <img
+                src={url}
+                alt={d.title || d.file_name || 'תצוגת מסמך'}
+                className="max-h-[420px] w-auto max-w-full rounded-sc-input border border-sc-border mx-auto"
+              />
+            </a>
+          ) : previewKind === 'pdf' ? (
+            <iframe
+              src={url}
+              title={d.title || d.file_name || 'תצוגת מסמך'}
+              className="w-full h-[480px] rounded-sc-input border border-sc-border bg-white"
+            />
+          ) : (
+            <p className="text-sc-text-secondary text-[12px] m-0">
+              לא ניתן להציג סוג קובץ זה בתצוגה מקדימה ({d.mime_type || d.file_name || 'לא ידוע'}). פתח/י בכרטיסייה חדשה.
+            </p>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="primary"
+              icon={<ExternalLink size={15} />}
+              onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
+            >
+              פתח את המסמך
+            </Button>
+            <a href={url} download={d.file_name || undefined} target="_blank" rel="noopener noreferrer">
+              <Button variant="secondary" icon={<Download size={15} />}>הורד</Button>
+            </a>
+          </div>
+          <p className="text-sc-text-muted text-[11px] m-0">
+            הקישור מאובטח וקצר-מועד (כ-5 דקות) ואינו נשמר.
+          </p>
+        </div>
+      )}
+    </Section>
   )
 }
 

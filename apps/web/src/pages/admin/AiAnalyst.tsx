@@ -48,7 +48,7 @@ export default function AdminAiAnalyst() {
           />
         </div>
         <div className="xl:col-span-1">
-          <PromptVersionsPanel />
+          <PromptVersionsPanel agent="analyzer" />
         </div>
       </div>
 

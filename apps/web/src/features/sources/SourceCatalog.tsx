@@ -116,9 +116,9 @@ function CatalogGroupBlock({
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+            <div className="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
               {group.sources.map((s) => (
-                <CatalogSourceRow key={s.key} source={s} live={s.healthId ? live[s.healthId] : undefined} />
+                <CatalogSourceCard key={s.key} source={s} live={s.healthId ? live[s.healthId] : undefined} />
               ))}
             </div>
           </motion.div>
@@ -128,7 +128,7 @@ function CatalogGroupBlock({
   )
 }
 
-function CatalogSourceRow({
+function CatalogSourceCard({
   source, live,
 }: {
   source: CatalogSource
@@ -139,7 +139,7 @@ function CatalogSourceRow({
   const TypeIcon = type.icon
 
   return (
-    <div className="rounded-sc-input border border-sc-border/60 bg-sc-bg-subtle/40 p-3 flex flex-col gap-2">
+    <div className="h-full rounded-sc-input border border-sc-border/60 bg-sc-bg-subtle/40 p-3 flex flex-col gap-2">
       <div className="flex items-start gap-2.5">
         <span className="grid place-items-center w-8 h-8 rounded-sc-input shrink-0 bg-sc-light-blue/70 text-sc-primary">
           <Icon size={15} />

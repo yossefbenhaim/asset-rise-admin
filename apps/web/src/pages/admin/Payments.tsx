@@ -3,10 +3,12 @@ import { Banknote, CheckCircle2, XCircle, Undo2 } from 'lucide-react'
 import { trpc } from '@/lib/api/trpc'
 import { KpiCard } from '@/components/ui/KpiCard'
 import { DataTable } from '@/components/ui/DataTable'
+import { Drawer } from '@/components/ui/Drawer'
+import { StatusBadge } from '@/components/ui/StatusBadge'
 import type { PaymentRow, PaymentStatus } from '@asset-rise/shared'
 import { paymentColumns } from '@/features/payments/columns'
 import { DemoNotice } from '@/features/payments/DemoNotice'
-import { nis } from '@/lib/format'
+import { nis, dateTime } from '@/lib/format'
 
 const STATUS_OPTIONS: { value: '' | PaymentStatus; label: string }[] = [
   { value: '', label: 'כל הסטטוסים' },
@@ -16,8 +18,18 @@ const STATUS_OPTIONS: { value: '' | PaymentStatus; label: string }[] = [
   { value: 'refunded', label: 'הוחזר' },
 ]
 
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-0.5 py-2 border-b border-sc-border last:border-0">
+      <span className="text-[11px] text-sc-text-muted">{label}</span>
+      <span className="text-[13px] text-sc-text break-all">{children}</span>
+    </div>
+  )
+}
+
 export default function AdminPayments() {
   const [status, setStatus] = useState<'' | PaymentStatus>('')
+  const [selected, setSelected] = useState<PaymentRow | null>(null)
 
   // Totals are computed server-side over ALL payments and stay stable while
   // the status filter narrows the rows, so the KPI cards don't jump.
@@ -74,6 +86,7 @@ export default function AdminPayments() {
         data={rows}
         loading={list.isLoading}
         csvName="payments"
+        onRowClick={setSelected}
         searchPlaceholder="חיפוש לפי אימייל, ספק, מזהה עסקה…"
         emptyTitle="אין תשלומים"
         emptyBody="כשלקוחות ישלמו עבור דוחות התשלומים יופיעו כאן."
@@ -92,6 +105,41 @@ export default function AdminPayments() {
           </select>
         }
       />
+
+      <Drawer
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        title="פרטי תשלום"
+      >
+        {selected && (
+          <div className="flex flex-col">
+            <div className="flex items-center justify-between pb-3 mb-1">
+              <span className="sc-num text-[22px] font-bold text-sc-text">{nis(selected.amount)}</span>
+              <StatusBadge status={selected.status} />
+            </div>
+            <Field label="סטטוס">{STATUS_LABEL[selected.status] ?? selected.status}</Field>
+            <Field label="לקוח (אימייל)">{selected.lead_email ?? '—'}</Field>
+            <Field label="מזהה משתמש">
+              <span className="font-mono" dir="ltr">{selected.user_id ?? '—'}</span>
+            </Field>
+            <Field label="טוקן דוח">
+              <span className="font-mono" dir="ltr">{selected.report_token ?? '—'}</span>
+            </Field>
+            <Field label="ספק סליקה">
+              <span className="capitalize">{selected.provider ?? '—'}</span>
+            </Field>
+            <Field label="מזהה עסקה">
+              <span className="font-mono" dir="ltr">{selected.txn_id ?? '—'}</span>
+            </Field>
+            <Field label="נוצר">{dateTime(selected.created_at)}</Field>
+            <Field label="שולם בתאריך">{selected.paid_at ? dateTime(selected.paid_at) : '—'}</Field>
+          </div>
+        )}
+      </Drawer>
     </div>
   )
+}
+
+const STATUS_LABEL: Record<PaymentStatus, string> = {
+  paid: 'שולם', pending: 'ממתין', failed: 'נכשל', refunded: 'הוחזר',
 }

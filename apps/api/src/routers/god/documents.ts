@@ -1,4 +1,5 @@
 import { TRPCError } from '@trpc/server'
+import { z } from 'zod'
 import {
   GodDocumentListInput,
   GodDocumentGetInput,
@@ -111,6 +112,42 @@ export const godDocumentsRouter = router({
       } catch (e) {
         rethrow(e)
       }
+    }),
+
+  // signedUrl — issue a short-lived (read-only) Supabase storage signed URL for
+  // a document's stored object, so the admin can PREVIEW/OPEN the actual file
+  // without the bucket having to be public. READ-ONLY: it never mutates the row
+  // or the storage object, so it gates on requireLevel (no godMutation/audit).
+  // The docs live in the 'documents' bucket; sc_tenant_documents.storage_path
+  // is the bucket-relative key (e.g. 'silver-castle/{userId}/{category}/...').
+  signedUrl: requireLevel('admin.super')
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      let path: string | null
+      try {
+        const d = await getDocument(ctx.db, input.id)
+        if (!d) notFound()
+        path = d.storage_path ?? null
+      } catch (e) {
+        rethrow(e)
+      }
+      if (!path) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'למסמך אין קובץ מאוחסן (נתיב אחסון חסר)',
+        })
+      }
+      // 5-minute signed URL — enough to preview, short enough to not leak.
+      const { data, error } = await ctx.db.storage
+        .from('documents')
+        .createSignedUrl(path, 60 * 5)
+      if (error || !data?.signedUrl) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'לא ניתן להפיק קישור לקובץ — ייתכן שהקובץ אינו קיים באחסון',
+        })
+      }
+      return { url: data.signedUrl, storage_path: path }
     }),
 
   // ── Writes (all audited via godMutation) ─────────────────────────────────────

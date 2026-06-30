@@ -65,19 +65,27 @@ export interface AiPerspective {
   key_point_he: string | null
 }
 
-// One known RESEARCH_VERSION in the prompt-version history. `current` marks the
-// version the live worker is on. `prompt` is the stored editable prompt text
-// for that version (null when nothing has been stored yet in sc_ai_prompts).
+// Which AI agent a prompt belongs to. Analyzer = the deterministic-research
+// host worker; Wong = the document-verification host worker.
+export type AiAgent = 'analyzer' | 'wong'
+
+// One known version in the prompt-version history. `current` marks the version
+// the live worker is on. `prompt` is the stored editable OVERRIDE text for that
+// version (null when nothing has been stored yet in sc_ai_prompts).
 export interface AiPromptVersion {
   version: string            // 'v1' … 'v10'
   current: boolean
   note: string | null        // human note about what changed in this version
-  prompt: string | null      // editable prompt text (sc_ai_prompts), if stored
-  updated_at: string | null  // when the stored prompt was last edited
+  prompt: string | null      // editable override text (sc_ai_prompts), if stored
+  hasOverride: boolean       // convenience flag (prompt != null)
+  base_note: string          // read-only note of the engine base prompt
+  updated_by: string | null  // admin id that last edited the override
+  updated_at: string | null  // when the stored override was last edited
 }
 
 export interface AiPromptVersionsResult {
-  current: string                  // the live RESEARCH_VERSION
+  agent: AiAgent
+  current: string                  // the live version for this agent
   versions: AiPromptVersion[]
   // Where edits go + how the worker consumes them (shown in the panel).
   note: string
@@ -95,9 +103,20 @@ export const AiRegenerateInput = z.object({
 })
 export type AiRegenerateInput = z.infer<typeof AiRegenerateInput>
 
+// Agent selector — shared by promptVersions + editPrompt.
+export const AiAgentInput = z.enum(['analyzer', 'wong'])
+
+// List a single agent's prompt versions.
+export const AiPromptVersionsInput = z.object({
+  agent: AiAgentInput,
+})
+export type AiPromptVersionsInput = z.infer<typeof AiPromptVersionsInput>
+
 // Edit a version's prompt text → upserted into sc_ai_prompts (the host worker
-// reads this store). version like 'v10', text is the full prompt body.
+// reads this store). agent + version like ('analyzer','v10'); text is the full
+// prompt body.
 export const AiEditPromptInput = z.object({
+  agent: AiAgentInput,
   version: z.string().min(1).max(20).regex(/^v\d{1,3}$/, 'גרסה חייבת להיות בפורמט v<מספר>'),
   text: z.string().max(20000),
   note: z.string().max(500).nullable().optional(),
