@@ -57,7 +57,7 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         onClick={e => e.stopPropagation()}
-        className={`flex flex-col w-full ${SIZES[size]} max-h-[calc(100dvh-2rem)] bg-sc-surface border border-sc-border rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.28)] overflow-hidden`}
+        className={`flex flex-col w-full ${SIZES[size]} max-h-[calc(100dvh-2rem)] bg-sc-card border border-sc-border rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.28)] overflow-hidden`}
         initial={{ opacity: 0, scale: 0.96, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
@@ -91,7 +91,7 @@ export function Modal({
 
         {/* Fixed footer */}
         {footer && (
-          <div className="shrink-0 flex items-center justify-end gap-2 px-6 py-4 border-t border-sc-border bg-sc-surface">
+          <div className="shrink-0 flex items-center justify-end gap-2 px-6 py-4 border-t border-sc-border bg-sc-card">
             {footer}
           </div>
         )}
