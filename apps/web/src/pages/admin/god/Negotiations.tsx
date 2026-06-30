@@ -1,14 +1,14 @@
 import { useState } from 'react'
+import type { ColumnDef } from '@tanstack/react-table'
 import { trpc } from '@/lib/api/trpc'
-import { Card, CardBody, CardHeader } from '@/components/ui/Card'
 import { ControlPanel } from '@/components/ui/ControlPanel'
+import { DataTable } from '@/components/ui/DataTable'
 import { Pill } from '@/components/ui/Pill'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { DangerConfirm } from '@/components/ui/DangerConfirm'
-import { EmptyState } from '@/components/ui/EmptyState'
 import { useToast } from '@/components/ui/Toast'
-import { Handshake, GitBranch, Link2, Link2Off, MessageSquare, ShieldAlert } from 'lucide-react'
+import { GitBranch, Link2, Link2Off, MessageSquare, ShieldAlert } from 'lucide-react'
 import {
   NEGOTIATION_STAGES,
   NEGOTIATION_STAGE_LABEL,
@@ -116,17 +116,71 @@ function statusPillKind(s: string | null | undefined): string {
   }
 }
 
+type NegRow = GodNegotiationListItem & Record<string, unknown>
+
+const columns: ColumnDef<NegRow, unknown>[] = [
+  {
+    id: 'building',
+    header: 'בניין',
+    accessorFn: r => r.building_address ?? '',
+    cell: ({ row }) => <span className="font-semibold">{row.original.building_address ?? '—'}</span>,
+  },
+  {
+    id: 'project',
+    header: 'פרויקט',
+    accessorFn: r => r.project_name ?? '',
+    cell: ({ row }) => row.original.project_name ?? '—',
+  },
+  {
+    id: 'chair',
+    header: 'יו״ר',
+    accessorFn: r => r.chair_name ?? '',
+    cell: ({ row }) => <span className="text-[12px]">{row.original.chair_name ?? '—'}</span>,
+  },
+  {
+    id: 'provider',
+    header: 'ספק',
+    accessorFn: r => r.provider_name ?? '',
+    cell: ({ row }) => <span className="text-[12px]">{row.original.provider_name ?? '—'}</span>,
+  },
+  {
+    id: 'provider_type',
+    header: 'סוג',
+    accessorFn: r => r.provider_type ?? '',
+    cell: ({ row }) =>
+      row.original.provider_type ? <Pill kind="gold">{row.original.provider_type}</Pill> : <>—</>,
+  },
+  {
+    id: 'status',
+    header: 'סטטוס',
+    accessorFn: r => statusLabel(r.status),
+    cell: ({ row }) => (
+      <Pill kind={statusPillKind(row.original.status) as any}>{statusLabel(row.original.status)}</Pill>
+    ),
+  },
+  {
+    id: 'stage',
+    header: 'שלב',
+    accessorFn: r => stageLabel(r.stage),
+    cell: ({ row }) => <Pill kind="neutral">{stageLabel(row.original.stage)}</Pill>,
+  },
+  {
+    id: 'message_count',
+    header: 'הודעות',
+    accessorFn: r => r.message_count,
+    cell: ({ row }) => row.original.message_count,
+  },
+]
+
 export default function GodNegotiations() {
   const [status, setStatus] = useState('')
   const [stage, setStage] = useState('')
-  const [q, setQ] = useState('')
   const [activeId, setActiveId] = useState<string | null>(null)
 
   const list = god.god.negotiations.list.useQuery(
     {
       status: (status || undefined) as NegotiationStatus | undefined,
       stage: (stage || undefined) as NegotiationStage | undefined,
-      q: q.trim() || undefined,
       limit: 200,
     },
     { keepPreviousData: true },
@@ -144,12 +198,6 @@ export default function GodNegotiations() {
         tone="danger"
       >
         <div className="flex flex-col sm:flex-row gap-2">
-          <input
-            className={inputCls}
-            value={q}
-            onChange={e => setQ(e.target.value)}
-            placeholder="חיפוש לפי כתובת / פרויקט / יו״ר / ספק / סיכום…"
-          />
           <select className={`${inputCls} sm:w-48`} value={status} onChange={e => setStatus(e.target.value)}>
             <option value="">כל הסטטוסים</option>
             {NEGOTIATION_STATUSES.map(s => (
@@ -165,53 +213,22 @@ export default function GodNegotiations() {
         </div>
       </ControlPanel>
 
-      <Card className="mt-4">
-        <CardHeader title="משאים ומתנים" meta={<Pill kind="info">{list.data?.length ?? 0}</Pill>} />
-        <CardBody>
-          {list.isLoading ? (
-            <div className="text-center py-6 text-sc-text-secondary text-[13px]">טוען…</div>
-          ) : list.isError ? (
-            <div className="text-center py-6 text-sc-danger text-[13px]">{list.error?.message}</div>
-          ) : !list.data?.length ? (
-            <EmptyState icon={<Handshake size={28} />} title="אין משאים ומתנים" body="לא נמצאו רשומות התואמות את הסינון." />
-          ) : (
-            <div className="sc-table-wrap">
-              <table className="sc-table">
-                <thead>
-                  <tr>
-                    <th>בניין</th>
-                    <th>פרויקט</th>
-                    <th>יו״ר</th>
-                    <th>ספק</th>
-                    <th>סוג</th>
-                    <th>סטטוס</th>
-                    <th>שלב</th>
-                    <th>הודעות</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {list.data.map(n => (
-                    <tr key={n.id}>
-                      <td className="font-semibold">{n.building_address ?? '—'}</td>
-                      <td>{n.project_name ?? '—'}</td>
-                      <td className="text-[12px]">{n.chair_name ?? '—'}</td>
-                      <td className="text-[12px]">{n.provider_name ?? '—'}</td>
-                      <td>{n.provider_type ? <Pill kind="gold">{n.provider_type}</Pill> : '—'}</td>
-                      <td><Pill kind={statusPillKind(n.status) as any}>{statusLabel(n.status)}</Pill></td>
-                      <td><Pill kind="neutral">{stageLabel(n.stage)}</Pill></td>
-                      <td>{n.message_count}</td>
-                      <td>
-                        <Button size="sm" variant="ghost" onClick={() => setActiveId(n.id)}>פתח</Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardBody>
-      </Card>
+      {list.isError && (
+        <p className="text-sc-danger text-[13px] mb-2">{list.error?.message}</p>
+      )}
+
+      <div className="mt-4">
+        <DataTable<NegRow>
+          columns={columns}
+          data={(list.data ?? []) as NegRow[]}
+          loading={list.isLoading}
+          onRowClick={n => setActiveId(n.id)}
+          csvName="negotiations"
+          searchPlaceholder="חיפוש משא ומתן…"
+          emptyTitle="אין משאים ומתנים"
+          emptyBody="לא נמצאו רשומות התואמות את הסינון."
+        />
+      </div>
 
       {activeId && <NegotiationDetail id={activeId} onClose={() => setActiveId(null)} />}
     </div>

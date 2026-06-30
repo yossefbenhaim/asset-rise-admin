@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react'
+import type { ColumnDef } from '@tanstack/react-table'
 import { trpc } from '@/lib/api/trpc'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
 import { ControlPanel } from '@/components/ui/ControlPanel'
 import { Pill } from '@/components/ui/Pill'
 import { Button } from '@/components/ui/Button'
 import { DangerConfirm } from '@/components/ui/DangerConfirm'
-import { EmptyState } from '@/components/ui/EmptyState'
+import { DataTable } from '@/components/ui/DataTable'
+import { Drawer } from '@/components/ui/Drawer'
 import { useToast } from '@/components/ui/Toast'
-import { Users, Building2, Send, RotateCcw, History } from 'lucide-react'
+import { Users, Building2, Send, RotateCcw } from 'lucide-react'
 import type {
   GodBroadcastAudience,
   GodBroadcastPreview,
@@ -349,6 +351,72 @@ function AudienceTab({
 }
 
 // ── Recent sends + resend ───────────────────────────────────────────────────────
+// DataTable's generic requires an index signature; the interface lacks one, so
+// we intersect with Record<string, unknown> (same pattern as the other god tables).
+type RecentRow = GodBroadcastRecent & Record<string, unknown>
+
+const recentColumns: ColumnDef<RecentRow, unknown>[] = [
+  {
+    id: 'title',
+    header: 'כותרת',
+    accessorFn: r => r.title ?? '',
+    cell: ({ row }) => (
+      <div className="font-semibold">
+        {row.original.title || '—'}
+        {row.original.body && (
+          <div className="text-[11px] text-sc-text-muted font-normal mt-0.5 line-clamp-1">
+            {row.original.body}
+          </div>
+        )}
+      </div>
+    ),
+  },
+  {
+    id: 'sent_at',
+    header: 'נשלח',
+    accessorFn: r => r.sent_at ?? '',
+    cell: ({ row }) => <span className="text-[12px]">{fmtTime(row.original.sent_at)}</span>,
+  },
+  {
+    id: 'recipient_count',
+    header: 'נמענים',
+    accessorFn: r => r.recipient_count,
+    cell: ({ row }) => <span>{row.original.recipient_count}</span>,
+  },
+  {
+    id: 'read_count',
+    header: 'נקראו',
+    accessorFn: r => r.read_count,
+    cell: ({ row }) => (
+      <span className="text-[12px] text-sc-text-secondary">{row.original.read_count}</span>
+    ),
+  },
+]
+
+function DetailRow({
+  label,
+  value,
+  ltr,
+  mono,
+}: {
+  label: string
+  value: string
+  ltr?: boolean
+  mono?: boolean
+}) {
+  return (
+    <div>
+      <div className="text-[12px] font-semibold text-sc-text-secondary mb-1">{label}</div>
+      <div
+        className={`text-sc-text whitespace-pre-wrap break-words ${mono ? 'font-mono text-[12px]' : ''}`}
+        dir={ltr ? 'ltr' : undefined}
+      >
+        {value}
+      </div>
+    </div>
+  )
+}
+
 function RecentSends({
   recent,
   toast,
@@ -357,6 +425,7 @@ function RecentSends({
   toast: ReturnType<typeof useToast>
 }) {
   const [resendTarget, setResendTarget] = useState<GodBroadcastRecent | null>(null)
+  const [activeSend, setActiveSend] = useState<GodBroadcastRecent | null>(null)
 
   const resendM = god.god.notifications.resend.useMutation({
     onSuccess: data => {
@@ -378,60 +447,55 @@ function RecentSends({
           meta={<Pill kind="info">{recent.data?.length ?? 0}</Pill>}
         />
         <CardBody>
-          {recent.isLoading ? (
-            <div className="text-center py-6 text-sc-text-secondary text-[13px]">טוען…</div>
-          ) : recent.isError ? (
+          {recent.isError ? (
             <div className="text-center py-6 text-sc-danger text-[13px]">{recent.error?.message}</div>
-          ) : !recent.data?.length ? (
-            <EmptyState
-              icon={<History size={28} />}
-              title="אין שידורים"
-              body="עדיין לא נשלחו הודעות מערכת."
-            />
           ) : (
-            <div className="sc-table-wrap">
-              <table className="sc-table">
-                <thead>
-                  <tr>
-                    <th>כותרת</th>
-                    <th>נשלח</th>
-                    <th>נמענים</th>
-                    <th>נקראו</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recent.data.map((r, i) => (
-                    <tr key={r.event_id ?? `orphan-${i}`}>
-                      <td className="font-semibold">
-                        {r.title || '—'}
-                        {r.body && (
-                          <div className="text-[11px] text-sc-text-muted font-normal mt-0.5 line-clamp-1">
-                            {r.body}
-                          </div>
-                        )}
-                      </td>
-                      <td className="text-[12px]">{fmtTime(r.sent_at)}</td>
-                      <td>{r.recipient_count}</td>
-                      <td className="text-[12px] text-sc-text-secondary">{r.read_count}</td>
-                      <td>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          icon={<RotateCcw size={14} />}
-                          onClick={() => setResendTarget(r)}
-                        >
-                          שלח שוב
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTable<RecentRow>
+              columns={recentColumns}
+              data={(recent.data ?? []) as RecentRow[]}
+              loading={recent.isLoading}
+              onRowClick={r => setActiveSend(r)}
+              csvName="broadcast-history"
+              searchPlaceholder="חיפוש בהיסטוריית שליחות…"
+              emptyTitle="אין שליחות"
+              emptyBody="טרם נשלחו הודעות."
+            />
           )}
         </CardBody>
       </Card>
+
+      <Drawer
+        open={!!activeSend}
+        onClose={() => setActiveSend(null)}
+        title="פרטי שליחה"
+      >
+        {activeSend && (
+          <div className="space-y-4 text-[13px]">
+            <DetailRow label="כותרת" value={activeSend.title || '—'} />
+            <DetailRow label="תוכן" value={activeSend.body || '—'} />
+            <DetailRow label="קישור" value={activeSend.link || '—'} ltr />
+            <DetailRow label="נשלח בתאריך" value={fmtTime(activeSend.sent_at) || '—'} />
+            <DetailRow label="מספר נמענים" value={String(activeSend.recipient_count)} />
+            <DetailRow label="נקראו" value={String(activeSend.read_count)} />
+            {activeSend.event_id && (
+              <DetailRow label="מזהה אירוע" value={activeSend.event_id} ltr mono />
+            )}
+            <div className="pt-2">
+              <Button
+                variant="secondary"
+                icon={<RotateCcw size={14} />}
+                onClick={() => {
+                  const target = activeSend
+                  setActiveSend(null)
+                  setResendTarget(target)
+                }}
+              >
+                שלח שוב
+              </Button>
+            </div>
+          </div>
+        )}
+      </Drawer>
 
       {resendTarget && (
         <ResendModal

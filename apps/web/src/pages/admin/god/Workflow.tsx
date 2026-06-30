@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import type { ColumnDef } from '@tanstack/react-table'
 import { trpc } from '@/lib/api/trpc'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
 import { ControlPanel } from '@/components/ui/ControlPanel'
@@ -6,7 +7,7 @@ import { Pill } from '@/components/ui/Pill'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { DangerConfirm } from '@/components/ui/DangerConfirm'
-import { EmptyState } from '@/components/ui/EmptyState'
+import { DataTable } from '@/components/ui/DataTable'
 import { useToast } from '@/components/ui/Toast'
 import {
   ListChecks,
@@ -15,7 +16,6 @@ import {
   UserCog,
   ShieldCheck,
   Building2,
-  ClipboardList,
 } from 'lucide-react'
 import {
   PROJECT_TASK_STATUSES,
@@ -163,6 +163,31 @@ export default function GodWorkflow() {
     { keepPreviousData: true },
   )
 
+  type ProjectRow = NonNullable<typeof projects.data>[number] & Record<string, unknown>
+  const columns = useMemo<ColumnDef<ProjectRow, unknown>[]>(
+    () => [
+      {
+        id: 'name',
+        header: 'פרויקט',
+        accessorFn: r => r.name ?? '',
+        cell: ({ row }) => <span className="font-semibold">{row.original.name ?? '—'}</span>,
+      },
+      {
+        id: 'building_address',
+        header: 'בניין',
+        accessorFn: r => r.building_address ?? '',
+        cell: ({ row }) => <span>{row.original.building_address ?? '—'}</span>,
+      },
+      {
+        id: 'current_stage',
+        header: 'שלב נוכחי',
+        accessorFn: r => r.current_stage ?? '',
+        cell: ({ row }) => <Pill kind="neutral">{row.original.current_stage ?? '—'}</Pill>,
+      },
+    ],
+    [],
+  )
+
   return (
     <div className="sc-page">
       <div className="sc-page__head">
@@ -215,48 +240,19 @@ export default function GodWorkflow() {
           meta={<Pill kind="info">{projects.data?.length ?? 0}</Pill>}
         />
         <CardBody>
-          {projects.isLoading ? (
-            <div className="text-center py-6 text-sc-text-secondary text-[13px]">טוען…</div>
-          ) : projects.isError ? (
-            <div className="text-center py-6 text-sc-danger text-[13px]">
-              {projects.error?.message}
-            </div>
-          ) : !projects.data?.length ? (
-            <EmptyState
-              icon={<ClipboardList size={28} />}
-              title="אין פרויקטים"
-              body="לא נמצאו פרויקטים התואמים את החיפוש."
-            />
-          ) : (
-            <div className="sc-table-wrap">
-              <table className="sc-table">
-                <thead>
-                  <tr>
-                    <th>פרויקט</th>
-                    <th>בניין</th>
-                    <th>שלב נוכחי</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {projects.data.map(p => (
-                    <tr key={p.id}>
-                      <td className="font-semibold">{p.name ?? '—'}</td>
-                      <td>{p.building_address ?? '—'}</td>
-                      <td>
-                        <Pill kind="neutral">{p.current_stage ?? '—'}</Pill>
-                      </td>
-                      <td>
-                        <Button size="sm" variant="ghost" onClick={() => setActiveProjectId(p.id)}>
-                          פתח
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          {projects.isError && (
+            <div className="text-sc-danger text-[13px] mb-2">{projects.error?.message}</div>
           )}
+          <DataTable<ProjectRow>
+            columns={columns}
+            data={(projects.data ?? []) as ProjectRow[]}
+            loading={projects.isLoading}
+            onRowClick={p => setActiveProjectId(p.id)}
+            csvName="workflow-projects"
+            searchPlaceholder="חיפוש פרויקט…"
+            emptyTitle="אין פרויקטים"
+            emptyBody="לא נמצאו פרויקטים."
+          />
         </CardBody>
       </Card>
 

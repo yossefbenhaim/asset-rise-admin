@@ -1,6 +1,10 @@
+import type { ColumnDef } from '@tanstack/react-table'
 import { trpc } from '@/lib/api/trpc'
-import { Card, CardBody, CardHeader } from '@/components/ui/Card'
 import { Pill } from '@/components/ui/Pill'
+import { DataTable } from '@/components/ui/DataTable'
+import { dateShort } from '@/lib/format'
+
+type Row = Record<string, unknown>
 
 const STAGE_LABEL: Record<string, string> = {
   REGISTRATION: 'הרשמה',
@@ -22,63 +26,74 @@ const STAGE_LABEL: Record<string, string> = {
 export default function AdminBuildings() {
   const list = trpc.buildings.listAll.useQuery()
 
+  const columns: ColumnDef<Row, unknown>[] = [
+    {
+      id: 'city',
+      header: 'עיר',
+      accessorFn: r => (r.city as string) ?? '',
+      cell: ({ row }) => <span className="font-semibold">{(row.original.city as string) ?? '—'}</span>,
+    },
+    {
+      id: 'address',
+      header: 'כתובת',
+      accessorFn: r => (r.address as string) ?? '',
+      cell: ({ row }) => <span>{(row.original.address as string) || '—'}</span>,
+    },
+    {
+      id: 'tenant_count',
+      header: 'דיירים',
+      accessorFn: r => (r.tenant_count as number) ?? 0,
+      cell: ({ row }) => <span className="sc-num">{(row.original.tenant_count as number) ?? 0}</span>,
+    },
+    {
+      id: 'project',
+      header: 'פרויקט / שלב',
+      enableSorting: false,
+      cell: ({ row }) => {
+        const project = row.original.project as { current_stage?: string } | null
+        return project ? (
+          <Pill kind="success">
+            {STAGE_LABEL[project.current_stage ?? ''] ?? project.current_stage ?? 'פעיל'}
+          </Pill>
+        ) : (
+          <Pill kind="neutral">לא נפתח</Pill>
+        )
+      },
+    },
+    {
+      id: 'invite_code',
+      header: 'קוד הזמנה',
+      enableSorting: false,
+      accessorFn: r => (r.invite_code as string) ?? '',
+      cell: ({ row }) => (
+        <code className="text-[11px] bg-sc-bg px-1 rounded">{(row.original.invite_code as string) ?? '—'}</code>
+      ),
+    },
+    {
+      id: 'created_at',
+      header: 'נוצר',
+      accessorFn: r => (r.created_at as string) ?? '',
+      cell: ({ row }) => (
+        <span className="text-sc-text-secondary sc-num">{dateShort(row.original.created_at as string)}</span>
+      ),
+    },
+  ]
+
   return (
     <div className="sc-page">
       <div className="sc-page__head">
         <h1>בניינים</h1>
       </div>
 
-      <Card>
-        <CardHeader title="כל הבניינים" meta={<Pill kind="info">{list.data?.length ?? 0}</Pill>} />
-        <CardBody>
-          {list.isLoading ? (
-            <div className="text-center py-6 text-sc-text-secondary text-[13px]">טוען…</div>
-          ) : list.error ? (
-            <div className="text-center py-6 text-sc-danger text-[13px]">{list.error.message}</div>
-          ) : !list.data?.length ? (
-            <div className="text-center py-6 text-sc-text-secondary text-[13px]">אין בניינים</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-[13px]">
-                <thead>
-                  <tr className="text-right text-sc-text-secondary border-b border-sc-border">
-                    <th className="py-2 px-2">עיר</th>
-                    <th className="py-2 px-2">כתובת</th>
-                    <th className="py-2 px-2">דיירים</th>
-                    <th className="py-2 px-2">פרויקט / שלב</th>
-                    <th className="py-2 px-2">קוד הזמנה</th>
-                    <th className="py-2 px-2">נוצר</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {list.data.map((b: any) => (
-                    <tr key={b.id} className="border-b border-sc-border/40">
-                      <td className="py-2 px-2 font-semibold">{b.city ?? '—'}</td>
-                      <td className="py-2 px-2">{b.address || '—'}</td>
-                      <td className="py-2 px-2">{b.tenant_count}</td>
-                      <td className="py-2 px-2">
-                        {b.project ? (
-                          <Pill kind="success">
-                            {STAGE_LABEL[b.project.current_stage] ?? b.project.current_stage ?? 'פעיל'}
-                          </Pill>
-                        ) : (
-                          <Pill kind="neutral">לא נפתח</Pill>
-                        )}
-                      </td>
-                      <td className="py-2 px-2">
-                        <code className="text-[11px] bg-sc-bg px-1 rounded">{b.invite_code ?? '—'}</code>
-                      </td>
-                      <td className="py-2 px-2 text-sc-text-secondary">
-                        {new Date(b.created_at).toLocaleDateString('he-IL')}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardBody>
-      </Card>
+      <DataTable
+        columns={columns}
+        data={(list.data ?? []) as Row[]}
+        loading={list.isLoading}
+        csvName="buildings"
+        searchPlaceholder="חיפוש בניין…"
+        emptyTitle="אין בניינים"
+        emptyBody="לא נמצאו בניינים."
+      />
     </div>
   )
 }

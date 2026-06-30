@@ -21,7 +21,7 @@ export function ControlPanel({
   title: string
   description?: string
   tone?: Tone
-  children: ReactNode
+  children?: ReactNode
 }) {
   const t = toneCls[tone]
   return (
@@ -35,7 +35,7 @@ export function ControlPanel({
           )}
         </div>
       </div>
-      <CardBody className="pt-0">{children}</CardBody>
+      {children != null && <CardBody className="pt-0">{children}</CardBody>}
     </Card>
   )
 }

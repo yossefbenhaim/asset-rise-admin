@@ -1,13 +1,12 @@
 import { useState } from 'react'
+import type { ColumnDef } from '@tanstack/react-table'
 import { trpc } from '@/lib/api/trpc'
-import { Card, CardBody, CardHeader } from '@/components/ui/Card'
-import { ControlPanel } from '@/components/ui/ControlPanel'
 import { Pill } from '@/components/ui/Pill'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
-import { EmptyState } from '@/components/ui/EmptyState'
+import { DataTable } from '@/components/ui/DataTable'
 import { useToast } from '@/components/ui/Toast'
-import { Briefcase, Star, Ban } from 'lucide-react'
+import { Star, Ban } from 'lucide-react'
 import {
   PROVIDER_TYPES,
   PROVIDER_TYPE_LABEL,
@@ -15,6 +14,8 @@ import {
   type GodProviderListItem,
   type GodProviderDetail,
 } from '@asset-rise/shared'
+
+type ProviderRow = GodProviderListItem & Record<string, unknown>
 
 const inputCls = 'border border-sc-border rounded-sc-input p-2 w-full text-[14px]'
 const labelCls = 'text-sc-text-secondary mb-1 text-[12px]'
@@ -69,20 +70,96 @@ const TYPE_FIELD_SKIP = new Set([
   'references',
 ])
 
+function Rating({ avg, count }: { avg: number | null; count: number | null }) {
+  if (avg == null || !count) return null
+  return (
+    <Pill kind="gold">
+      <Star size={11} /> {avg.toFixed(1)} ({count})
+    </Pill>
+  )
+}
+
+const columns: ColumnDef<ProviderRow, unknown>[] = [
+  {
+    id: 'full_name',
+    header: 'שם',
+    accessorFn: r => r.full_name ?? '',
+    cell: ({ row }) => (
+      <span className="font-semibold text-sc-text">{row.original.full_name || '(ללא שם)'}</span>
+    ),
+  },
+  {
+    id: 'provider_type',
+    header: 'סוג',
+    accessorFn: r => typeLabel(r.provider_type),
+    cell: ({ row }) => <Pill kind="navy">{typeLabel(row.original.provider_type)}</Pill>,
+  },
+  {
+    id: 'email',
+    header: 'אימייל',
+    accessorFn: r => r.email ?? '',
+    cell: ({ row }) =>
+      row.original.email ? (
+        <span className="text-sc-text-secondary" dir="ltr">{row.original.email}</span>
+      ) : (
+        <span className="text-sc-text-muted">—</span>
+      ),
+  },
+  {
+    id: 'phone',
+    header: 'טלפון',
+    accessorFn: r => r.phone ?? '',
+    cell: ({ row }) =>
+      row.original.phone ? (
+        <span className="text-sc-text-secondary sc-num" dir="ltr">{row.original.phone}</span>
+      ) : (
+        <span className="text-sc-text-muted">—</span>
+      ),
+  },
+  {
+    id: 'city',
+    header: 'עיר',
+    accessorFn: r => r.city ?? '',
+    cell: ({ row }) =>
+      row.original.city ? (
+        <span className="text-sc-text-secondary">{row.original.city}</span>
+      ) : (
+        <span className="text-sc-text-muted">—</span>
+      ),
+  },
+  {
+    id: 'completed_projects',
+    header: 'פרויקטים',
+    accessorFn: r => r.completed_projects ?? -1,
+    cell: ({ row }) =>
+      row.original.completed_projects != null ? (
+        <span className="text-sc-text-secondary sc-num">{row.original.completed_projects}</span>
+      ) : (
+        <span className="text-sc-text-muted">—</span>
+      ),
+  },
+  {
+    id: 'rating',
+    header: 'דירוג',
+    accessorFn: r => r.rating_avg ?? -1,
+    cell: ({ row }) => {
+      const { rating_avg, rating_count } = row.original
+      if (rating_avg == null || !rating_count) return <span className="text-sc-text-muted">—</span>
+      return <Rating avg={rating_avg} count={rating_count} />
+    },
+  },
+]
+
 // God-mode Providers. List/search providers, drill into one, and run the
 // audited god writes (edit common profile / reversible ban). Per-type license
 // and specializations are shown read-only for Wave 1.
 export default function GodProviders() {
-  const [q, setQ] = useState('')
   const [providerType, setProviderType] = useState('')
-  const [city, setCity] = useState('')
   const [activeId, setActiveId] = useState<string | null>(null)
 
   const list = trpc.god.providers.list.useQuery(
     {
-      q: q.trim() || undefined,
       provider_type: (providerType || undefined) as GodProviderType | undefined,
-      city: city.trim() || undefined,
       limit: 200,
     },
     { keepPreviousData: true },
@@ -94,20 +171,18 @@ export default function GodProviders() {
         <h1>ספקים</h1>
       </div>
 
-      <ControlPanel
-        title="ניהול ספקים — מנהל-על"
-        description="עריכת פרופיל ספק (שם, טלפון, אודות, פרויקטים שהושלמו) והשבתה זמנית. רישיון והתמחויות מוצגים לקריאה בלבד. כל פעולה נרשמת ביומן הביקורת."
-        tone="danger"
-      >
-        <div className="flex flex-col sm:flex-row gap-2">
-          <input
-            className={inputCls}
-            value={q}
-            onChange={e => setQ(e.target.value)}
-            placeholder="חיפוש לפי שם / אימייל / טלפון…"
-          />
+      <DataTable<ProviderRow>
+        columns={columns}
+        data={(list.data ?? []) as ProviderRow[]}
+        loading={list.isLoading}
+        onRowClick={r => setActiveId(r.id)}
+        csvName="providers"
+        searchPlaceholder="חיפוש ספק…"
+        emptyTitle="אין ספקים"
+        emptyBody="לא נמצאו ספקים התואמים את הסינון."
+        toolbar={
           <select
-            className={`${inputCls} sm:w-48`}
+            className="bg-sc-bg border border-sc-border rounded-sc-input py-2 px-3 text-[13px] text-sc-text outline-none focus:border-sc-primary transition-colors max-w-[12rem]"
             value={providerType}
             onChange={e => setProviderType(e.target.value)}
           >
@@ -116,72 +191,13 @@ export default function GodProviders() {
               <option key={t} value={t}>{PROVIDER_TYPE_LABEL[t]}</option>
             ))}
           </select>
-          <input
-            className={`${inputCls} sm:w-44`}
-            value={city}
-            onChange={e => setCity(e.target.value)}
-            placeholder="עיר…"
-          />
-        </div>
-      </ControlPanel>
-
-      <Card className="mt-4">
-        <CardHeader
-          title="ספקים"
-          meta={<Pill kind="info">{list.data?.length ?? 0}</Pill>}
-        />
-        <CardBody>
-          {list.isLoading ? (
-            <div className="text-center py-6 text-sc-text-secondary text-[13px]">טוען…</div>
-          ) : list.isError ? (
-            <div className="text-center py-6 text-sc-danger text-[13px]">{list.error.message}</div>
-          ) : !list.data?.length ? (
-            <EmptyState icon={<Briefcase size={28} />} title="אין ספקים" body="לא נמצאו ספקים התואמים את הסינון." />
-          ) : (
-            <div className="space-y-2">
-              {list.data.map(p => (
-                <ProviderRow key={p.id} p={p} onOpen={() => setActiveId(p.id)} />
-              ))}
-            </div>
-          )}
-        </CardBody>
-      </Card>
+        }
+      />
 
       {activeId && (
         <ProviderDetail id={activeId} onClose={() => setActiveId(null)} />
       )}
     </div>
-  )
-}
-
-function Rating({ avg, count }: { avg: number | null; count: number | null }) {
-  if (avg == null || !count) return null
-  return (
-    <Pill kind="gold">
-      <Star size={11} /> {avg.toFixed(1)} ({count})
-    </Pill>
-  )
-}
-
-function ProviderRow({ p, onOpen }: { p: GodProviderListItem; onOpen: () => void }) {
-  return (
-    <button
-      onClick={onOpen}
-      className="w-full text-right p-3 rounded-sc-input border border-sc-border bg-white hover:bg-sc-bg/60 transition-colors"
-    >
-      <div className="flex items-baseline gap-2 flex-wrap">
-        <div className="font-semibold text-[14px]">{p.full_name || '(ללא שם)'}</div>
-        <Pill kind="navy">{typeLabel(p.provider_type)}</Pill>
-        {p.phone && <div className="text-[12px] text-sc-text-secondary">{p.phone}</div>}
-        <div className="flex-1" />
-        <Rating avg={p.rating_avg} count={p.rating_count} />
-      </div>
-      <div className="text-[11px] text-sc-text-muted mt-1 flex flex-wrap gap-2">
-        {p.email && <span>{p.email}</span>}
-        {p.city && <span>· {p.city}</span>}
-        {p.completed_projects != null && <span>· {p.completed_projects} פרויקטים</span>}
-      </div>
-    </button>
   )
 }
 

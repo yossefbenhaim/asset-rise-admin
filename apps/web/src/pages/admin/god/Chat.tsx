@@ -1,13 +1,15 @@
 import { useState } from 'react'
+import type { ColumnDef } from '@tanstack/react-table'
 import { trpc } from '@/lib/api/trpc'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
 import { ControlPanel } from '@/components/ui/ControlPanel'
 import { Pill } from '@/components/ui/Pill'
 import { Button } from '@/components/ui/Button'
 import { DangerConfirm } from '@/components/ui/DangerConfirm'
+import { DataTable } from '@/components/ui/DataTable'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useToast } from '@/components/ui/Toast'
-import { MessagesSquare, MessageSquare, Trash2, RotateCcw, UserCog } from 'lucide-react'
+import { MessageSquare, Trash2, RotateCcw, UserCog } from 'lucide-react'
 import type {
   GodChatBuilding,
   GodChatThread,
@@ -58,24 +60,53 @@ const god = trpc as unknown as {
   }
 }
 
-const inputCls = 'border border-sc-border rounded-sc-input p-2 w-full text-[13px]'
-
 function fmtTime(s: string | null | undefined): string {
   if (!s) return ''
   return new Date(s).toLocaleString('he-IL')
 }
 
+// DataTable's generic requires an index signature; interfaces lack one, so we
+// intersect with Record<string, unknown> (same pattern as the other god tables).
+type RoomRow = GodChatBuilding & Record<string, unknown>
+
+const roomColumns: ColumnDef<RoomRow, unknown>[] = [
+  {
+    id: 'building',
+    header: 'בניין',
+    accessorFn: r => r.address ?? '',
+    cell: ({ row }) => <span className="font-semibold">{row.original.address ?? '—'}</span>,
+  },
+  {
+    id: 'city',
+    header: 'עיר',
+    accessorFn: r => r.city ?? '',
+    cell: ({ row }) => <span className="text-[12px]">{row.original.city ?? '—'}</span>,
+  },
+  {
+    id: 'message_count',
+    header: 'הודעות',
+    accessorFn: r => r.message_count,
+    cell: ({ row }) => <span>{row.original.message_count}</span>,
+  },
+  {
+    id: 'deleted_count',
+    header: 'נמחקו',
+    accessorFn: r => r.deleted_count,
+    cell: ({ row }) =>
+      row.original.deleted_count > 0 ? (
+        <Pill kind="danger">{row.original.deleted_count}</Pill>
+      ) : (
+        <span className="text-sc-text-muted">0</span>
+      ),
+  },
+]
+
 export default function GodChat() {
   const [activeBuilding, setActiveBuilding] = useState<GodChatBuilding | null>(null)
-  const [q, setQ] = useState('')
 
   const buildings = god.god.chat.buildings.useQuery()
 
-  const safe = q.trim().toLowerCase()
-  const rooms = (buildings.data ?? []).filter(b =>
-    !safe ||
-    [b.address, b.city].filter(Boolean).join(' ').toLowerCase().includes(safe),
-  )
+  const rooms = buildings.data ?? []
 
   return (
     <div className="sc-page">
@@ -88,12 +119,9 @@ export default function GodChat() {
         description="צפייה בשרשור ההודעות המלא של כל בניין (כולל הודעות שנמחקו), מחיקה רכה (soft-delete) של הודעה פוגענית ושחזורה. מחיקה רכה אינה מוחקת את ההודעה ממסד הנתונים — היא מסומנת כ«נמחקה» ומוסתרת מהדיירים. כל פעולה נרשמת ביומן הביקורת."
         tone="danger"
       >
-        <input
-          className={inputCls}
-          value={q}
-          onChange={e => setQ(e.target.value)}
-          placeholder="חיפוש בניין לפי כתובת / עיר…"
-        />
+        <p className="text-[12px] text-sc-text-secondary m-0">
+          בחר/י בניין מהרשימה למטה כדי לפתוח את שרשור הצ׳אט המלא שלו.
+        </p>
       </ControlPanel>
 
       <Card className="mt-4">
@@ -102,56 +130,19 @@ export default function GodChat() {
           meta={<Pill kind="info">{rooms.length}</Pill>}
         />
         <CardBody>
-          {buildings.isLoading ? (
-            <div className="text-center py-6 text-sc-text-secondary text-[13px]">טוען…</div>
-          ) : buildings.isError ? (
+          {buildings.isError ? (
             <div className="text-center py-6 text-sc-danger text-[13px]">{buildings.error?.message}</div>
-          ) : !rooms.length ? (
-            <EmptyState
-              icon={<MessagesSquare size={28} />}
-              title="אין חדרי צ׳אט"
-              body="לא נמצאו בניינים עם שרשור צ׳אט התואמים את החיפוש."
-            />
           ) : (
-            <div className="sc-table-wrap">
-              <table className="sc-table">
-                <thead>
-                  <tr>
-                    <th>בניין</th>
-                    <th>עיר</th>
-                    <th>הודעות</th>
-                    <th>נמחקו</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rooms.map(b => (
-                    <tr key={b.thread_id}>
-                      <td className="font-semibold">{b.address ?? '—'}</td>
-                      <td className="text-[12px]">{b.city ?? '—'}</td>
-                      <td>{b.message_count}</td>
-                      <td>
-                        {b.deleted_count > 0 ? (
-                          <Pill kind="danger">{b.deleted_count}</Pill>
-                        ) : (
-                          <span className="text-sc-text-muted">0</span>
-                        )}
-                      </td>
-                      <td>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          icon={<MessageSquare size={14} />}
-                          onClick={() => setActiveBuilding(b)}
-                        >
-                          פתח שרשור
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTable<RoomRow>
+              columns={roomColumns}
+              data={rooms as RoomRow[]}
+              loading={buildings.isLoading}
+              onRowClick={b => setActiveBuilding(b)}
+              csvName="chat-rooms"
+              searchPlaceholder="חיפוש בניין…"
+              emptyTitle="אין שרשורים"
+              emptyBody="לא נמצאו שרשורי בניין."
+            />
           )}
         </CardBody>
       </Card>

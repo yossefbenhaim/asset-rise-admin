@@ -1,12 +1,13 @@
 import { useState } from 'react'
+import type { ColumnDef } from '@tanstack/react-table'
 import { trpc } from '@/lib/api/trpc'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
 import { ControlPanel } from '@/components/ui/ControlPanel'
 import { Pill } from '@/components/ui/Pill'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
+import { DataTable } from '@/components/ui/DataTable'
 import { DangerConfirm } from '@/components/ui/DangerConfirm'
-import { EmptyState } from '@/components/ui/EmptyState'
 import { useToast } from '@/components/ui/Toast'
 import { FileText, Eye, Trash2, FolderOpen, ShieldAlert, ExternalLink, Download } from 'lucide-react'
 import {
@@ -94,6 +95,12 @@ const god = trpc as unknown as {
 type MutOpts = { onSuccess?: () => void; onError?: (e: { message: string }) => void }
 type Mut<TInput> = { mutate: (input: TInput) => void; isLoading: boolean }
 
+// DataTable's row constraint is `Record<string, unknown>`; the shared
+// `GodDocumentListItem` is an interface (no implicit index signature), so we
+// intersect it with a string index signature to satisfy the constraint without
+// changing the shared schema. Same shape, just index-signature-compatible.
+type DocRow = GodDocumentListItem & Record<string, unknown>
+
 const inputCls = 'border border-sc-border rounded-sc-input p-2 w-full text-[13px]'
 const labelCls = 'text-[12px] text-sc-text-secondary mb-1 block'
 
@@ -133,8 +140,68 @@ function visibilityPillKind(v: string | null | undefined): string {
   }
 }
 
+// Columns mirror the previous hand-rolled `sc-table` exactly (title/file, kind,
+// visibility, source, building, project, uploader). The trailing "פתח" button
+// is dropped — row-click → setActiveId opens the same detail/preview modal.
+const columns: ColumnDef<DocRow, unknown>[] = [
+  {
+    id: 'title',
+    header: 'כותרת / קובץ',
+    accessorFn: d => d.title || d.file_name || '',
+    cell: ({ row }) => (
+      <span className="font-semibold">{row.original.title || row.original.file_name || '—'}</span>
+    ),
+  },
+  {
+    id: 'kind',
+    header: 'סוג',
+    accessorFn: d => kindLabel(d.kind),
+    cell: ({ row }) => <Pill kind="neutral">{kindLabel(row.original.kind)}</Pill>,
+  },
+  {
+    id: 'visibility',
+    header: 'חשיפה',
+    accessorFn: d => visibilityLabel(d.visibility),
+    cell: ({ row }) => (
+      <Pill kind={visibilityPillKind(row.original.visibility) as any}>
+        {visibilityLabel(row.original.visibility)}
+      </Pill>
+    ),
+  },
+  {
+    id: 'source',
+    header: 'מקור',
+    accessorFn: d => `${sourceLabel(d.source_kind)}${d.source_label ? ` · ${d.source_label}` : ''}`,
+    cell: ({ row }) => (
+      <span className="text-[12px]">
+        {sourceLabel(row.original.source_kind)}
+        {row.original.source_label ? ` · ${row.original.source_label}` : ''}
+      </span>
+    ),
+  },
+  {
+    id: 'building',
+    header: 'בניין',
+    accessorFn: d => d.building_address || '',
+    cell: ({ row }) => <span className="text-[12px]">{row.original.building_address || '—'}</span>,
+  },
+  {
+    id: 'project',
+    header: 'פרויקט',
+    accessorFn: d => d.project_name || '',
+    cell: ({ row }) => <span className="text-[12px]">{row.original.project_name || '—'}</span>,
+  },
+  {
+    id: 'uploader',
+    header: 'מעלה',
+    accessorFn: d => d.uploader_name || d.uploader_email || '',
+    cell: ({ row }) => (
+      <span className="text-[12px]">{row.original.uploader_name || row.original.uploader_email || '—'}</span>
+    ),
+  },
+]
+
 export default function GodDocuments() {
-  const [q, setQ] = useState('')
   const [kind, setKind] = useState('')
   const [sourceKind, setSourceKind] = useState('')
   const [visibility, setVisibility] = useState('')
@@ -142,7 +209,6 @@ export default function GodDocuments() {
 
   const list = god.god.documents.list.useQuery(
     {
-      q: q.trim() || undefined,
       kind: kind || undefined,
       source_kind: (sourceKind || undefined) as GodDocumentSourceKind | undefined,
       visibility: (visibility || undefined) as GodDocumentVisibility | undefined,
@@ -161,88 +227,46 @@ export default function GodDocuments() {
         title="שליטה במסמכים"
         description="צפייה בכל המסמכים בכל הבניינים והפרויקטים, שינוי חשיפה (מי רואה מסמך) והסרה רכה של מסמך. הסרה אינה מוחקת את הקובץ מהאחסון — היא רק מסתירה את המסמך (מסמנת אותו פרטי ומנתקת אותו מהבניין/פרויקט). כל פעולה נרשמת ביומן הביקורת."
         tone="danger"
-      >
-        <div className="flex flex-col sm:flex-row gap-2">
-          <input
-            className={inputCls}
-            value={q}
-            onChange={e => setQ(e.target.value)}
-            placeholder="חיפוש לפי כותרת / שם קובץ / מקור / כתובת / מעלה…"
-          />
-          <select className={`${inputCls} sm:w-44`} value={visibility} onChange={e => setVisibility(e.target.value)}>
-            <option value="">כל החשיפות</option>
-            {DOCUMENT_VISIBILITIES.map(v => (
-              <option key={v} value={v}>{DOCUMENT_VISIBILITY_LABEL[v]}</option>
-            ))}
-          </select>
-          <select className={`${inputCls} sm:w-40`} value={sourceKind} onChange={e => setSourceKind(e.target.value)}>
-            <option value="">כל המקורות</option>
-            {DOCUMENT_SOURCE_KINDS.map(s => (
-              <option key={s} value={s}>{DOCUMENT_SOURCE_KIND_LABEL[s]}</option>
-            ))}
-          </select>
-          <input
-            className={`${inputCls} sm:w-36`}
-            value={kind}
-            onChange={e => setKind(e.target.value)}
-            placeholder="סוג (kind)"
-          />
-        </div>
-      </ControlPanel>
+      />
 
       <Card className="mt-4">
         <CardHeader title="מסמכים" meta={<Pill kind="info">{list.data?.length ?? 0}</Pill>} />
         <CardBody>
-          {list.isLoading ? (
-            <div className="text-center py-6 text-sc-text-secondary text-[13px]">טוען…</div>
-          ) : list.isError ? (
+          {list.isError && (
             <div className="text-center py-6 text-sc-danger text-[13px]">{list.error?.message}</div>
-          ) : !list.data?.length ? (
-            <EmptyState icon={<FileText size={28} />} title="אין מסמכים" body="לא נמצאו מסמכים התואמים את הסינון." />
-          ) : (
-            <div className="sc-table-wrap">
-              <table className="sc-table">
-                <thead>
-                  <tr>
-                    <th>כותרת / קובץ</th>
-                    <th>סוג</th>
-                    <th>חשיפה</th>
-                    <th>מקור</th>
-                    <th>בניין</th>
-                    <th>פרויקט</th>
-                    <th>מעלה</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {list.data.map(d => (
-                    <tr key={d.id}>
-                      <td className="font-semibold">{d.title || d.file_name || '—'}</td>
-                      <td><Pill kind="neutral">{kindLabel(d.kind)}</Pill></td>
-                      <td><Pill kind={visibilityPillKind(d.visibility) as any}>{visibilityLabel(d.visibility)}</Pill></td>
-                      <td className="text-[12px]">
-                        {sourceLabel(d.source_kind)}
-                        {d.source_label ? ` · ${d.source_label}` : ''}
-                      </td>
-                      <td className="text-[12px]">{d.building_address || '—'}</td>
-                      <td className="text-[12px]">{d.project_name || '—'}</td>
-                      <td className="text-[12px]">{d.uploader_name || d.uploader_email || '—'}</td>
-                      <td>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          icon={<Eye size={14} />}
-                          onClick={() => setActiveId(d.id)}
-                        >
-                          פתח
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           )}
+          <DataTable<DocRow>
+            columns={columns}
+            data={(list.data ?? []) as DocRow[]}
+            loading={list.isLoading}
+            onRowClick={d => setActiveId(d.id)}
+            csvName="documents"
+            searchPlaceholder="חיפוש מסמך…"
+            emptyTitle="אין מסמכים"
+            emptyBody="לא נמצאו מסמכים."
+            toolbar={
+              <>
+                <select className={`${inputCls} sm:w-44`} value={visibility} onChange={e => setVisibility(e.target.value)}>
+                  <option value="">כל החשיפות</option>
+                  {DOCUMENT_VISIBILITIES.map(v => (
+                    <option key={v} value={v}>{DOCUMENT_VISIBILITY_LABEL[v]}</option>
+                  ))}
+                </select>
+                <select className={`${inputCls} sm:w-40`} value={sourceKind} onChange={e => setSourceKind(e.target.value)}>
+                  <option value="">כל המקורות</option>
+                  {DOCUMENT_SOURCE_KINDS.map(s => (
+                    <option key={s} value={s}>{DOCUMENT_SOURCE_KIND_LABEL[s]}</option>
+                  ))}
+                </select>
+                <input
+                  className={`${inputCls} sm:w-36`}
+                  value={kind}
+                  onChange={e => setKind(e.target.value)}
+                  placeholder="סוג (kind)"
+                />
+              </>
+            }
+          />
         </CardBody>
       </Card>
 

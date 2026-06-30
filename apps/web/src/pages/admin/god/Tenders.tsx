@@ -1,14 +1,14 @@
 import { useState } from 'react'
+import type { ColumnDef } from '@tanstack/react-table'
 import { trpc } from '@/lib/api/trpc'
-import { Card, CardBody, CardHeader } from '@/components/ui/Card'
 import { ControlPanel } from '@/components/ui/ControlPanel'
 import { Pill } from '@/components/ui/Pill'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
-import { EmptyState } from '@/components/ui/EmptyState'
+import { DataTable } from '@/components/ui/DataTable'
 import { DangerConfirm } from '@/components/ui/DangerConfirm'
 import { useToast } from '@/components/ui/Toast'
-import { Gavel, Award, Ban, Trophy } from 'lucide-react'
+import { Award, Ban, Trophy } from 'lucide-react'
 import {
   TENDER_STATUSES,
   TENDER_STATUS_LABEL,
@@ -19,6 +19,8 @@ import {
   type GodTenderDetail,
   type GodTenderBid,
 } from '@asset-rise/shared'
+
+type TenderRow = GodTenderListItem & Record<string, unknown>
 
 const inputCls = 'border border-sc-border rounded-sc-input p-2 w-full text-[14px]'
 
@@ -53,6 +55,57 @@ function money(v: number | null): string {
   return '₪' + v.toLocaleString('he-IL')
 }
 
+const columns: ColumnDef<TenderRow, unknown>[] = [
+  {
+    id: 'title',
+    header: 'כותרת',
+    accessorFn: r => r.title ?? '',
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="font-semibold text-sc-text">{row.original.title || '(ללא כותרת)'}</span>
+        {row.original.awarded_provider_id && (
+          <Pill kind="gold"><Trophy size={11} /> זוכה נבחר</Pill>
+        )}
+      </div>
+    ),
+  },
+  {
+    id: 'status',
+    header: 'סטטוס',
+    accessorFn: r => r.status ?? '',
+    cell: ({ row }) => (
+      <Pill kind={statusPillKind(row.original.status)}>{statusLabel(row.original.status)}</Pill>
+    ),
+  },
+  {
+    id: 'building_address',
+    header: 'בניין',
+    accessorFn: r => r.building_address ?? '',
+    cell: ({ row }) =>
+      row.original.building_address
+        ? <span className="text-sc-text-secondary">{row.original.building_address}</span>
+        : <span className="text-sc-text-muted">—</span>,
+  },
+  {
+    id: 'budget',
+    header: 'תקציב',
+    enableSorting: false,
+    accessorFn: r => (r.budget_min ?? '') + ' ' + (r.budget_max ?? ''),
+    cell: ({ row }) => {
+      const { budget_min, budget_max } = row.original
+      return budget_min != null || budget_max != null
+        ? <span className="text-sc-text-secondary sc-num">{`${money(budget_min)} – ${money(budget_max)}`}</span>
+        : <span className="text-sc-text-muted">—</span>
+    },
+  },
+  {
+    id: 'bid_count',
+    header: 'הצעות',
+    accessorFn: r => r.bid_count,
+    cell: ({ row }) => <Pill kind="navy">{row.original.bid_count} הצעות</Pill>,
+  },
+]
+
 // God-mode Tenders + Bids. List/search tenders (+ bid counts), drill into one
 // (+ all its bids sorted by amount), and run the audited god writes:
 // setTenderStatus (lifecycle move / reopen), forceAward (DangerConfirm — sets
@@ -60,13 +113,11 @@ function money(v: number | null): string {
 // normal bid flow), and cancelTender (DangerConfirm). Every action is recorded
 // in the audit log.
 export default function GodTenders() {
-  const [q, setQ] = useState('')
   const [status, setStatus] = useState('')
   const [activeId, setActiveId] = useState<string | null>(null)
 
   const list = trpc.god.tenders.list.useQuery(
     {
-      q: q.trim() || undefined,
       status: (status || undefined) as TenderStatus | undefined,
       limit: 200,
     },
@@ -83,78 +134,37 @@ export default function GodTenders() {
         title="ניהול מכרזים והצעות — מנהל-על"
         description="שינוי סטטוס מכרז (פתיחה מחדש / סגירה / ביטול), הכרזת זוכה כפויה (קובעת את ההצעה הזוכה, דוחה את היתר ומקשרת את הספק לפרויקט — עוקף את תהליך ההצבעה הרגיל). כל פעולה נרשמת ביומן הביקורת."
         tone="danger"
-      >
-        <div className="flex flex-col sm:flex-row gap-2">
-          <input
-            className={inputCls}
-            value={q}
-            onChange={e => setQ(e.target.value)}
-            placeholder="חיפוש לפי כותרת מכרז…"
-          />
-          <select
-            className={`${inputCls} sm:w-48`}
-            value={status}
-            onChange={e => setStatus(e.target.value)}
-          >
-            <option value="">כל הסטטוסים</option>
-            {TENDER_STATUSES.map(s => (
-              <option key={s} value={s}>{TENDER_STATUS_LABEL[s]}</option>
-            ))}
-          </select>
-        </div>
-      </ControlPanel>
+      />
 
-      <Card className="mt-4">
-        <CardHeader
-          title="מכרזים"
-          meta={<Pill kind="info">{list.data?.length ?? 0}</Pill>}
-        />
-        <CardBody>
-          {list.isLoading ? (
-            <div className="text-center py-6 text-sc-text-secondary text-[13px]">טוען…</div>
-          ) : list.isError ? (
-            <div className="text-center py-6 text-sc-danger text-[13px]">{list.error.message}</div>
-          ) : !list.data?.length ? (
-            <EmptyState icon={<Gavel size={28} />} title="אין מכרזים" body="לא נמצאו מכרזים התואמים את הסינון." />
-          ) : (
-            <div className="space-y-2">
-              {list.data.map(t => (
-                <TenderRow key={t.id} t={t} onOpen={() => setActiveId(t.id)} />
+      <div className="mt-4">
+        <DataTable
+          columns={columns}
+          data={(list.data ?? []) as TenderRow[]}
+          loading={list.isLoading}
+          onRowClick={r => setActiveId(r.id)}
+          csvName="tenders"
+          searchPlaceholder="חיפוש מכרז…"
+          emptyTitle="אין מכרזים"
+          emptyBody="לא נמצאו מכרזים התואמים את הסינון."
+          toolbar={
+            <select
+              className={`${inputCls} sm:w-48`}
+              value={status}
+              onChange={e => setStatus(e.target.value)}
+            >
+              <option value="">כל הסטטוסים</option>
+              {TENDER_STATUSES.map(s => (
+                <option key={s} value={s}>{TENDER_STATUS_LABEL[s]}</option>
               ))}
-            </div>
-          )}
-        </CardBody>
-      </Card>
+            </select>
+          }
+        />
+      </div>
 
       {activeId && (
         <TenderDetail id={activeId} onClose={() => setActiveId(null)} />
       )}
     </div>
-  )
-}
-
-function TenderRow({ t, onOpen }: { t: GodTenderListItem; onOpen: () => void }) {
-  const budget =
-    t.budget_min != null || t.budget_max != null
-      ? `${money(t.budget_min)} – ${money(t.budget_max)}`
-      : null
-  return (
-    <button
-      onClick={onOpen}
-      className="w-full text-right p-3 rounded-sc-input border border-sc-border bg-white hover:bg-sc-bg/60 transition-colors"
-    >
-      <div className="flex items-baseline gap-2 flex-wrap">
-        <div className="font-semibold text-[14px]">{t.title || '(ללא כותרת)'}</div>
-        <Pill kind={statusPillKind(t.status)}>{statusLabel(t.status)}</Pill>
-        {t.awarded_provider_id && <Pill kind="gold"><Trophy size={11} /> זוכה נבחר</Pill>}
-        <div className="flex-1" />
-        <Pill kind="navy">{t.bid_count} הצעות</Pill>
-      </div>
-      <div className="text-[11px] text-sc-text-muted mt-1 flex flex-wrap gap-2">
-        {t.building_address && <span>{t.building_address}</span>}
-        {budget && <span>· {budget}</span>}
-      </div>
-    </button>
   )
 }
 

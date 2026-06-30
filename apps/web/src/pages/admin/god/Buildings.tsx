@@ -1,8 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
-  Building2,
   ArrowRight,
-  ArrowLeft,
   Pencil,
   GitBranch,
   UserCog,
@@ -10,6 +8,7 @@ import {
   Users as UsersIcon,
   FileUp,
 } from 'lucide-react'
+import type { ColumnDef } from '@tanstack/react-table'
 import { trpc } from '@/lib/api/trpc'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
 import { ControlPanel } from '@/components/ui/ControlPanel'
@@ -17,6 +16,7 @@ import { Button } from '@/components/ui/Button'
 import { Pill } from '@/components/ui/Pill'
 import { Modal } from '@/components/ui/Modal'
 import { DangerConfirm } from '@/components/ui/DangerConfirm'
+import { DataTable } from '@/components/ui/DataTable'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useToast } from '@/components/ui/Toast'
 import {
@@ -25,7 +25,10 @@ import {
   PROJECT_ROLE_SLOTS,
   type ProjectRoleSlot,
   type GodBuildingDetail,
+  type GodBuildingListItem,
 } from '@asset-rise/shared'
+
+type Row = GodBuildingListItem & Record<string, unknown>
 
 // Derive the project shape from the shared response type rather than the tRPC
 // hook's ReturnType (which collapses to `{}` under `tsc -b` project refs).
@@ -57,20 +60,47 @@ export default function GodBuildings() {
 }
 
 // ── List ─────────────────────────────────────────────────────────────────────
-function BuildingList({ onSelect }: { onSelect: (id: string) => void }) {
-  const [q, setQ] = useState('')
-  const list = trpc.god.buildings.list.useQuery()
+const columns: ColumnDef<Row, unknown>[] = [
+  {
+    id: 'city',
+    header: 'עיר',
+    accessorFn: r => r.city ?? '',
+    cell: ({ row }) => <span className="font-semibold">{row.original.city ?? '—'}</span>,
+  },
+  {
+    id: 'address',
+    header: 'כתובת',
+    accessorFn: r => r.address ?? '',
+    cell: ({ row }) => row.original.address || '—',
+  },
+  {
+    id: 'tenant_count',
+    header: 'דיירים',
+    accessorFn: r => r.tenant_count,
+    cell: ({ row }) => row.original.tenant_count,
+  },
+  {
+    id: 'project_count',
+    header: 'פרויקטים',
+    accessorFn: r => r.project_count,
+    cell: ({ row }) => row.original.project_count,
+  },
+  {
+    id: 'current_stage',
+    header: 'שלב',
+    accessorFn: r => r.current_stage ?? '',
+    cell: ({ row }) =>
+      row.original.current_stage ? (
+        <Pill kind="success">{stageLabel(row.original.current_stage)}</Pill>
+      ) : (
+        <Pill kind="neutral">ללא פרויקט</Pill>
+      ),
+  },
+]
 
-  const rows = useMemo(() => {
-    const data = list.data ?? []
-    const term = q.trim().toLowerCase()
-    if (!term) return data
-    return data.filter(b =>
-      [b.address, b.city, b.street, b.building_number]
-        .filter(Boolean)
-        .some(v => String(v).toLowerCase().includes(term)),
-    )
-  }, [list.data, q])
+function BuildingList({ onSelect }: { onSelect: (id: string) => void }) {
+  const list = trpc.god.buildings.list.useQuery()
+  const rows = useMemo(() => list.data ?? [], [list.data])
 
   return (
     <div className="sc-page">
@@ -88,71 +118,21 @@ function BuildingList({ onSelect }: { onSelect: (id: string) => void }) {
         title="שליטה בבניינים ופרויקטים"
         description="פירוט עומק לכל בניין (דיירים, בעלים, ועד, שלב) וכל פעולות העריכה ההרסניות על בניינים ופרויקטים. בשונה ממסך «בניינים» שהוא רשימת CRM לקריאה — כאן מתבצעת השליטה התפעולית המלאה. כל פעולה נרשמת ביומן הביקורת."
         tone="navy"
-      >
-        <input
-          className={inputCls}
-          value={q}
-          onChange={e => setQ(e.target.value)}
-          placeholder="סינון לפי עיר / רחוב / מספר…"
-        />
-      </ControlPanel>
+      />
 
       <Card className="mt-4">
         <CardHeader title="כל הבניינים" meta={<Pill kind="info">{rows.length}</Pill>} />
         <CardBody>
-          {list.isLoading ? (
-            <div className="text-center py-6 text-sc-text-secondary text-[13px]">טוען…</div>
-          ) : list.isError ? (
-            <div className="text-center py-6 text-sc-danger text-[13px]">{list.error.message}</div>
-          ) : !rows.length ? (
-            <EmptyState icon={<Building2 size={28} />} title="אין בניינים" body="לא נמצאו בניינים תואמים." />
-          ) : (
-            <div className="sc-table-wrap">
-              <table className="sc-table">
-                <thead>
-                  <tr>
-                    <th>עיר</th>
-                    <th>כתובת</th>
-                    <th>דיירים</th>
-                    <th>פרויקטים</th>
-                    <th>שלב נוכחי</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map(b => (
-                    <tr
-                      key={b.id}
-                      onClick={() => onSelect(b.id)}
-                      className="cursor-pointer hover:bg-sc-light-blue/40 transition-colors"
-                    >
-                      <td className="font-semibold">{b.city ?? '—'}</td>
-                      <td>{b.address || '—'}</td>
-                      <td>{b.tenant_count}</td>
-                      <td>{b.project_count}</td>
-                      <td>
-                        {b.current_stage ? (
-                          <Pill kind="success">{stageLabel(b.current_stage)}</Pill>
-                        ) : (
-                          <Pill kind="neutral">ללא פרויקט</Pill>
-                        )}
-                      </td>
-                      <td className="text-left">
-                        <Button
-                          size="sm"
-                          variant="primary"
-                          icon={<ArrowLeft size={14} />}
-                          onClick={(e) => { e.stopPropagation(); onSelect(b.id) }}
-                        >
-                          פתח ופרט
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <DataTable
+            columns={columns}
+            data={rows as Row[]}
+            loading={list.isLoading}
+            onRowClick={b => onSelect(b.id)}
+            csvName="buildings-god"
+            searchPlaceholder="חיפוש בניין / עיר…"
+            emptyTitle="אין בניינים"
+            emptyBody="לא נמצאו בניינים."
+          />
         </CardBody>
       </Card>
     </div>

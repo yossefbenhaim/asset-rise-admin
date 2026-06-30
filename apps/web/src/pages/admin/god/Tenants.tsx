@@ -1,23 +1,107 @@
 import { useState } from 'react'
+import type { ColumnDef } from '@tanstack/react-table'
 import { trpc } from '@/lib/api/trpc'
-import { Card, CardBody, CardHeader } from '@/components/ui/Card'
-import { ControlPanel } from '@/components/ui/ControlPanel'
 import { Pill } from '@/components/ui/Pill'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { DangerConfirm } from '@/components/ui/DangerConfirm'
-import { EmptyState } from '@/components/ui/EmptyState'
+import { DataTable } from '@/components/ui/DataTable'
 import { useToast } from '@/components/ui/Toast'
-import { Users, Crown, ShieldCheck, Flag, Ban, Trash2 } from 'lucide-react'
+import { Crown, ShieldCheck, Flag, Ban, Trash2 } from 'lucide-react'
 import type { GodTenantListItem, GodTenantDetail } from '@asset-rise/shared'
+
+type TenantRow = GodTenantListItem & Record<string, unknown>
 
 const inputCls = 'border border-sc-border rounded-sc-input p-2 w-full text-[14px]'
 const labelCls = 'text-sc-text-secondary mb-1 text-[12px]'
 
+function VaadPills({ t }: { t: Pick<GodTenantListItem, 'is_committee_chair' | 'is_committee_member' | 'is_organizer'> }) {
+  return (
+    <>
+      {t.is_committee_chair && <Pill kind="gold"><Crown size={11} /> יו"ר ועד</Pill>}
+      {t.is_committee_member && <Pill kind="navy"><ShieldCheck size={11} /> חבר ועד</Pill>}
+      {t.is_organizer && <Pill kind="info"><Flag size={11} /> מארגן</Pill>}
+    </>
+  )
+}
+
+const columns: ColumnDef<TenantRow, unknown>[] = [
+  {
+    id: 'full_name',
+    header: 'שם',
+    accessorFn: r => r.full_name ?? '',
+    cell: ({ row }) => (
+      <span className="font-semibold text-sc-text">{row.original.full_name || '(ללא שם)'}</span>
+    ),
+  },
+  {
+    id: 'email',
+    header: 'אימייל',
+    accessorFn: r => r.email ?? '',
+    cell: ({ row }) =>
+      row.original.email ? (
+        <span className="text-sc-text-secondary" dir="ltr">{row.original.email}</span>
+      ) : (
+        <span className="text-sc-text-muted">—</span>
+      ),
+  },
+  {
+    id: 'phone',
+    header: 'טלפון',
+    accessorFn: r => r.phone ?? '',
+    cell: ({ row }) =>
+      row.original.phone ? (
+        <span className="text-sc-text-secondary sc-num" dir="ltr">{row.original.phone}</span>
+      ) : (
+        <span className="text-sc-text-muted">—</span>
+      ),
+  },
+  {
+    id: 'building_label',
+    header: 'בניין',
+    accessorFn: r => r.building_label ?? '',
+    cell: ({ row }) =>
+      row.original.building_label ? (
+        <span className="text-sc-text-secondary">{row.original.building_label}</span>
+      ) : (
+        <span className="text-sc-text-muted">—</span>
+      ),
+  },
+  {
+    id: 'apartment_number',
+    header: 'דירה',
+    accessorFn: r => r.apartment_number ?? '',
+    cell: ({ row }) =>
+      row.original.apartment_number ? (
+        <span className="text-sc-text-secondary sc-num">{row.original.apartment_number}</span>
+      ) : (
+        <span className="text-sc-text-muted">—</span>
+      ),
+  },
+  {
+    id: 'vaad',
+    header: 'ועד',
+    enableSorting: false,
+    accessorFn: r =>
+      [r.is_committee_chair && 'chair', r.is_committee_member && 'member', r.is_organizer && 'organizer']
+        .filter(Boolean)
+        .join(' '),
+    cell: ({ row }) => {
+      const t = row.original
+      if (!t.is_committee_chair && !t.is_committee_member && !t.is_organizer)
+        return <span className="text-sc-text-muted">—</span>
+      return (
+        <div className="flex gap-1 flex-wrap">
+          <VaadPills t={t} />
+        </div>
+      )
+    },
+  },
+]
+
 // God-mode Tenants + Vaad. List/search tenants, drill into one, and run the
 // audited god writes (edit profile / set vaad / move building / ban / delete).
 export default function GodTenants() {
-  const [q, setQ] = useState('')
   const [buildingId, setBuildingId] = useState('')
   const [activeId, setActiveId] = useState<string | null>(null)
 
@@ -26,7 +110,6 @@ export default function GodTenants() {
   })
   const list = trpc.god.tenants.list.useQuery(
     {
-      q: q.trim() || undefined,
       building_id: buildingId || undefined,
       limit: 200,
     },
@@ -39,20 +122,18 @@ export default function GodTenants() {
         <h1>דיירים וועד</h1>
       </div>
 
-      <ControlPanel
-        title="ניהול דיירים וועד — מנהל-על"
-        description="עריכת פרופיל דייר, שינוי הרכב הוועד, העברת בניין, השבתה זמנית ומחיקה לצמיתות. כל פעולה נרשמת ביומן הביקורת."
-        tone="danger"
-      >
-        <div className="flex flex-col sm:flex-row gap-2">
-          <input
-            className={inputCls}
-            value={q}
-            onChange={e => setQ(e.target.value)}
-            placeholder="חיפוש לפי שם / אימייל / טלפון…"
-          />
+      <DataTable<TenantRow>
+        columns={columns}
+        data={(list.data ?? []) as TenantRow[]}
+        loading={list.isLoading}
+        onRowClick={r => setActiveId(r.id)}
+        csvName="tenants"
+        searchPlaceholder="חיפוש דייר…"
+        emptyTitle="אין דיירים"
+        emptyBody="לא נמצאו דיירים התואמים את הסינון."
+        toolbar={
           <select
-            className={`${inputCls} sm:w-72`}
+            className="bg-sc-bg border border-sc-border rounded-sc-input py-2 px-3 text-[13px] text-sc-text outline-none focus:border-sc-primary transition-colors max-w-[16rem]"
             value={buildingId}
             onChange={e => setBuildingId(e.target.value)}
           >
@@ -61,66 +142,13 @@ export default function GodTenants() {
               <option key={b.id} value={b.id}>{b.label}</option>
             ))}
           </select>
-        </div>
-      </ControlPanel>
-
-      <Card className="mt-4">
-        <CardHeader
-          title="דיירים"
-          meta={<Pill kind="info">{list.data?.length ?? 0}</Pill>}
-        />
-        <CardBody>
-          {list.isLoading ? (
-            <div className="text-center py-6 text-sc-text-secondary text-[13px]">טוען…</div>
-          ) : list.isError ? (
-            <div className="text-center py-6 text-sc-danger text-[13px]">{list.error.message}</div>
-          ) : !list.data?.length ? (
-            <EmptyState icon={<Users size={28} />} title="אין דיירים" body="לא נמצאו דיירים התואמים את הסינון." />
-          ) : (
-            <div className="space-y-2">
-              {list.data.map(t => (
-                <TenantRow key={t.id} t={t} onOpen={() => setActiveId(t.id)} />
-              ))}
-            </div>
-          )}
-        </CardBody>
-      </Card>
+        }
+      />
 
       {activeId && (
         <TenantDetail id={activeId} onClose={() => setActiveId(null)} />
       )}
     </div>
-  )
-}
-
-function VaadPills({ t }: { t: Pick<GodTenantListItem, 'is_committee_chair' | 'is_committee_member' | 'is_organizer'> }) {
-  return (
-    <>
-      {t.is_committee_chair && <Pill kind="gold"><Crown size={11} /> יו"ר ועד</Pill>}
-      {t.is_committee_member && <Pill kind="navy"><ShieldCheck size={11} /> חבר ועד</Pill>}
-      {t.is_organizer && <Pill kind="info"><Flag size={11} /> מארגן</Pill>}
-    </>
-  )
-}
-
-function TenantRow({ t, onOpen }: { t: GodTenantListItem; onOpen: () => void }) {
-  return (
-    <button
-      onClick={onOpen}
-      className="w-full text-right p-3 rounded-sc-input border border-sc-border bg-white hover:bg-sc-bg/60 transition-colors"
-    >
-      <div className="flex items-baseline gap-2 flex-wrap">
-        <div className="font-semibold text-[14px]">{t.full_name || '(ללא שם)'}</div>
-        {t.phone && <div className="text-[12px] text-sc-text-secondary">{t.phone}</div>}
-        <div className="flex-1" />
-        <VaadPills t={t} />
-      </div>
-      <div className="text-[11px] text-sc-text-muted mt-1 flex flex-wrap gap-2">
-        {t.email && <span>{t.email}</span>}
-        {t.building_label && <span>· {t.building_label}</span>}
-        {t.apartment_number && <span>· דירה {t.apartment_number}</span>}
-      </div>
-    </button>
   )
 }
 

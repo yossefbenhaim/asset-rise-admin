@@ -1,14 +1,14 @@
 import { useState } from 'react'
+import type { ColumnDef } from '@tanstack/react-table'
 import { trpc } from '@/lib/api/trpc'
-import { Card, CardBody, CardHeader } from '@/components/ui/Card'
 import { ControlPanel } from '@/components/ui/ControlPanel'
 import { Pill } from '@/components/ui/Pill'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
-import { EmptyState } from '@/components/ui/EmptyState'
+import { DataTable } from '@/components/ui/DataTable'
 import { DangerConfirm } from '@/components/ui/DangerConfirm'
 import { useToast } from '@/components/ui/Toast'
-import { Vote, Plus, Gavel, RotateCcw, Crown, Trash2, ShieldAlert } from 'lucide-react'
+import { Plus, Gavel, RotateCcw, Crown, Trash2, ShieldAlert } from 'lucide-react'
 import {
   POLL_KINDS,
   POLL_KIND_LABEL,
@@ -20,6 +20,8 @@ import {
   type GodPollDetail,
   type GodPollOption,
 } from '@asset-rise/shared/schemas/godPolls'
+
+type PollRow = GodPollListItem & Record<string, unknown>
 
 const inputCls = 'border border-sc-border rounded-sc-input p-2 w-full text-[14px]'
 
@@ -43,6 +45,66 @@ function statusPillKind(s: string | null | undefined): React.ComponentProps<type
   }
 }
 
+const columns: ColumnDef<PollRow, unknown>[] = [
+  {
+    id: 'question',
+    header: 'שאלה',
+    accessorFn: r => r.question ?? '',
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="font-semibold text-sc-text">{row.original.question || '(ללא שאלה)'}</span>
+        {row.original.result_user_id && (
+          <Pill kind="gold"><Crown size={11} /> תוצאה נקבעה</Pill>
+        )}
+      </div>
+    ),
+  },
+  {
+    id: 'kind',
+    header: 'סוג',
+    accessorFn: r => r.kind ?? '',
+    cell: ({ row }) => <Pill kind="navy">{kindLabel(row.original.kind)}</Pill>,
+  },
+  {
+    id: 'status',
+    header: 'סטטוס',
+    accessorFn: r => r.status ?? '',
+    cell: ({ row }) => (
+      <Pill kind={statusPillKind(row.original.status)}>{statusLabel(row.original.status)}</Pill>
+    ),
+  },
+  {
+    id: 'building_address',
+    header: 'בניין',
+    accessorFn: r => r.building_address ?? '',
+    cell: ({ row }) =>
+      row.original.building_address
+        ? <span className="text-sc-text-secondary">{row.original.building_address}</span>
+        : <span className="text-sc-text-muted">—</span>,
+  },
+  {
+    id: 'option_count',
+    header: 'אפשרויות',
+    accessorFn: r => r.option_count,
+    cell: ({ row }) => <span className="sc-num text-sc-text-secondary">{row.original.option_count}</span>,
+  },
+  {
+    id: 'threshold_pct',
+    header: 'אחוז סף',
+    accessorFn: r => r.threshold_pct ?? -1,
+    cell: ({ row }) =>
+      row.original.threshold_pct != null
+        ? <span className="sc-num text-sc-text-secondary">{row.original.threshold_pct}%</span>
+        : <span className="text-sc-text-muted">—</span>,
+  },
+  {
+    id: 'vote_count',
+    header: 'קולות',
+    accessorFn: r => r.vote_count,
+    cell: ({ row }) => <Pill kind="info">{row.original.vote_count} קולות</Pill>,
+  },
+]
+
 // God-mode Polls / Elections. List/search polls (+ option & vote counts), drill
 // into one (options + live read-only tally), create a new poll, and run the
 // audited god writes: forceFinalize (status→finalized), reopen (status→open),
@@ -50,7 +112,6 @@ function statusPillKind(s: string | null | undefined): React.ComponentProps<type
 // status DIRECTLY, BYPASSING the tally + threshold). Every action is recorded in
 // the audit log.
 export default function GodPolls() {
-  const [q, setQ] = useState('')
   const [kind, setKind] = useState('')
   const [status, setStatus] = useState('')
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -58,7 +119,6 @@ export default function GodPolls() {
 
   const list = trpc.god.polls.list.useQuery(
     {
-      q: q.trim() || undefined,
       kind: (kind || undefined) as PollKind | undefined,
       status: (status || undefined) as PollStatus | undefined,
       limit: 200,
@@ -76,77 +136,43 @@ export default function GodPolls() {
         title="ניהול הצבעות ובחירות — מנהל-על"
         description="יצירת הצבעה חדשה, הכרעה כפויה (סטטוס → הוכרע), פתיחה מחדש, וקביעת תוצאה ידנית (קובעת זוכה / סטטוס ישירות — עוקף את ספירת הקולות ואחוז הסף). כל פעולה נרשמת ביומן הביקורת."
         tone="danger"
-      >
-        <div className="flex flex-col sm:flex-row gap-2">
-          <input
-            className={inputCls}
-            value={q}
-            onChange={e => setQ(e.target.value)}
-            placeholder="חיפוש לפי שאלת ההצבעה…"
-          />
-          <select className={`${inputCls} sm:w-44`} value={kind} onChange={e => setKind(e.target.value)}>
-            <option value="">כל הסוגים</option>
-            {POLL_KINDS.map(k => (
-              <option key={k} value={k}>{POLL_KIND_LABEL[k]}</option>
-            ))}
-          </select>
-          <select className={`${inputCls} sm:w-44`} value={status} onChange={e => setStatus(e.target.value)}>
-            <option value="">כל הסטטוסים</option>
-            {POLL_STATUSES.map(s => (
-              <option key={s} value={s}>{POLL_STATUS_LABEL[s]}</option>
-            ))}
-          </select>
-          <Button icon={<Plus size={16} />} onClick={() => setCreating(true)}>
-            הצבעה חדשה
-          </Button>
-        </div>
-      </ControlPanel>
+      />
 
-      <Card className="mt-4">
-        <CardHeader title="הצבעות" meta={<Pill kind="info">{list.data?.length ?? 0}</Pill>} />
-        <CardBody>
-          {list.isLoading ? (
-            <div className="text-center py-6 text-sc-text-secondary text-[13px]">טוען…</div>
-          ) : list.isError ? (
-            <div className="text-center py-6 text-sc-danger text-[13px]">{list.error.message}</div>
-          ) : !list.data?.length ? (
-            <EmptyState icon={<Vote size={28} />} title="אין הצבעות" body="לא נמצאו הצבעות התואמות את הסינון." />
-          ) : (
-            <div className="space-y-2">
-              {list.data.map(p => (
-                <PollRow key={p.id} p={p} onOpen={() => setActiveId(p.id)} />
-              ))}
-            </div>
-          )}
-        </CardBody>
-      </Card>
+      <div className="mt-4">
+        <DataTable
+          columns={columns}
+          data={(list.data ?? []) as PollRow[]}
+          loading={list.isLoading}
+          onRowClick={r => setActiveId(r.id)}
+          csvName="polls"
+          searchPlaceholder="חיפוש הצבעה…"
+          emptyTitle="אין הצבעות"
+          emptyBody="לא נמצאו הצבעות התואמות את הסינון."
+          toolbar={
+            <>
+              <select className={`${inputCls} sm:w-44`} value={kind} onChange={e => setKind(e.target.value)}>
+                <option value="">כל הסוגים</option>
+                {POLL_KINDS.map(k => (
+                  <option key={k} value={k}>{POLL_KIND_LABEL[k]}</option>
+                ))}
+              </select>
+              <select className={`${inputCls} sm:w-44`} value={status} onChange={e => setStatus(e.target.value)}>
+                <option value="">כל הסטטוסים</option>
+                {POLL_STATUSES.map(s => (
+                  <option key={s} value={s}>{POLL_STATUS_LABEL[s]}</option>
+                ))}
+              </select>
+              <Button icon={<Plus size={16} />} onClick={() => setCreating(true)}>
+                הצבעה חדשה
+              </Button>
+            </>
+          }
+        />
+      </div>
 
       {activeId && <PollDetail id={activeId} onClose={() => setActiveId(null)} />}
       {creating && <CreatePollModal onClose={() => setCreating(false)} />}
     </div>
-  )
-}
-
-function PollRow({ p, onOpen }: { p: GodPollListItem; onOpen: () => void }) {
-  return (
-    <button
-      onClick={onOpen}
-      className="w-full text-right p-3 rounded-sc-input border border-sc-border bg-white hover:bg-sc-bg/60 transition-colors"
-    >
-      <div className="flex items-baseline gap-2 flex-wrap">
-        <div className="font-semibold text-[14px]">{p.question || '(ללא שאלה)'}</div>
-        <Pill kind="navy">{kindLabel(p.kind)}</Pill>
-        <Pill kind={statusPillKind(p.status)}>{statusLabel(p.status)}</Pill>
-        {p.result_user_id && <Pill kind="gold"><Crown size={11} /> תוצאה נקבעה</Pill>}
-        <div className="flex-1" />
-        <Pill kind="info">{p.vote_count} קולות</Pill>
-      </div>
-      <div className="text-[11px] text-sc-text-muted mt-1 flex flex-wrap gap-2">
-        {p.building_address && <span>{p.building_address}</span>}
-        <span>· {p.option_count} אפשרויות</span>
-        {p.threshold_pct != null && <span>· סף {p.threshold_pct}%</span>}
-      </div>
-    </button>
   )
 }
 
