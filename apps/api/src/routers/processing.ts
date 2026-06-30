@@ -215,13 +215,16 @@ export const processingRouter = router({
         .eq('status', 'pending')
         .order('created_at', { ascending: true })
         .limit(50),
-      // Running: in-flight jobs, longest-running first (most at-risk).
+      // Running: in-flight AI-research jobs, longest-running first. A 5-minute
+      // window drops jobs stuck in 'running' (worker died mid-claim) so they
+      // don't ghost as forever-running.
       ctx.db
         .from('sc_analyzer_jobs')
         .select(SELECT)
         .eq('status', 'running')
+        .gte('updated_at', new Date(nowMs - 5 * 60_000).toISOString())
         .order('updated_at', { ascending: true })
-        .limit(50),
+        .limit(200),
       // Recently completed (last 20).
       ctx.db
         .from('sc_analyzer_jobs')
@@ -270,15 +273,17 @@ export const processingRouter = router({
         .order('source', { ascending: true }),
       // In-flight cold computes — runs stamped 'processing' at the start of an
       // evaluate (the customer app's startRun). These are the live "a check is
-      // running NOW" items. A 5-minute window drops orphaned rows from a
-      // crashed/restarted compute that never got its finishRun update.
+      // running NOW" items. A short 2-minute window drops orphaned rows from a
+      // crashed/restarted/aborted compute that never got its finishRun update,
+      // so a finished check never lingers as "running". limit is high so many
+      // concurrent runs all show.
       ctx.db
         .from('sc_report_runs')
         .select('id,address_display,created_at')
         .eq('status', 'processing')
-        .gte('created_at', new Date(nowMs - 5 * 60_000).toISOString())
+        .gte('created_at', new Date(nowMs - 120_000).toISOString())
         .order('created_at', { ascending: true })
-        .limit(50),
+        .limit(200),
     ])
 
     const queue = (queueRes.data ?? []).map((r) => toProcessingJob(r as JobRow, nowMs))

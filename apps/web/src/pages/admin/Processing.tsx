@@ -130,25 +130,35 @@ export default function AdminProcessing() {
 
           {/* Main grid: live processing (wide) + queue (narrow) */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-start">
-            {/* In-processing jobs */}
-            <div className="lg:col-span-2 flex flex-col gap-3">
-              <div className="flex items-center gap-1.5 text-[14px] font-bold text-sc-text">
+            {/* In-processing jobs — one titled card; title sits INSIDE it and
+                the list scrolls internally so any number of concurrent runs
+                (even 100) stay contained. */}
+            <div className="lg:col-span-2 sc-glass p-4 flex flex-col gap-3">
+              <div className="flex items-center gap-1.5 text-[14px] font-bold text-sc-text shrink-0">
                 <Activity size={15} className="text-sc-primary" />
                 בדיקות שרצות כעת
-                <span className="text-sc-text-secondary font-semibold sc-num">({d.running.length})</span>
+                <span className="ml-1 inline-flex items-center justify-center min-w-[22px] h-[20px] px-1.5 rounded-sc-pill bg-sc-primary text-white text-[11px] font-bold sc-num">
+                  {d.running.length}
+                </span>
+                {d.running.length > 0 && (
+                  <span className="flex items-center gap-1 text-[11px] text-sc-success font-semibold mr-auto">
+                    <span className="w-1.5 h-1.5 rounded-full bg-sc-success animate-pulse" />
+                    חי
+                  </span>
+                )}
               </div>
               {d.running.length === 0 ? (
-                <div className="sc-glass p-4">
-                  <EmptyState
-                    icon={<Activity size={26} />}
-                    title="אין בדיקה פעילה כרגע"
-                    body="כשתרוץ בדיקת היתכנות חדשה, היא תופיע כאן בזמן אמת."
-                  />
-                </div>
+                <EmptyState
+                  icon={<Activity size={26} />}
+                  title="אין בדיקה פעילה כרגע"
+                  body="כשתרוץ בדיקת היתכנות חדשה, היא תופיע כאן בזמן אמת."
+                />
               ) : (
-                d.running.map((job, i) => (
-                  <JobCard key={job.id} job={job} index={i} />
-                ))
+                <div className="flex flex-col gap-2.5 max-h-[460px] overflow-y-auto overscroll-contain -mx-1 px-1">
+                  {d.running.map((job, i) => (
+                    <JobCard key={job.id} job={job} index={i} />
+                  ))}
+                </div>
               )}
             </div>
 

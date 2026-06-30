@@ -41,7 +41,7 @@ export function JobCard({ job, index = 0 }: {
 
   return (
     <motion.div
-      className="sc-glass p-4 flex flex-col gap-3"
+      className="rounded-sc-input border border-sc-border bg-sc-bg/50 p-3 flex flex-col gap-3"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
