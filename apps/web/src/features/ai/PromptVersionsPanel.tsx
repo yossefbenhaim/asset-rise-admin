@@ -125,6 +125,7 @@ export function PromptVersionsPanel({ agent }: { agent: AiAgent }) {
               <VersionDetail
                 agent={agent}
                 version={active}
+                basePrompt={data.basePrompt}
                 canEdit={canEdit}
                 onSaved={() => q.refetch()}
               />
@@ -154,11 +155,13 @@ export function PromptVersionsPanel({ agent }: { agent: AiAgent }) {
 function VersionDetail({
   agent,
   version,
+  basePrompt,
   canEdit,
   onSaved,
 }: {
   agent: AiAgent
   version: AiPromptVersion
+  basePrompt: string
   canEdit: boolean
   onSaved: () => void
 }) {
@@ -193,16 +196,25 @@ function VersionDetail({
         <p className="text-[12px] text-sc-text-secondary m-0 leading-snug">{version.note}</p>
       )}
 
-      {/* Read-only engine base-prompt note — always visible, so it is clear what
-          the override is appended to. */}
-      <div className="flex items-start gap-2 rounded-sc-input bg-sc-bg text-sc-text-secondary px-2.5 py-2 text-[11px] leading-relaxed">
-        <Server size={13} className="shrink-0 mt-0.5 text-sc-primary" />
-        <span><b>פרומפט המנוע:</b> {version.base_note}</span>
+      {/* The ACTUAL base prompt the worker runs right now — read-only, full
+          text (not just a note), so it's clear exactly what the agent runs on. */}
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-1.5 text-[11px] font-bold text-sc-text-muted">
+          <Server size={13} className="text-sc-primary" />
+          הפרומפט שרץ בפועל (פרומפט המנוע)
+        </div>
+        <pre
+          dir="rtl"
+          className="m-0 p-2.5 bg-sc-bg border border-sc-border rounded-sc-input text-[11.5px] text-sc-text-secondary overflow-auto max-h-72 leading-relaxed whitespace-pre-wrap"
+        >
+          {basePrompt}
+        </pre>
+        <p className="text-[10.5px] text-sc-text-muted m-0 leading-snug">{version.base_note}</p>
       </div>
 
       <div className="flex items-center gap-1.5 text-[11px] font-bold text-sc-text-muted">
         <FileCode2 size={13} className="text-sc-primary" />
-        טקסט ה-override (rubric)
+        פרומפט חדש / חידוד (override שמתווסף לבסיס כ-rubric)
       </div>
 
       {canEdit ? (

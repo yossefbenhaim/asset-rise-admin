@@ -87,6 +87,10 @@ export interface AiPromptVersionsResult {
   agent: AiAgent
   current: string                  // the live version for this agent
   versions: AiPromptVersion[]
+  // The ACTUAL base prompt the host worker runs right now (static instruction
+  // text with {placeholders} where per-request data is injected). Shown
+  // read-only so it's clear exactly what the agent is running on.
+  basePrompt: string
   // Where edits go + how the worker consumes them (shown in the panel).
   note: string
 }

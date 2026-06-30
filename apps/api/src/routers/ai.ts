@@ -58,6 +58,48 @@ const BASE_PROMPT_NOTE: Record<AiAgent, string> = {
     '{ approved, reason_he, confidence }. ה-override שנשמר כאן מתווסף לבסיס כ-rubric תחום ב-fences.',
 }
 
+// The ACTUAL base prompt each host worker runs, mirrored here so the admin can
+// SHOW it (the container can't read the host worker scripts at runtime). These
+// are the static instruction bodies of build_prompt() in
+// ~/analyzer-codex-worker.sh and ~/document-verify-worker.sh — {…} marks where
+// per-request data is injected. Keep in sync if a worker's prompt changes.
+const BASE_PROMPT: Record<AiAgent, string> = {
+  analyzer: [
+    'נתוני הנכס: {עיר, רחוב, מספר, גוש, חלקה, שטח מגרש, שכונה}',
+    '',
+    '=== הדוח הדטרמיניסטי שלנו ===',
+    '{report_context — הציון, הפוטנציאל, 9 הקטגוריות, התנאים, השכונה}',
+    '',
+    '=== תכניות חופפות (MAVAT) ===',
+    '{covering_plans}',
+    '',
+    '=== מתחמי התחדשות בעיר (רשות ההתחדשות הממשלתית) ===',
+    '{complexes}',
+    '',
+    '=== דוסייה מחקרי (תקנוני תב"ע ודפי מדיניות שחולצו עבורך) ===',
+    '{dossier}',
+    '',
+    '=== המשימה ===',
+    'לפני הכל — קרא וקלוט את כל מה שקיבלת: הדוח הדטרמיניסטי שלנו (ציון, פוטנציאל, 9 קטגוריות, תנאים, שכונה), כל התכניות החופפות, רשימת מתחמי ההתחדשות בעיר (שים לב במיוחד למתחמים עם היתרים שכבר הוצאו או שמסומנים in_execution, ולמתחם שמסומן street_match=true — הוא על שם הרחוב של הנכס; אלה אינדיקציות חזקות להתקדמות), וכל הדוסייה. רק אחר כך גבש עמדה.',
+    '(א) חלץ זכויות לחלקה הזו בלבד. (ב) opinion_he — חוות דעת מורחבת כמו שמאי שמדבר עם בעל הדירה: סכם בנינוחות מה מצאנו אנחנו (הציון, הפוטנציאל, החוזקות והחולשות), מה גילית באינטרנט, ומה המסקנה והצעד המעשי הבא. פסקה של 4-7 משפטים בשפה פשוטה. (ג) score_opinion — בכמה נקודות הממצאים שלך צריכים לשנות את הציון של המנוע? תן delta מספר שלם בין -20 ל-20, direction תואם, ו-reason_he. (ד) perspectives — פאנל של שלוש חוות דעת (שמאי / אדריכל / יזם), לכל אחת rating 0-100, stance, opinion_he ו-key_point_he. ה-ratings אינדיקטיביים בלבד ואינם משנים את ציון הבדיקה.',
+    '',
+    'החזר JSON אחד בלבד, בלי טקסט נוסף ובלי code fence, לפי הסכמה:',
+    '{ density_per_dunam, rights_pct, preservation, parking_note, parking_per_unit, named_complex, summary_he, opinion_he, score_opinion:{direction,delta,reason_he}, sources, confidence, takanon_rights:{…}|null, perspectives:[{role,rating,stance,opinion_he,key_point_he} ×3] }',
+    '',
+    'כללים: שפה פשוטה (מונחים מקצועיים + הסבר קצר בסוגריים בפעם הראשונה). השתמש רק בתכנית שמכסה את הכתובת הזו. אל תמציא מספרים — אם אין תמיכה לחלקה, null + confidence נמוך (אבל opinion_he ו-score_opinion תמיד מלאים בעברית). takanon_rights — חלץ זכויות מהתקנון הסטטוטורי בלבד (לא מדפי פרסום). קריטי: אל תוריד ציון בגלל "החלקה לא במתחם" — ההכרעה אם החלקה כלולה נעשית אצלנו, דטרמיניסטית, מתוך parcels; ב-notes_he וב-opinion_he נסח על המתחם והאזור, בלי לנקוב במספר חלקה ספציפי.',
+  ].join('\n'),
+  wong: [
+    'המשימה: "{כותרת משימת ה-workflow}". המסמך המבוקש: "{תווית המסמך}".',
+    'להלן הטקסט שחולץ מהקובץ שהועלה (ייתכן חלקי):',
+    '---',
+    '{טקסט שחולץ מהקובץ — או "(לא חולץ טקסט מהקובץ)"}',
+    '---',
+    'תפקידך היחיד: לקבוע האם הקובץ הוא מהסוג/הנושא הנכון של המסמך המבוקש. התעלם לחלוטין מהשאלה אם המסמך חתום, מלא, או תקף משפטית — גם אם שדות ריקים, חסרה חתימה, או חסרים פרטים: אם זה הסוג הנכון של מסמך עם הנושא הנכון, approved=true. approved=false רק אם הטקסט ריק לגמרי, או שזה מסמך אחר לגמרי / תמונה אקראית שאינה קשורה למבוקש.',
+    'החזר אך ורק JSON תקין, בלי טקסט נוסף ובלי code fence:',
+    '{"approved": true|false, "reason_he": "משפט קצר בעברית", "confidence": "high"|"medium"|"low"}',
+  ].join('\n'),
+}
+
 // Composition note (where edits go + how the worker consumes them) per agent.
 const COMPOSE_NOTE: Record<AiAgent, string> = {
   analyzer:
@@ -282,6 +324,7 @@ export const aiRouter = router({
         agent,
         current,
         versions,
+        basePrompt: BASE_PROMPT[agent],
         note: COMPOSE_NOTE[agent],
       }
     }),
