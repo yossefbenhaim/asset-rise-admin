@@ -23,6 +23,17 @@ export const ADMIN_NAV: NavGroup[] = [
     ],
   },
   {
+    group: 'מרכז בקרה',
+    items: [
+      { id: 'reports',    label: 'דוחות',       to: '/reports',    icon: 'FileBarChart2', requires: ['admin.reports.list'] },
+      { id: 'processing', label: 'ניטור עיבוד',  to: '/processing', icon: 'Activity',      requires: ['admin.processing.view'] },
+      { id: 'payments',   label: 'תשלומים',     to: '/payments',   icon: 'CreditCard',    requires: ['admin.payments.list'] },
+      { id: 'sources',    label: 'מקורות מידע',  to: '/sources',    icon: 'Radar',         requires: ['admin.sources.view'] },
+      { id: 'ai',         label: 'בקרת AI',     to: '/ai',         icon: 'Sparkles',      requires: ['admin.ai.view'] },
+      { id: 'logs',       label: 'לוגים',       to: '/logs',       icon: 'FileWarning',   requires: ['admin.logs.list'] },
+    ],
+  },
+  {
     group: 'ניהול',
     items: [
       { id: 'users',     label: 'משתמשים', to: '/users',     icon: 'Users',     requires: ['admin.users.list'] },

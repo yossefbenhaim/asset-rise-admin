@@ -9,6 +9,13 @@ const map: Record<string, Action[]> = {
     'admin.leads.list', 'admin.leads.update',
     'admin.buildings.list',
     'admin.submissions.list',
+    // Control Center (mirror of migration 015).
+    'admin.reports.list', 'admin.reports.update', 'admin.reports.rerun',
+    'admin.processing.view',
+    'admin.payments.list',
+    'admin.sources.view',
+    'admin.ai.view', 'admin.ai.regenerate',
+    'admin.logs.list',
   ],
   // Super-admin god capabilities. MUST mirror migration 006's seed exactly.
   // Only 'admin.super' gets god.* — plain 'admin' deliberately does not.
@@ -56,17 +63,25 @@ const map: Record<string, Action[]> = {
     'god.misc.cancel_inspection',
     'god.misc.set_rating_verified',
     'god.misc.remove_rating',
+    // Control Center — prompt editing is super-only (the rest comes via 'admin').
+    'admin.ai.edit_prompt',
   ],
   'admin.support': [
     'admin.dashboard',
     'admin.users.list',
     'admin.leads.list',
     'admin.submissions.list',
+    'admin.reports.list',
+    'admin.processing.view',
+    'admin.sources.view',
+    'admin.logs.list',
   ],
   'admin.sales': [
     'admin.dashboard',
     'admin.leads.list',
     'admin.leads.update',
+    'admin.reports.list',
+    'admin.payments.list',
   ],
 }
 

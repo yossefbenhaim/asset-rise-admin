@@ -88,7 +88,48 @@
   --sc-space-8:  32px;
   --sc-space-10: 40px;
   --sc-space-12: 48px;
+
+  /* ── Glass / elevation (admin control-center) ─────────────────── */
+  --sc-glass-bg:     rgba(255,255,255,0.72);
+  --sc-glass-border: rgba(255,255,255,0.55);
+  --sc-shadow-glass: 0 8px 30px rgba(30,58,95,0.10);
+  --sc-skeleton:     #eef1f5;
+  --sc-skeleton-hi:  #f7f9fc;
 }
+
+/* ── Dark theme ─────────────────────────────────────────────────────
+   Brand navy/primary/gold stay constant; surfaces/text/borders/shadows
+   flip. Toggled by data-theme="dark" on <html> (see lib/theme.ts). */
+:root[data-theme="dark"] {
+  --sc-light-blue:     #1b2c46;   /* dark tint — hover/info bg */
+  --sc-cream:          #2a2417;   /* dark gold tint */
+
+  --sc-bg:             #0e1623;
+  --sc-card:           #16243a;
+  --sc-border:         #243650;
+  --sc-border-strong:  #32507a;
+
+  --sc-text:           #e8eef5;
+  --sc-text-secondary: #a9b8cc;
+  --sc-text-muted:     #7f90a6;
+
+  --sc-success-bg:     #14271c;
+  --sc-warning-bg:     #2a2113;
+  --sc-danger-bg:      #2a1717;
+
+  --sc-shadow-sm:   0 2px 8px rgba(0,0,0,0.30);
+  --sc-shadow-card: 0 2px 12px rgba(0,0,0,0.38);
+  --sc-shadow-lg:   0 8px 32px rgba(0,0,0,0.50);
+  --sc-shadow-xl:   0 16px 48px rgba(0,0,0,0.55);
+
+  --sc-glass-bg:     rgba(22,36,58,0.66);
+  --sc-glass-border: rgba(122,160,210,0.16);
+  --sc-shadow-glass: 0 8px 30px rgba(0,0,0,0.45);
+  --sc-skeleton:     #1d2c44;
+  --sc-skeleton-hi:  #27395a;
+}
+html { color-scheme: light; }
+html[data-theme="dark"] { color-scheme: dark; }
 
 /* ── Base ───────────────────────────────────────────────────────── */
 html, body {
@@ -194,3 +235,23 @@ body { direction: rtl; }
 .sc-badge-info    { background: var(--sc-light-blue); color: var(--sc-primary); }
 .sc-badge-gold    { background: var(--sc-cream);      color: var(--sc-gold); }
 .sc-badge-navy    { background: var(--sc-navy);       color: #fff; }
+
+/* ── Admin control-center helpers ───────────────────────────────── */
+/* Glass card — frosted surface for KPI/chart panels. */
+.sc-glass {
+  background: var(--sc-glass-bg);
+  border: 1px solid var(--sc-glass-border);
+  border-radius: var(--sc-radius-card);
+  box-shadow: var(--sc-shadow-glass);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+/* Loading skeleton — shimmer between two token greys. Reduced-motion safe. */
+.sc-skel {
+  background: linear-gradient(100deg, var(--sc-skeleton) 30%, var(--sc-skeleton-hi) 50%, var(--sc-skeleton) 70%);
+  background-size: 200% 100%;
+  animation: sc-skel-shimmer 1.4s ease-in-out infinite;
+  border-radius: 8px;
+}
+@keyframes sc-skel-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .sc-skel { animation: none; } }

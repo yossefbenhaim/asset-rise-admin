@@ -10,6 +10,18 @@ export type Action =
   | 'admin.leads.update'
   | 'admin.buildings.list'
   | 'admin.submissions.list'
+  // Control Center (operational management of the analyzer/reports pipeline).
+  // Seeded by migration 015_admin_control_center_perms; mirrored in the web can().
+  | 'admin.reports.list'
+  | 'admin.reports.update'
+  | 'admin.reports.rerun'
+  | 'admin.processing.view'
+  | 'admin.payments.list'
+  | 'admin.sources.view'
+  | 'admin.ai.view'
+  | 'admin.ai.regenerate'
+  | 'admin.ai.edit_prompt'
+  | 'admin.logs.list'
   // god.* — super-admin (role_key 'admin.super') capabilities. Future waves
   // add more god actions here; they must stay in lockstep with migration 006's
   // seed and the frontend can() mirror.

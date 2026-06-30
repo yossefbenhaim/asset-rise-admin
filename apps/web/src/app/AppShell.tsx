@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { Sidebar } from '@/components/shell/Sidebar'
 import { TopBar } from '@/components/shell/TopBar'
+import { CommandPalette } from '@/components/command/CommandPalette'
 
 export default function AppShell() {
   const [sideOpen, setSideOpen] = useState(false)
@@ -17,6 +18,7 @@ export default function AppShell() {
         <TopBar onMenuClick={() => setSideOpen(o => !o)} />
         <Outlet />
       </div>
+      <CommandPalette />
     </div>
   )
 }
