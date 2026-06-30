@@ -62,11 +62,14 @@ export function SourceCatalog({ data }: { data: SourcesCatalogResponse }) {
         </div>
       </div>
 
-      {/* Groups laid out side by side (e.g. תחבורה · תל אביב · מדיניות ותקנים
-          in the same row), each a self-contained column card. */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
+      {/* Groups laid out side by side. A masonry (CSS multi-column) layout packs
+          the cards tightly top-to-bottom so short groups (1 source) don't leave
+          big vertical gaps under them the way a fixed grid row does. */}
+      <div className="columns-1 md:columns-2 xl:columns-3 gap-4">
         {data.groups.map((g) => (
-          <CatalogGroupBlock key={g.key} group={g} live={data.live} />
+          <div key={g.key} className="mb-4 break-inside-avoid">
+            <CatalogGroupBlock group={g} live={data.live} />
+          </div>
         ))}
       </div>
     </div>
