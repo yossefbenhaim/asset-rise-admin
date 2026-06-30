@@ -6,6 +6,14 @@ import { buildingsRouter } from './buildings.js'
 import { submissionsRouter } from './submissions.js'
 import { summaryRouter } from './summary.js'
 import { godRouter } from './god/_index.js'
+// Control Center modules
+import { analyticsRouter } from './analytics.js'
+import { reportsRouter } from './reports.js'
+import { processingRouter } from './processing.js'
+import { paymentsRouter } from './payments.js'
+import { sourcesRouter } from './sources.js'
+import { aiRouter } from './ai.js'
+import { logsRouter } from './logs.js'
 
 export const appRouter = router({
   auth: authRouter,
@@ -15,6 +23,14 @@ export const appRouter = router({
   buildings: buildingsRouter,
   submissions: submissionsRouter,
   god: godRouter,
+  // Control Center
+  analytics: analyticsRouter,
+  reports: reportsRouter,
+  processing: processingRouter,
+  payments: paymentsRouter,
+  sources: sourcesRouter,
+  ai: aiRouter,
+  logs: logsRouter,
 })
 
 export type AppRouter = typeof appRouter

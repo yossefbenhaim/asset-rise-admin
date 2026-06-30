@@ -8,6 +8,12 @@ import AdminUsers from '@/pages/admin/Users'
 import AdminLeads from '@/pages/admin/Leads'
 import AdminBuildings from '@/pages/admin/Buildings'
 import AdminSubmissions from '@/pages/admin/Submissions'
+import AdminReports from '@/pages/admin/Reports'
+import AdminProcessing from '@/pages/admin/Processing'
+import AdminPayments from '@/pages/admin/Payments'
+import AdminSources from '@/pages/admin/Sources'
+import AdminAiAnalyst from '@/pages/admin/AiAnalyst'
+import AdminLogs from '@/pages/admin/Logs'
 import AdminAudit from '@/pages/admin/Audit'
 import AdminSearch from '@/pages/admin/Search'
 import GodBuildings from '@/pages/admin/god/Buildings'
@@ -53,6 +59,13 @@ export const router = createBrowserRouter([
         { path: 'leads', element: <AdminLeads /> },
         { path: 'buildings', element: <AdminBuildings /> },
         { path: 'submissions', element: <AdminSubmissions /> },
+        // Control Center
+        { path: 'reports', element: <AdminReports /> },
+        { path: 'processing', element: <AdminProcessing /> },
+        { path: 'payments', element: <AdminPayments /> },
+        { path: 'sources', element: <AdminSources /> },
+        { path: 'ai', element: <AdminAiAnalyst /> },
+        { path: 'logs', element: <AdminLogs /> },
         {
           element: <RequireSuperAdmin />,
           children: [
