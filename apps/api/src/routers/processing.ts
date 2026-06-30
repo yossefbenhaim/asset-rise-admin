@@ -4,6 +4,7 @@ import {
   STAGE_COUNT,
   type ProcessingJob,
   type ProcessingLive,
+  type ProcessingRun,
 } from '@asset-rise/shared'
 
 // ── request jsonb helpers ─────────────────────────────────────────────────
@@ -116,6 +117,7 @@ export const processingRouter = router({
       recentFailedRes,
       doneTodayRes,
       failedTodayRes,
+      runsRes,
     ] = await Promise.all([
       // Queue: pending jobs, oldest first (next to run).
       ctx.db
@@ -157,12 +159,26 @@ export const processingRouter = router({
         .select('id', { count: 'exact', head: true })
         .eq('status', 'failed')
         .gte('updated_at', todayIso),
+      // Real analyzer-compute runs (sc_report_runs) — actual wall-clock times.
+      ctx.db
+        .from('sc_report_runs')
+        .select('id,address_display,status,duration_ms,error,created_at')
+        .order('created_at', { ascending: false })
+        .limit(20),
     ])
 
     const queue = (queueRes.data ?? []).map((r) => toProcessingJob(r as JobRow, nowMs))
     const running = (runningRes.data ?? []).map((r) => toProcessingJob(r as JobRow, nowMs))
     const recentDone = (recentDoneRes.data ?? []).map((r) => toProcessingJob(r as JobRow, nowMs))
     const recentFailed = (recentFailedRes.data ?? []).map((r) => toProcessingJob(r as JobRow, nowMs))
+    const recentRuns: ProcessingRun[] = ((runsRes.data ?? []) as any[]).map((r) => ({
+      id: r.id,
+      addressDisplay: r.address_display ?? null,
+      status: r.status,
+      durationMs: r.duration_ms ?? null,
+      error: r.error ?? null,
+      created_at: r.created_at,
+    }))
 
     return {
       kpis: {
@@ -177,6 +193,7 @@ export const processingRouter = router({
       running,
       recentDone,
       recentFailed,
+      recentRuns,
       now: new Date(nowMs).toISOString(),
     }
   }),

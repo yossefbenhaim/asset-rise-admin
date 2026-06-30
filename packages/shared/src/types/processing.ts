@@ -60,7 +60,21 @@ export interface ProcessingLive {
   running: ProcessingJob[]
   recentDone: ProcessingJob[]
   recentFailed: ProcessingJob[]
+  // Real analyzer-compute runs (sc_report_runs) — actual wall-clock durations.
+  recentRuns: ProcessingRun[]
   // Server clock at fetch time (ISO) — lets the UI tick elapsed locally
   // between 4s polls without drifting from the server's reference.
   now: string
+}
+
+// A real evaluate-compute record from sc_report_runs (migration 081). Unlike
+// ProcessingJob (the AI research queue), these are the actual cold/refresh
+// analyzer runs with REAL wall-clock durations.
+export interface ProcessingRun {
+  id: string
+  addressDisplay: string | null
+  status: 'queued' | 'processing' | 'completed' | 'failed'
+  durationMs: number | null
+  error: string | null
+  created_at: string
 }

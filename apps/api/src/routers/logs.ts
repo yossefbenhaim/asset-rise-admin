@@ -72,8 +72,34 @@ function normalizeFailedJob(row: FailedJobRow): LogEntry {
   }
 }
 
+interface SystemLogRow {
+  id: string
+  severity: 'error' | 'warning' | 'info'
+  service: string | null
+  ref: string | null
+  message: string | null
+  meta: unknown
+  created_at: string
+}
+
+// sc_system_log — structured analyzer failures (and future warnings/info)
+// written best-effort by the customer pipeline (migration 082). Real source.
+function normalizeSystemLog(row: SystemLogRow): LogEntry {
+  return {
+    id: `sys:${row.id}`,
+    severity: row.severity,
+    service: row.service?.trim() || 'system',
+    reportId: row.ref ?? null,
+    userId: null,
+    message: row.message?.trim() || row.severity,
+    meta: row.meta ?? null,
+    timestamp: row.created_at,
+  }
+}
+
 const AUDIT_SELECT = 'id,actor_id,action,target_type,target_id,meta,ip,created_at'
 const JOB_SELECT = 'id,research_key,status,request,error,attempts,created_at,updated_at'
+const SYS_SELECT = 'id,severity,service,ref,message,meta,created_at'
 
 export const logsRouter = router({
   list: requireAction('admin.logs.list')
@@ -91,9 +117,16 @@ export const logsRouter = router({
       // source. Skip a query entirely when the severity filter excludes it.
       const wantAudit = severity === 'all' || severity === 'info'
       const wantJobs = severity === 'all' || severity === 'error'
-      // 'warning' has no real source yet → both skipped → empty feed.
+      // sc_system_log can emit any severity, so it's queried for every filter
+      // (narrowed by .eq when a specific severity is requested).
+      const sysQuery = ctx.db
+        .from('sc_system_log')
+        .select(SYS_SELECT)
+        .order('created_at', { ascending: false })
+        .limit(perSource)
+      if (severity !== 'all') sysQuery.eq('severity', severity)
 
-      const [auditRes, jobsRes] = await Promise.all([
+      const [auditRes, jobsRes, sysRes] = await Promise.all([
         wantAudit
           ? ctx.db
               .from('sc_audit_log')
@@ -109,11 +142,13 @@ export const logsRouter = router({
               .order('updated_at', { ascending: false, nullsFirst: false })
               .limit(perSource)
           : Promise.resolve({ data: [] as FailedJobRow[] }),
+        sysQuery,
       ])
 
       const merged: LogEntry[] = [
         ...((auditRes.data as AuditRow[] | null) ?? []).map(normalizeAudit),
         ...((jobsRes.data as FailedJobRow[] | null) ?? []).map(normalizeFailedJob),
+        ...((sysRes.data as SystemLogRow[] | null) ?? []).map(normalizeSystemLog),
       ]
 
       const filtered = q
