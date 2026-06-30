@@ -3,7 +3,7 @@ import { Banknote, CheckCircle2, XCircle, Undo2 } from 'lucide-react'
 import { trpc } from '@/lib/api/trpc'
 import { KpiCard } from '@/components/ui/KpiCard'
 import { DataTable } from '@/components/ui/DataTable'
-import { Drawer } from '@/components/ui/Drawer'
+import { Modal } from '@/components/ui/Modal'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import type { PaymentRow, PaymentStatus } from '@asset-rise/shared'
 import { paymentColumns } from '@/features/payments/columns'
@@ -106,10 +106,11 @@ export default function AdminPayments() {
         }
       />
 
-      <Drawer
+      <Modal
         open={!!selected}
         onClose={() => setSelected(null)}
         title="פרטי תשלום"
+        icon={<Banknote size={18} />}
       >
         {selected && (
           <div className="flex flex-col">
@@ -135,7 +136,7 @@ export default function AdminPayments() {
             <Field label="שולם בתאריך">{selected.paid_at ? dateTime(selected.paid_at) : '—'}</Field>
           </div>
         )}
-      </Drawer>
+      </Modal>
     </div>
   )
 }

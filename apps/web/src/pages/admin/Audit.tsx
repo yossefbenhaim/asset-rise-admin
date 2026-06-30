@@ -5,7 +5,7 @@ import { ControlPanel } from '@/components/ui/ControlPanel'
 import { Pill } from '@/components/ui/Pill'
 import { Button } from '@/components/ui/Button'
 import { DataTable } from '@/components/ui/DataTable'
-import { Drawer } from '@/components/ui/Drawer'
+import { Modal } from '@/components/ui/Modal'
 import type { GodAuditListInput } from '@asset-rise/shared'
 import { dateTime } from '@/lib/format'
 
@@ -194,7 +194,7 @@ export default function AdminAudit() {
         />
       </div>
 
-      <Drawer open={!!active} onClose={() => setActive(null)} title="רשומת ביקורת">
+      <Modal open={!!active} onClose={() => setActive(null)} title="רשומת ביקורת">
         {active && (
           <div className="space-y-3 text-[13px]">
             <AuditField label="תאריך" value={dateTime(active.created_at as string)} />
@@ -214,7 +214,7 @@ export default function AdminAudit() {
             ) : null}
           </div>
         )}
-      </Drawer>
+      </Modal>
     </div>
   )
 }

@@ -7,7 +7,7 @@ import { Pill } from '@/components/ui/Pill'
 import { Button } from '@/components/ui/Button'
 import { DangerConfirm } from '@/components/ui/DangerConfirm'
 import { DataTable } from '@/components/ui/DataTable'
-import { Drawer } from '@/components/ui/Drawer'
+import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/Toast'
 import { Users, Building2, Send, RotateCcw } from 'lucide-react'
 import type {
@@ -464,10 +464,26 @@ function RecentSends({
         </CardBody>
       </Card>
 
-      <Drawer
+      <Modal
         open={!!activeSend}
         onClose={() => setActiveSend(null)}
         title="פרטי שליחה"
+        icon={<Send size={18} />}
+        footer={
+          activeSend && (
+            <Button
+              variant="secondary"
+              icon={<RotateCcw size={14} />}
+              onClick={() => {
+                const target = activeSend
+                setActiveSend(null)
+                setResendTarget(target)
+              }}
+            >
+              שלח שוב
+            </Button>
+          )
+        }
       >
         {activeSend && (
           <div className="space-y-4 text-[13px]">
@@ -480,22 +496,9 @@ function RecentSends({
             {activeSend.event_id && (
               <DetailRow label="מזהה אירוע" value={activeSend.event_id} ltr mono />
             )}
-            <div className="pt-2">
-              <Button
-                variant="secondary"
-                icon={<RotateCcw size={14} />}
-                onClick={() => {
-                  const target = activeSend
-                  setActiveSend(null)
-                  setResendTarget(target)
-                }}
-              >
-                שלח שוב
-              </Button>
-            </div>
           </div>
         )}
-      </Drawer>
+      </Modal>
 
       {resendTarget && (
         <ResendModal
