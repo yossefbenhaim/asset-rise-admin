@@ -138,16 +138,25 @@ export const godDocumentsRouter = router({
         })
       }
       // 5-minute signed URL — enough to preview, short enough to not leak.
-      const { data, error } = await ctx.db.storage
-        .from('documents')
-        .createSignedUrl(path, 60 * 5)
-      if (error || !data?.signedUrl) {
+      // Dual-read during the storage-prefix migration grace period: if the
+      // recorded key fails (e.g. a row still on the old prefix, or vice versa),
+      // retry the alternate prefix before giving up.
+      const altOf = (k: string): string | null =>
+        k.startsWith('asset-rise/') ? 'silver-castle/' + k.slice('asset-rise/'.length)
+        : k.startsWith('silver-castle/') ? 'asset-rise/' + k.slice('silver-castle/'.length)
+        : null
+      let signed = await ctx.db.storage.from('documents').createSignedUrl(path, 60 * 5)
+      if ((signed.error || !signed.data?.signedUrl)) {
+        const alt = altOf(path)
+        if (alt) signed = await ctx.db.storage.from('documents').createSignedUrl(alt, 60 * 5)
+      }
+      if (signed.error || !signed.data?.signedUrl) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'לא ניתן להפיק קישור לקובץ — ייתכן שהקובץ אינו קיים באחסון',
         })
       }
-      return { url: data.signedUrl, storage_path: path }
+      return { url: signed.data.signedUrl, storage_path: path }
     }),
 
   // ── Writes (all audited via godMutation) ─────────────────────────────────────
