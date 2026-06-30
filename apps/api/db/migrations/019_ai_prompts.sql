@@ -2,6 +2,15 @@
 -- Edited from the admin (admin.ai.edit_prompt, super-only) and read by the host
 -- analyzer worker so prompt tweaks ship without a code deploy. Service-role
 -- only. One row per version. Idempotent.
+--
+-- ⚠ SECURITY CONTRACT (Shield 2026-06-30, MEDIUM): `text` is UNTRUSTED
+-- operator-provided content. The host analyzer worker (~/analyzer-codex-worker.sh)
+-- does NOT read this table yet. BEFORE wiring the worker to consume it, the worker
+-- MUST treat `text` as DATA/rubric only — quoted + fenced inside a fixed,
+-- code-owned instruction harness, with the non-negotiable JSON-only output
+-- contract and tool/file/secret restrictions OUTSIDE the stored text and enforced
+-- by schema validation (block, not log-only). Never concatenate `text` as live
+-- agent instructions. Editing stays super-admin-only.
 create table if not exists sc_ai_prompts (
   version     text primary key,        -- 'v10', 'v11', …
   text        text not null default '',
