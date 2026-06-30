@@ -204,7 +204,14 @@ export default function GodDocuments() {
                       <td className="text-[12px]">{d.project_name || '—'}</td>
                       <td className="text-[12px]">{d.uploader_name || d.uploader_email || '—'}</td>
                       <td>
-                        <Button size="sm" variant="ghost" onClick={() => setActiveId(d.id)}>פתח</Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          icon={<Eye size={14} />}
+                          onClick={() => setActiveId(d.id)}
+                        >
+                          פתח
+                        </Button>
                       </td>
                     </tr>
                   ))}

@@ -1,5 +1,11 @@
 // Column defs for the AI summaries DataTable. Kept separate so the list stays
 // declarative and the page thin.
+//
+// NOTE: the shared DataTable puts `whitespace-nowrap` on every <td> and does not
+// itself apply column widths — so every cell here pins its own width and
+// truncates inside a `block` wrapper (overflow-hidden + ellipsis / line-clamp).
+// That is what keeps long summaries from spilling over and overlapping the next
+// column. The full text is read in the SummaryDrawer (row click).
 import type { ColumnDef } from '@tanstack/react-table'
 import { Sparkles, Users } from 'lucide-react'
 import type { AiSummaryRow } from '@asset-rise/shared'
@@ -21,11 +27,14 @@ export const aiColumns: ColumnDef<AiSummaryRow, unknown>[] = [
     cell: ({ row }) => {
       const r = row.original
       const loc = localityOf(r.research_key)
+      const head = r.heading ?? r.summary ?? 'ללא תקציר'
       return (
-        <div className="leading-tight max-w-[420px]">
-          <div className="font-semibold text-sc-text inline-flex items-center gap-1.5">
+        // Fixed-width block: the title truncates to one line, the meta to one
+        // line. No inline-flex (which would size-to-content and never shrink).
+        <div className="w-[280px] max-w-[280px] leading-tight" title={head}>
+          <div className="flex items-center gap-1.5 font-semibold text-sc-text">
             <Sparkles size={13} className="text-sc-primary shrink-0" />
-            <span className="truncate">{r.heading ?? r.summary ?? 'ללא תקציר'}</span>
+            <span className="block truncate min-w-0">{head}</span>
           </div>
           <div className="text-[11px] text-sc-text-muted truncate sc-num">
             {loc ? `${loc} · ` : ''}{r.research_key}
@@ -51,7 +60,12 @@ export const aiColumns: ColumnDef<AiSummaryRow, unknown>[] = [
     accessorFn: r => r.model ?? '',
     cell: ({ row }) =>
       row.original.model ? (
-        <code className="text-[11px] text-sc-text-secondary break-all">{row.original.model}</code>
+        <code
+          className="block w-[130px] max-w-[130px] truncate text-[11px] text-sc-text-secondary"
+          title={row.original.model}
+        >
+          {row.original.model}
+        </code>
       ) : (
         <span className="text-sc-text-muted">—</span>
       ),
@@ -93,7 +107,7 @@ export const aiColumns: ColumnDef<AiSummaryRow, unknown>[] = [
     header: 'עודכן',
     accessorFn: r => r.updated_at ?? r.created_at,
     cell: ({ row }) => (
-      <span className="text-sc-text-secondary sc-num">
+      <span className="text-sc-text-secondary sc-num whitespace-nowrap">
         {dateShort(row.original.updated_at ?? row.original.created_at)}
       </span>
     ),

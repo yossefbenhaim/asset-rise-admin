@@ -73,12 +73,18 @@ function BuildingList({ onSelect }: { onSelect: (id: string) => void }) {
   return (
     <div className="sc-page">
       <div className="sc-page__head">
-        <h1>בניינים ופרויקטים — מנהל-על</h1>
+        <div>
+          <h1>בניינים ופרויקטים — מנהל-על</h1>
+          <div className="sub">
+            שליטה תפעולית מלאה ופירוט עומק לכל בניין — בשונה מ«בניינים» (רשימת ה-CRM
+            לקריאה), כאן רואים את כל הדיירים, הבעלים, הוועד, השלב, ומבצעים את פעולות-העל
+          </div>
+        </div>
       </div>
 
       <ControlPanel
         title="שליטה בבניינים ופרויקטים"
-        description="צפייה וכל פעולות העריכה ההרסניות על בניינים ופרויקטים. כל פעולה נרשמת ביומן הביקורת."
+        description="פירוט עומק לכל בניין (דיירים, בעלים, ועד, שלב) וכל פעולות העריכה ההרסניות על בניינים ופרויקטים. בשונה ממסך «בניינים» שהוא רשימת CRM לקריאה — כאן מתבצעת השליטה התפעולית המלאה. כל פעולה נרשמת ביומן הביקורת."
         tone="navy"
       >
         <input
@@ -159,6 +165,19 @@ function BuildingDetail({ id, onBack }: { id: string; onBack: () => void }) {
 
   const d = detail.data
 
+  // Derived tenant breakdown for the detail header. "Declared" = tenants who
+  // completed their declaration (have an apartment number assigned); the rest
+  // are registered but not yet declared. Owners = tenants with an ownership %.
+  const stats = useMemo(() => {
+    const tenants = d?.tenants ?? []
+    const total = tenants.length
+    const declared = tenants.filter(t => t.apartment_number != null && String(t.apartment_number).trim() !== '').length
+    const owners = tenants.filter(t => t.ownership_percentage != null).length
+    const committee = tenants.filter(t => t.is_committee_member || t.is_committee_chair).length
+    const ownershipSum = tenants.reduce((acc, t) => acc + (Number(t.ownership_percentage) || 0), 0)
+    return { total, declared, owners, committee, ownershipSum }
+  }, [d])
+
   if (detail.isLoading) {
     return (
       <div className="sc-page">
@@ -235,6 +254,24 @@ function BuildingDetail({ id, onBack }: { id: string; onBack: () => void }) {
         )}
       </div>
 
+      {/* Tenant breakdown stats */}
+      <Card className="mt-4">
+        <CardHeader title="מבט-על על הדיירים" />
+        <CardBody>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <Stat label="סה״כ דיירים רשומים" value={stats.total} />
+            <Stat
+              label="הצהירו (עם דירה)"
+              value={`${stats.declared} / ${stats.total}`}
+              hint={stats.total ? `${Math.round((stats.declared / stats.total) * 100)}% השלימו הצהרה` : undefined}
+            />
+            <Stat label="בעלים (עם % בעלות)" value={stats.owners} />
+            <Stat label="חברי ועד" value={stats.committee} />
+            <Stat label="סך אחוזי בעלות" value={`${Math.round(stats.ownershipSum)}%`} />
+          </div>
+        </CardBody>
+      </Card>
+
       {/* Linked providers */}
       <Card className="mt-4">
         <CardHeader
@@ -271,11 +308,104 @@ function BuildingDetail({ id, onBack }: { id: string; onBack: () => void }) {
         </CardBody>
       </Card>
 
-      {/* Tenants */}
+      {/* Committee members */}
       <Card className="mt-4">
         <CardHeader
-          title="דיירי הבניין"
-          meta={<Pill kind="info">{d.tenants.length}</Pill>}
+          title="חברי הוועד"
+          meta={<Pill kind="info">{stats.committee}</Pill>}
+        />
+        <CardBody>
+          {!d.tenants.some(t => t.is_committee_member || t.is_committee_chair) ? (
+            <div className="text-center py-4 text-sc-text-secondary text-[13px]">
+              לא הוגדרו חברי ועד לבניין זה
+            </div>
+          ) : (
+            <div className="sc-table-wrap">
+              <table className="sc-table">
+                <thead>
+                  <tr>
+                    <th>שם</th>
+                    <th>תפקיד בוועד</th>
+                    <th>דירה</th>
+                    <th>אימייל</th>
+                    <th>טלפון</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {d.tenants
+                    .filter(t => t.is_committee_member || t.is_committee_chair)
+                    .map(t => (
+                      <tr key={t.id}>
+                        <td className="font-semibold">{t.full_name ?? '—'}</td>
+                        <td>
+                          {t.is_committee_chair ? (
+                            <Pill kind="navy">יו״ר ועד</Pill>
+                          ) : (
+                            <Pill kind="info">חבר ועד</Pill>
+                          )}
+                        </td>
+                        <td>{t.apartment_number ?? '—'}</td>
+                        <td className="text-[12px]">{t.email ?? '—'}</td>
+                        <td className="text-[12px]">{t.phone ?? '—'}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardBody>
+      </Card>
+
+      {/* Owners */}
+      <Card className="mt-4">
+        <CardHeader
+          title="בעלי דירות"
+          meta={<Pill kind="info">{stats.owners}</Pill>}
+        />
+        <CardBody>
+          {!d.tenants.some(t => t.ownership_percentage != null) ? (
+            <div className="text-center py-4 text-sc-text-secondary text-[13px]">
+              לא נרשמו אחוזי בעלות לדיירי בניין זה
+            </div>
+          ) : (
+            <div className="sc-table-wrap">
+              <table className="sc-table">
+                <thead>
+                  <tr>
+                    <th>שם</th>
+                    <th>דירה</th>
+                    <th>% בעלות</th>
+                    <th>אימייל</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {d.tenants
+                    .filter(t => t.ownership_percentage != null)
+                    .map(t => (
+                      <tr key={t.id}>
+                        <td className="font-semibold">{t.full_name ?? '—'}</td>
+                        <td>{t.apartment_number ?? '—'}</td>
+                        <td className="font-semibold">{t.ownership_percentage}%</td>
+                        <td className="text-[12px]">{t.email ?? '—'}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardBody>
+      </Card>
+
+      {/* Tenants (full roster) */}
+      <Card className="mt-4">
+        <CardHeader
+          title="כל דיירי הבניין"
+          meta={
+            <div className="flex items-center gap-2">
+              <Pill kind="info">{stats.total} רשומים</Pill>
+              <Pill kind="success">{stats.declared} הצהירו</Pill>
+            </div>
+          }
         />
         <CardBody>
           {!d.tenants.length ? (
@@ -350,6 +480,18 @@ function BuildingDetail({ id, onBack }: { id: string; onBack: () => void }) {
           onBack()
         }}
       />
+    </div>
+  )
+}
+
+// Lightweight inline stat tile for the building detail header — token-styled,
+// no animation (the detail view is dense, KpiCard would be too heavy here).
+function Stat({ label, value, hint }: { label: string; value: React.ReactNode; hint?: string }) {
+  return (
+    <div className="border border-sc-border rounded-sc-input p-3">
+      <div className="text-[12px] text-sc-text-secondary mb-1">{label}</div>
+      <div className="text-[20px] font-extrabold text-sc-text leading-none">{value}</div>
+      {hint && <div className="text-[11px] text-sc-text-muted mt-1">{hint}</div>}
     </div>
   )
 }

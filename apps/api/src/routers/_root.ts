@@ -14,6 +14,7 @@ import { paymentsRouter } from './payments.js'
 import { sourcesRouter } from './sources.js'
 import { aiRouter } from './ai.js'
 import { logsRouter } from './logs.js'
+import { wongRouter } from './wong.js'
 
 export const appRouter = router({
   auth: authRouter,
@@ -31,6 +32,7 @@ export const appRouter = router({
   sources: sourcesRouter,
   ai: aiRouter,
   logs: logsRouter,
+  wong: wongRouter,
 })
 
 export type AppRouter = typeof appRouter

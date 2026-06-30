@@ -1,7 +1,9 @@
 // Processing Monitor — real-time view of the analyzer research pipeline.
-// Thin page: poll processingRouter.live every 4s, then lay out KPIs + the
-// live in-processing jobs (each with a 7-stage StageBar) + the waiting queue
-// + a recent done/failed strip. Heavy UI lives in features/processing/*.
+// Thin page: poll processingRouter.live every 4s, then lay out KPIs + a
+// runs-over-time timeline + the live in-processing jobs (each with a 7-stage
+// StageBar) + the waiting queue + recent done/failed strips + the real
+// cold-compute runs panel (duration + 3-phase breakdown + source health).
+// Heavy UI lives in features/processing/*.
 import { motion } from 'framer-motion'
 import { RefreshCw, Info, Activity, Hourglass, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { trpc } from '@/lib/api/trpc'
@@ -10,9 +12,13 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { KpiCard } from '@/components/ui/KpiCard'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SkeletonCard } from '@/components/ui/Skeleton'
+import { AreaChartCard } from '@/components/charts/AreaChartCard'
+import { BarChartCard } from '@/components/charts/BarChartCard'
+import { BRAND } from '@/components/charts/chartTheme'
 import { timeAgo } from '@/lib/format'
 import { JobCard } from '@/features/processing/JobCard'
 import { QueuePanel } from '@/features/processing/QueuePanel'
+import { RunsPanel } from '@/features/processing/RunsPanel'
 
 export default function AdminProcessing() {
   const q = trpc.processing.live.useQuery(undefined, {
@@ -97,6 +103,35 @@ export default function AdminProcessing() {
             </div>
           )}
 
+          {/* Runs-over-time timeline (real cold computes, last 24h by hour) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
+            <AreaChartCard
+              index={0}
+              title="ריצות לאורך זמן"
+              sub={`${d.timelineGranularity === 'hour' ? '24 שעות אחרונות · לפי שעה' : 'לפי יום'} · חישובים קרים בלבד`}
+              data={d.timeline}
+              xKey="label"
+              yKey="count"
+              color={BRAND.primary}
+              height={200}
+              valueFmt={(n) => `${n} ריצות`}
+            />
+            <BarChartCard
+              index={1}
+              title="משך ריצה ממוצע"
+              sub={`${d.timelineGranularity === 'hour' ? 'לפי שעה' : 'לפי יום'} · שניות`}
+              data={d.timeline.map((p) => ({
+                label: p.label,
+                avgSec: p.avgDurationMs != null ? Number((p.avgDurationMs / 1000).toFixed(1)) : 0,
+              }))}
+              xKey="label"
+              yKey="avgSec"
+              color={BRAND.gold}
+              height={200}
+              valueFmt={(n) => `${n} ש׳`}
+            />
+          </div>
+
           {/* Main grid: live processing (wide) + queue (narrow) */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-start">
             {/* In-processing jobs */}
@@ -141,39 +176,9 @@ export default function AdminProcessing() {
             />
           </div>
 
-          {/* Real analyzer-compute runs (sc_report_runs) — actual durations */}
-          <div className="sc-glass p-4 flex flex-col gap-3">
-            <h3 className="text-[14px] font-bold text-sc-text m-0 inline-flex items-center gap-1.5">
-              <Activity size={15} className="text-sc-primary" />
-              ריצות אנליזה אחרונות
-              <span className="text-[10px] font-bold text-sc-success bg-sc-success-bg rounded-sc-pill px-2 py-0.5">נתוני אמת</span>
-              <span className="text-sc-text-secondary font-semibold sc-num">({d.recentRuns.length})</span>
-            </h3>
-            {d.recentRuns.length === 0 ? (
-              <EmptyState title="טרם נרשמו ריצות" body="ריצת ניתוח חדשה (לא מהמטמון) תופיע כאן עם משך אמיתי." />
-            ) : (
-              <ul className="flex flex-col divide-y divide-sc-border/60 -mb-1">
-                {d.recentRuns.map((r) => (
-                  <li key={r.id} className="flex items-center justify-between gap-3 py-2">
-                    <div className="min-w-0">
-                      <div className="text-[12.5px] font-semibold text-sc-text truncate" title={r.addressDisplay ?? ''}>
-                        {r.addressDisplay ?? '—'}
-                      </div>
-                      <div className="text-[11px] text-sc-text-muted truncate">
-                        {r.error ? `${r.error} · ` : ''}{timeAgo(r.created_at)}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {r.durationMs != null && (
-                        <span className="text-[11px] font-bold text-sc-text-secondary sc-num">{(r.durationMs / 1000).toFixed(1)} ש׳</span>
-                      )}
-                      <StatusBadge status={r.status} />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          {/* Real analyzer-compute runs (sc_report_runs) — duration + 3-phase
+              breakdown + global source health (features/processing/RunsPanel) */}
+          <RunsPanel runs={d.recentRuns} sources={d.sources} index={0} />
         </motion.div>
       )}
     </div>

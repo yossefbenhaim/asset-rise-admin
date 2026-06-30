@@ -60,6 +60,80 @@ export type SourceHealth = {
   note: string | null
 }
 
+// ---------------------------------------------------------------------------
+// FULL SOURCE CATALOG — the complete list of everything the analyzer connects
+// to, grouped, with type + what it feeds. This is a STATIC inventory (mirrors
+// ~/silver-castle/apps/api/src/analyzer/sources/*) enriched with live health
+// from sc_source_health where a canonical SourceId match exists. Backs the
+// expandable "כל המקורות" section in apps/web/src/features/sources/*.
+
+// How we connect to a source.
+//   'api'    — live programmatic fetch (GIS/CKAN/ArcGIS/MAVAT REST)
+//   'web'    — scraped from a website (firecrawl on municipal pages)
+//   'static' — curated/bundled data shipped with the app (JSON / policy tables)
+export type SourceConnType = 'api' | 'web' | 'static'
+
+// One entry in the catalog. Decoupled from SourceHealth: a catalog entry is an
+// adapter we ship, which MAY map to a canonical health SourceId.
+export type CatalogSource = {
+  // Stable key (the adapter file name, e.g. 'govmap', 'nadlan_deals').
+  key: string
+  // Hebrew display name.
+  name: string
+  // Connection type chip.
+  type: SourceConnType
+  // Short technical descriptor (e.g. 'GovMap GIS', 'data.gov.il CKAN').
+  provider: string
+  // Hebrew: what this source feeds into the analysis.
+  feeds: string
+  // lucide-react icon name (mapped client-side).
+  icon: string
+  // Canonical health id this adapter rolls up to, if any. Lets the UI show the
+  // live status/latency next to the catalog entry. null = no direct health row.
+  healthId: SourceId | null
+  // For municipal-web: the list of municipalities we have scraped data for.
+  // Hebrew city names. Empty for everything else.
+  municipalities: string[]
+}
+
+// A named group of catalog sources for the grouped catalog UI.
+export type CatalogGroup = {
+  // Stable group key.
+  key: string
+  // Hebrew group title.
+  title: string
+  // Hebrew one-line description of the group.
+  subtitle: string
+  // lucide-react icon name for the group header.
+  icon: string
+  sources: CatalogSource[]
+}
+
+// Live status of a canonical health id, sent alongside the catalog so the UI
+// can pin a status dot next to each entry that maps to a health row.
+export type CatalogLiveStatus = {
+  status: SourceStatus
+  instrumented: boolean
+  latencyMs: number | null
+  lastUpdated: string | null
+}
+
+// Payload returned by sources.catalog().
+export interface SourcesCatalogResponse {
+  groups: CatalogGroup[]
+  // Live status keyed by SourceId (only canonical health ids that have a signal).
+  live: Partial<Record<SourceId, CatalogLiveStatus>>
+  // Counts for the catalog header.
+  summary: {
+    total: number
+    api: number
+    web: number
+    static: number
+    municipalities: number
+  }
+  now: string
+}
+
 // The whole sources payload returned by sources.health().
 export interface SourcesHealthResponse {
   sources: SourceHealth[]

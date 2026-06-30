@@ -46,7 +46,10 @@ export default function AdminAudit() {
   return (
     <div className="sc-page">
       <div className="sc-page__head">
-        <h1>יומן ביקורת</h1>
+        <div>
+          <h1>יומן ביקורת</h1>
+          <div className="sub">יומן כל פעולות-הניהול — מי עשה מה, מתי, ועל מה</div>
+        </div>
       </div>
 
       <ControlPanel

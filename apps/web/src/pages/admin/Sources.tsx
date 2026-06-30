@@ -14,6 +14,7 @@ import { KpiCard } from '@/components/ui/KpiCard'
 import { SkeletonCard } from '@/components/ui/Skeleton'
 import { timeAgo } from '@/lib/format'
 import { SourceHealthGrid } from '@/features/sources/SourceHealthGrid'
+import { SourceCatalog } from '@/features/sources/SourceCatalog'
 
 export default function AdminSources() {
   const q = trpc.sources.health.useQuery(undefined, {
@@ -21,13 +22,19 @@ export default function AdminSources() {
     refetchOnWindowFocus: true,
   })
   const d = q.data
+  // Full source catalog (static structure + live status). Refetched slowly —
+  // the structure is static; live dots ride along.
+  const cat = trpc.sources.catalog.useQuery(undefined, {
+    refetchInterval: 60000,
+    refetchOnWindowFocus: false,
+  })
 
   return (
     <div className="sc-page">
       <div className="sc-page__head">
         <div>
           <h1>מקורות נתונים</h1>
-          <div className="sub">בריאות מקורות המידע של מנוע הניתוח · מתרענן כל 15 שניות</div>
+          <div className="sub">בריאות וקטלוג מלא של כל מקורות המידע שמזינים את מנוע הניתוח · מתרענן כל 15 שניות</div>
         </div>
         <Button variant="ghost" onClick={() => q.refetch()} disabled={q.isFetching}>
           <RefreshCw size={15} className={q.isFetching ? 'animate-spin' : ''} />
@@ -101,8 +108,20 @@ export default function AdminSources() {
             </div>
           )}
 
-          {/* Grid */}
+          {/* Live health grid (canonical sources reporting right now) */}
           <SourceHealthGrid sources={d.sources} />
+
+          {/* Full source catalog — everything we connect to */}
+          {cat.data ? (
+            <div className="mt-2">
+              <h2 className="text-[15px] font-bold text-sc-text mb-1">הקטלוג המלא</h2>
+              <SourceCatalog data={cat.data} />
+            </div>
+          ) : cat.isLoading ? (
+            <div className="flex flex-col gap-3 mt-2">
+              <SkeletonCard /><SkeletonCard />
+            </div>
+          ) : null}
 
           <div className="text-[10.5px] text-sc-text-muted text-center">
             נתונים עודכנו {timeAgo(d.now)}

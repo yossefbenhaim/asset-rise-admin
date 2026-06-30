@@ -166,7 +166,12 @@ export default function GodWorkflow() {
   return (
     <div className="sc-page">
       <div className="sc-page__head">
-        <h1>תהליך, מקל-שרביט ואישור כפול — מנהל-על</h1>
+        <div>
+          <h1>תהליך, מקל-שרביט ואישור כפול — מנהל-על</h1>
+          <div className="sub">
+            שליטה בתהליך העבודה של הפרויקט — שלבים, משימות, שרביט, אישורים כפולים
+          </div>
+        </div>
       </div>
 
       <ControlPanel
@@ -180,6 +185,28 @@ export default function GodWorkflow() {
           onChange={e => setQ(e.target.value)}
           placeholder="חיפוש פרויקט לפי שם / כתובת בניין…"
         />
+        <div className="mt-3">
+          <div className="text-[12px] text-sc-text-secondary mb-1">
+            בחר/י פרויקט מהרשימה למטה כדי לבצע את פעולות-העל הזמינות:
+          </div>
+          <div className="flex flex-wrap gap-2 text-[12px]">
+            <span className="inline-flex items-center gap-1 rounded-sc-input border border-sc-border px-2 py-1">
+              <Flag size={13} /> החלפת מחזיק המקל
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-sc-input border border-sc-border px-2 py-1">
+              <GitBranch size={13} /> כפיית סטטוס משימת פרויקט
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-sc-input border border-sc-border px-2 py-1">
+              <Building2 size={13} /> כפיית סטטוס משימת בניין
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-sc-input border border-sc-border px-2 py-1">
+              <UserCog size={13} /> שיוך אחראי למשימה
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-sc-input border border-sc-border px-2 py-1">
+              <ShieldCheck size={13} /> הכרעת אישור כפול תקוע
+            </span>
+          </div>
+        </div>
       </ControlPanel>
 
       <Card className="mt-4">

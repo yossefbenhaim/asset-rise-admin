@@ -13,6 +13,7 @@ import AdminProcessing from '@/pages/admin/Processing'
 import AdminPayments from '@/pages/admin/Payments'
 import AdminSources from '@/pages/admin/Sources'
 import AdminAiAnalyst from '@/pages/admin/AiAnalyst'
+import AdminWong from '@/pages/admin/Wong'
 import AdminLogs from '@/pages/admin/Logs'
 import AdminAudit from '@/pages/admin/Audit'
 import AdminSearch from '@/pages/admin/Search'
@@ -65,6 +66,7 @@ export const router = createBrowserRouter([
         { path: 'payments', element: <AdminPayments /> },
         { path: 'sources', element: <AdminSources /> },
         { path: 'ai', element: <AdminAiAnalyst /> },
+        { path: 'wong', element: <AdminWong /> },
         { path: 'logs', element: <AdminLogs /> },
         {
           element: <RequireSuperAdmin />,

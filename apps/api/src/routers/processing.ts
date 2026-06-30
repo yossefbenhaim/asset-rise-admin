@@ -5,6 +5,10 @@ import {
   type ProcessingJob,
   type ProcessingLive,
   type ProcessingRun,
+  type ProcessingRunStage,
+  type ProcessingSourceHealth,
+  type ProcessingTimelineGranularity,
+  type ProcessingTimelinePoint,
 } from '@asset-rise/shared'
 
 // ── request jsonb helpers ─────────────────────────────────────────────────
@@ -100,6 +104,84 @@ function toProcessingJob(row: JobRow, nowMs: number): ProcessingJob {
 
 const SELECT = 'id,research_key,status,request,error,attempts,created_at,updated_at,completed_at'
 
+// ── sc_report_runs / sc_source_health helpers ─────────────────────────────
+
+// Coerce the runs.stages jsonb (expected [{stage,ms}]) into a clean typed
+// array. Tolerant of older/null rows and stray shapes — returns null when
+// there's nothing usable so the UI can hide the breakdown.
+function parseRunStages(raw: unknown): ProcessingRunStage[] | null {
+  if (!Array.isArray(raw)) return null
+  const out: ProcessingRunStage[] = []
+  for (const s of raw) {
+    if (s && typeof s === 'object') {
+      const stage = (s as any).stage
+      const ms = (s as any).ms
+      if (typeof stage === 'string' && typeof ms === 'number' && Number.isFinite(ms)) {
+        out.push({ stage, ms: Math.max(0, Math.round(ms)) })
+      }
+    }
+  }
+  return out.length ? out : null
+}
+
+// Two-digit, zero-padded helper for compact bucket labels.
+function pad2(n: number): string {
+  return String(n).padStart(2, '0')
+}
+
+// Build a timeline of cold-compute runs over the last `hours` window, bucketed
+// by hour (≤48h) or day (longer). Each bucket carries run count + avg duration.
+// Empty buckets are emitted so the chart shows true gaps, not a compressed line.
+function buildTimeline(
+  runs: { created_at: string; duration_ms: number | null }[],
+  nowMs: number,
+  granularity: ProcessingTimelineGranularity,
+  buckets: number,
+): ProcessingTimelinePoint[] {
+  const stepMs = granularity === 'hour' ? 3_600_000 : 86_400_000
+  // Floor "now" to the start of its bucket so edges line up.
+  const now = new Date(nowMs)
+  if (granularity === 'hour') now.setMinutes(0, 0, 0)
+  else now.setHours(0, 0, 0, 0)
+  const lastStart = now.getTime()
+  const firstStart = lastStart - stepMs * (buckets - 1)
+
+  // Accumulate count + duration sum per bucket index.
+  const agg = new Map<number, { count: number; durSum: number; durN: number }>()
+  for (const r of runs) {
+    const t = Date.parse(r.created_at)
+    if (Number.isNaN(t) || t < firstStart) continue
+    const idx = Math.floor((t - firstStart) / stepMs)
+    if (idx < 0 || idx >= buckets) continue
+    const cell = agg.get(idx) ?? { count: 0, durSum: 0, durN: 0 }
+    cell.count += 1
+    if (typeof r.duration_ms === 'number' && Number.isFinite(r.duration_ms)) {
+      cell.durSum += r.duration_ms
+      cell.durN += 1
+    }
+    agg.set(idx, cell)
+  }
+
+  const out: ProcessingTimelinePoint[] = []
+  for (let i = 0; i < buckets; i++) {
+    const startMs = firstStart + i * stepMs
+    const d = new Date(startMs)
+    const label = granularity === 'hour' ? `${pad2(d.getHours())}:00` : `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}`
+    const cell = agg.get(i)
+    out.push({
+      bucket: new Date(startMs).toISOString(),
+      label,
+      count: cell?.count ?? 0,
+      avgDurationMs: cell && cell.durN > 0 ? Math.round(cell.durSum / cell.durN) : null,
+    })
+  }
+  return out
+}
+
+// How far back the timeline + run history reach, and the bucket grain.
+const TIMELINE_GRANULARITY: ProcessingTimelineGranularity = 'hour'
+const TIMELINE_BUCKETS = 24 // last 24 hours, one bar per hour
+
 export const processingRouter = router({
   // Live snapshot of the research pipeline. Designed to be polled (the page
   // uses refetchInterval: 4000). Pure read; no audit (read-only monitor).
@@ -110,6 +192,10 @@ export const processingRouter = router({
     startOfToday.setHours(0, 0, 0, 0)
     const todayIso = startOfToday.toISOString()
 
+    // Timeline window start (ISO): far enough back to fill TIMELINE_BUCKETS.
+    const timelineStepMs = TIMELINE_GRANULARITY === 'hour' ? 3_600_000 : 86_400_000
+    const timelineSinceIso = new Date(nowMs - timelineStepMs * TIMELINE_BUCKETS).toISOString()
+
     const [
       queueRes,
       runningRes,
@@ -118,6 +204,8 @@ export const processingRouter = router({
       doneTodayRes,
       failedTodayRes,
       runsRes,
+      timelineRunsRes,
+      sourcesRes,
     ] = await Promise.all([
       // Queue: pending jobs, oldest first (next to run).
       ctx.db
@@ -160,11 +248,24 @@ export const processingRouter = router({
         .eq('status', 'failed')
         .gte('updated_at', todayIso),
       // Real analyzer-compute runs (sc_report_runs) — actual wall-clock times.
+      // `stages` is the per-run 3-phase (foundation/free/expensive) breakdown.
       ctx.db
         .from('sc_report_runs')
-        .select('id,address_display,status,duration_ms,error,created_at')
+        .select('id,address_display,status,duration_ms,error,created_at,stages')
         .order('created_at', { ascending: false })
         .limit(20),
+      // Runs for the timeline — just timestamps + duration over the window.
+      ctx.db
+        .from('sc_report_runs')
+        .select('created_at,duration_ms')
+        .gte('created_at', timelineSinceIso)
+        .order('created_at', { ascending: false })
+        .limit(2000),
+      // Global last-known source-category health (one row per source).
+      ctx.db
+        .from('sc_source_health')
+        .select('source,status,latency_ms,last_ok_at')
+        .order('source', { ascending: true }),
     ])
 
     const queue = (queueRes.data ?? []).map((r) => toProcessingJob(r as JobRow, nowMs))
@@ -178,7 +279,24 @@ export const processingRouter = router({
       durationMs: r.duration_ms ?? null,
       error: r.error ?? null,
       created_at: r.created_at,
+      stages: parseRunStages(r.stages),
     }))
+
+    // Global source-category health (last snapshot any cold compute wrote).
+    const sources: ProcessingSourceHealth[] = ((sourcesRes.data ?? []) as any[]).map((s) => ({
+      source: s.source,
+      status: s.status ?? 'down',
+      latencyMs: s.latency_ms ?? null,
+      lastOkAt: s.last_ok_at ?? null,
+    }))
+
+    // Runs-over-time timeline (count + avg duration per bucket).
+    const timeline = buildTimeline(
+      (timelineRunsRes.data ?? []) as { created_at: string; duration_ms: number | null }[],
+      nowMs,
+      TIMELINE_GRANULARITY,
+      TIMELINE_BUCKETS,
+    )
 
     return {
       kpis: {
@@ -194,6 +312,9 @@ export const processingRouter = router({
       recentDone,
       recentFailed,
       recentRuns,
+      sources,
+      timeline,
+      timelineGranularity: TIMELINE_GRANULARITY,
       now: new Date(nowMs).toISOString(),
     }
   }),

@@ -118,7 +118,12 @@ export default function GodMisc() {
   return (
     <div className="sc-page">
       <div className="sc-page__head">
-        <h1>ניהול חוצה-תחומים — מנהל-על</h1>
+        <div>
+          <h1>ניהול חוצה-תחומים — מנהל-על</h1>
+          <div className="sub">
+            פעולות-על נוספות: הסרת בן-משפחה, ביטול בדיקה, אימות/הסרת דירוג
+          </div>
+        </div>
       </div>
 
       <ControlPanel

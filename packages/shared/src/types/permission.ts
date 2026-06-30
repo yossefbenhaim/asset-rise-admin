@@ -22,6 +22,7 @@ export type Action =
   | 'admin.ai.regenerate'
   | 'admin.ai.edit_prompt'
   | 'admin.logs.list'
+  | 'admin.docverify.view'
   // god.* — super-admin (role_key 'admin.super') capabilities. Future waves
   // add more god actions here; they must stay in lockstep with migration 006's
   // seed and the frontend can() mirror.

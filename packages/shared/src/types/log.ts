@@ -23,16 +23,29 @@ export type LogEntry = {
   reportId: string | null
   // The acting admin's id (audit actor_id) — null for system/anonymous rows.
   userId: string | null
+  // Resolved identity for `userId` (batched lookup against sc_profiles). All
+  // null when userId is null or the profile was deleted/not found.
+  actorName: string | null
+  actorEmail: string | null
+  actorPhone: string | null
   // Human-readable line: the audit action, or the job's error text.
   message: string
   // The raw jsonb payload (audit meta / job request+error) for the drawer.
   meta?: unknown
+  // What was sent into the operation (analyzer job request, audit input) —
+  // pretty-printed under "מה נשלח" in the drawer.
+  request?: unknown
+  // What came back: a result snippet on success, or the error text/payload on
+  // failure — pretty-printed under "מה חזר" in the drawer.
+  response?: unknown
   timestamp: string
 }
 
 // ── Input ──────────────────────────────────────────────────────────────
 // All filters optional. `severity` 'all' (or omitted) = no severity filter.
-// `q` does a case-insensitive contains over the normalized message. `limit`
+// `q` does a case-insensitive contains over the message AND the resolved
+// actor (name / email / phone / id), so you can find all logs for a person by
+// typing their email. `limit`
 // caps the merged result (per-source fetch is widened to keep the merge fair).
 export const ListLogsInput = z.object({
   severity: z.enum(['error', 'warning', 'info', 'all']).optional(),

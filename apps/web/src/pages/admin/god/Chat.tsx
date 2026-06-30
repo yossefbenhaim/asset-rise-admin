@@ -138,7 +138,12 @@ export default function GodChat() {
                         )}
                       </td>
                       <td>
-                        <Button size="sm" variant="ghost" onClick={() => setActiveBuilding(b)}>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          icon={<MessageSquare size={14} />}
+                          onClick={() => setActiveBuilding(b)}
+                        >
                           פתח שרשור
                         </Button>
                       </td>
@@ -257,7 +262,7 @@ function MessageRow({ m, building }: { m: GodChatMessage; building: GodChatBuild
             {m.is_deleted ? (
               <Button
                 size="sm"
-                variant="ghost"
+                variant="secondary"
                 icon={<RotateCcw size={14} />}
                 loading={restoreM.isLoading}
                 onClick={() => restoreM.mutate({ id: m.id })}

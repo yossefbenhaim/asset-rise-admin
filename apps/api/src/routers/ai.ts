@@ -226,8 +226,9 @@ export const aiRouter = router({
         current: CURRENT_VERSION,
         versions,
         note:
-          'עריכת פרומפט נשמרת לטבלת sc_ai_prompts (service-role בלבד); ' +
-          'ה-worker באירוח קורא ממנה את הטקסט בריצה הבאה. השינוי אינו מפיל גרסה חדשה אוטומטית.',
+          'פרומפט המחקר הבסיסי מוגדר ב-worker באירוח ואינו נערך מכאן. ה-override שנערך כאן ' +
+          'נשמר לטבלת sc_ai_prompts (service-role בלבד), מתווסף לבסיס כ-rubric תחום ב-fences, ' +
+          'וה-worker קורא אותו בריצה הבאה. השינוי אינו מפיל גרסה חדשה אוטומטית.',
       }
     },
   ),

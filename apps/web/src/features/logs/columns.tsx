@@ -45,25 +45,51 @@ export const logColumns: ColumnDef<LogEntry, unknown>[] = [
     ),
   },
   {
-    id: 'ref',
-    header: 'הפניה',
+    id: 'actor',
+    header: 'מי',
     enableSorting: false,
-    accessorFn: (r) => r.reportId ?? r.userId ?? '',
+    accessorFn: (r) => r.actorName ?? r.actorEmail ?? r.userId ?? '',
     cell: ({ row }) => {
-      const { reportId, userId } = row.original
-      if (reportId) {
+      const { actorName, actorEmail, userId } = row.original
+      // Resolved identity → show the human, not the uuid.
+      if (actorName || actorEmail) {
         return (
-          <span className="inline-flex items-center gap-1 text-[11px] text-sc-text-secondary">
-            <span className="text-sc-text-muted">דוח</span>
-            <code className="sc-num" title={reportId}>{shortId(reportId)}</code>
-          </span>
+          <div className="min-w-0 max-w-[220px]">
+            <div className="truncate text-[12px] text-sc-text" title={actorName ?? undefined}>
+              {actorName ?? actorEmail}
+            </div>
+            {actorName && actorEmail && (
+              <div className="truncate text-[11px] text-sc-text-muted sc-num" title={actorEmail}>
+                {actorEmail}
+              </div>
+            )}
+          </div>
         )
       }
+      // Unresolved actor (deleted profile / not found) — degrade to a short id.
       if (userId) {
         return (
           <span className="inline-flex items-center gap-1 text-[11px] text-sc-text-secondary">
             <span className="text-sc-text-muted">משתמש</span>
             <code className="sc-num" title={userId}>{shortId(userId)}</code>
+          </span>
+        )
+      }
+      return <span className="text-sc-text-muted">מערכת</span>
+    },
+  },
+  {
+    id: 'ref',
+    header: 'הפניה',
+    enableSorting: false,
+    accessorFn: (r) => r.reportId ?? '',
+    cell: ({ row }) => {
+      const { reportId } = row.original
+      if (reportId) {
+        return (
+          <span className="inline-flex items-center gap-1 text-[11px] text-sc-text-secondary">
+            <span className="text-sc-text-muted">דוח</span>
+            <code className="sc-num" title={reportId}>{shortId(reportId)}</code>
           </span>
         )
       }

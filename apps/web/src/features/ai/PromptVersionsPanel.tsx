@@ -1,12 +1,19 @@
-// RESEARCH_VERSION history panel. Lists known versions (current highlighted),
-// shows a compare/diff placeholder between two picked versions, and — for
-// super-admins (admin.ai.edit_prompt) — an edit box that upserts the prompt
-// text into sc_ai_prompts (read by the host worker). Read-only users see the
-// stored prompt (if any) without the editor.
+// RESEARCH_VERSION history panel. The goal is to make it obvious to Yossef
+// WHAT changed between versions and WHAT the prompt actually is:
+//
+//   • Each version is listed (current highlighted) with its human note + the
+//     stored OVERRIDE text from sc_ai_prompts, if any. No stored text →
+//     "גרסת מנוע (ללא override מותאם)".
+//   • A read-only "base prompt" explainer makes clear the real research prompt
+//     lives in the HOST worker; the text edited here is APPENDED to it as a
+//     fenced rubric (it does not replace the base prompt).
+//   • Super-admins (admin.ai.edit_prompt) get the edit box; everyone else sees
+//     the stored override read-only.
+//   • A real side-by-side compare lets two versions be read against each other.
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-  History, GitCompare, Lock, Save, Info, ChevronLeft,
+  History, GitCompare, Lock, Save, Info, Layers, FileCode2,
 } from 'lucide-react'
 import { trpc } from '@/lib/api/trpc'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
@@ -64,6 +71,16 @@ export function PromptVersionsPanel() {
           <EmptyState title="לא ניתן לטעון גרסאות" body={q.error?.message} />
         ) : (
           <div className="space-y-4">
+            {/* How the prompt is composed (base in worker + override here) */}
+            <div className="flex items-start gap-2 rounded-sc-input bg-sc-light-blue text-sc-primary px-3 py-2.5 text-[11.5px] leading-relaxed">
+              <Layers size={15} className="shrink-0 mt-0.5" />
+              <span>
+                <b>פרומפט המחקר הבסיסי</b> חי ב-worker באירוח (לא נערך מכאן).
+                הטקסט שנערך כאן הוא <b>override</b> שמתווסף לבסיס כ-<span dir="ltr" className="font-mono">rubric</span> תחום
+                ב-fences, ונקרא ע״י ה-worker בריצה הבאה. השינוי אינו מפיל גרסה חדשה אוטומטית.
+              </span>
+            </div>
+
             {/* Version chips */}
             <div className="flex flex-wrap gap-1.5">
               {versions.map(v => (
@@ -75,6 +92,7 @@ export function PromptVersionsPanel() {
                       ? 'bg-sc-primary text-white border-sc-primary'
                       : 'bg-white text-sc-text-secondary border-sc-border hover:border-sc-primary'
                   }`}
+                  title={v.current ? 'גרסה פעילה' : undefined}
                 >
                   {v.version}
                   {v.current && (
@@ -82,7 +100,14 @@ export function PromptVersionsPanel() {
                       className={`inline-block w-1.5 h-1.5 rounded-full ${
                         selected === v.version ? 'bg-white' : 'bg-sc-success'
                       }`}
-                      title="גרסה פעילה"
+                    />
+                  )}
+                  {v.prompt && (
+                    <span
+                      className={`inline-block w-1.5 h-1.5 rounded-sm ${
+                        selected === v.version ? 'bg-white/80' : 'bg-sc-gold'
+                      }`}
+                      title="קיים override מותאם"
                     />
                   )}
                 </button>
@@ -98,8 +123,8 @@ export function PromptVersionsPanel() {
               />
             )}
 
-            {/* Compare / diff placeholder */}
-            <ComparePlaceholder
+            {/* Real side-by-side compare */}
+            <CompareVersions
               versions={versions}
               base={active}
               compareWith={compareWith}
@@ -107,8 +132,8 @@ export function PromptVersionsPanel() {
               onPick={setCompareWith}
             />
 
-            {/* Where edits go */}
-            <div className="flex items-start gap-2 rounded-sc-input bg-sc-light-blue text-sc-primary px-3 py-2 text-[11.5px]">
+            {/* Where edits go (server note) */}
+            <div className="flex items-start gap-2 rounded-sc-input bg-sc-bg text-sc-text-secondary px-3 py-2 text-[11px] leading-relaxed">
               <Info size={14} className="shrink-0 mt-0.5" />
               <span>{data.note}</span>
             </div>
@@ -140,13 +165,15 @@ function VersionDetail({
   })
 
   const dirty = text.trim() !== (version.prompt ?? '').trim()
+  const hasOverride = !!version.prompt
 
   return (
     <div className="border border-sc-border rounded-sc-card p-3.5 space-y-2.5">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <span className="inline-flex items-center gap-2 text-[13px] font-bold text-sc-text">
           גרסה {version.version}
           {version.current && <Pill kind="success">פעילה</Pill>}
+          {hasOverride ? <Pill kind="gold">override מותאם</Pill> : <Pill kind="neutral">מנוע בלבד</Pill>}
         </span>
         {version.updated_at && (
           <span className="text-[11px] text-sc-text-muted">עודכן {dateTime(version.updated_at)}</span>
@@ -157,6 +184,11 @@ function VersionDetail({
         <p className="text-[12px] text-sc-text-secondary m-0 leading-snug">{version.note}</p>
       )}
 
+      <div className="flex items-center gap-1.5 text-[11px] font-bold text-sc-text-muted">
+        <FileCode2 size={13} className="text-sc-primary" />
+        טקסט ה-override (rubric)
+      </div>
+
       {canEdit ? (
         <>
           <textarea
@@ -164,11 +196,13 @@ function VersionDetail({
             onChange={e => setText(e.target.value)}
             rows={8}
             dir="ltr"
-            placeholder="טקסט הפרומפט עבור גרסה זו…"
+            placeholder="טקסט ה-override עבור גרסה זו… (יתווסף לפרומפט הבסיס כ-rubric)"
             className="w-full bg-sc-bg border border-sc-border rounded-sc-input p-2.5 text-[12px] font-mono outline-none focus:border-sc-primary leading-relaxed text-left"
           />
           <div className="flex items-center justify-between">
-            <span className="text-[11px] text-sc-text-muted sc-num">{text.length} תווים</span>
+            <span className="text-[11px] text-sc-text-muted sc-num">
+              {text.length} תווים{!hasOverride && ' · אין override שמור עדיין'}
+            </span>
             <Button
               size="sm"
               icon={<Save size={14} />}
@@ -176,11 +210,11 @@ function VersionDetail({
               loading={editPrompt.isLoading}
               onClick={() => editPrompt.mutate({ version: version.version, text })}
             >
-              שמור פרומפט
+              שמור override
             </Button>
           </div>
         </>
-      ) : version.prompt ? (
+      ) : hasOverride ? (
         <pre
           dir="ltr"
           className="m-0 p-2.5 bg-sc-bg border border-sc-border rounded-sc-input text-[11.5px] text-sc-text-secondary overflow-x-auto max-h-60 leading-relaxed text-left whitespace-pre-wrap"
@@ -188,18 +222,18 @@ function VersionDetail({
           {version.prompt}
         </pre>
       ) : (
-        <div className="flex items-center gap-2 text-[12px] text-sc-text-muted">
-          <Lock size={14} />
-          עריכת פרומפטים מוגבלת למנהל-על. אין טקסט שמור לגרסה זו.
+        <div className="flex items-center gap-2 text-[12px] text-sc-text-muted rounded-sc-input bg-sc-bg px-2.5 py-2">
+          <Lock size={14} className="shrink-0" />
+          גרסת מנוע (ללא override מותאם)
         </div>
       )}
     </div>
   )
 }
 
-// Compare/diff is a placeholder for now — picking a second version shows a
-// side-by-side stub that a future text-diff can fill in.
-function ComparePlaceholder({
+// Side-by-side comparison: pick a second version and read both prompts (or the
+// "engine-only" note) against each other. Notes shown above each text.
+function CompareVersions({
   versions,
   base,
   compareWith,
@@ -217,12 +251,11 @@ function ComparePlaceholder({
       <div className="flex items-center gap-1.5 text-[12px] font-bold text-sc-text">
         <GitCompare size={15} className="text-sc-gold" />
         השוואת גרסאות
-        <Pill kind="neutral">בקרוב</Pill>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 text-[12px] text-sc-text-secondary">
-        <span className="sc-num font-bold">{base?.version ?? '—'}</span>
-        <ChevronLeft size={14} className="text-sc-text-muted" />
+        <Pill kind="navy">{base?.version ?? '—'}</Pill>
+        <span className="text-sc-text-muted">מול</span>
         <select
           value={compareWith ?? ''}
           onChange={e => onPick(e.target.value || null)}
@@ -233,21 +266,22 @@ function ComparePlaceholder({
             .filter(v => v.version !== base?.version)
             .map(v => (
               <option key={v.version} value={v.version}>
-                {v.version}
+                {v.version}{v.prompt ? ' · override' : ' · מנוע'}
               </option>
             ))}
         </select>
       </div>
 
-      {other && (
+      {other ? (
         <div className="grid grid-cols-2 gap-2">
           <DiffSide v={base} />
           <DiffSide v={other} />
         </div>
+      ) : (
+        <p className="text-[11px] text-sc-text-muted m-0">
+          בחר גרסה להשוואה כדי לראות את שני הטקסטים זה לצד זה.
+        </p>
       )}
-      <p className="text-[11px] text-sc-text-muted m-0">
-        תצוגת ההבדלים המלאה (diff שורה-אחר-שורה) תתווסף בהמשך — כרגע מוצג טקסט הגרסאות זה לצד זה.
-      </p>
     </div>
   )
 }
@@ -259,13 +293,22 @@ function DiffSide({ v }: { v: AiPromptVersion | null }) {
       animate={{ opacity: 1 }}
       className="rounded-sc-input bg-sc-bg p-2 min-h-[80px]"
     >
-      <div className="text-[11px] font-bold text-sc-text mb-1 sc-num">{v?.version ?? '—'}</div>
-      <pre
-        dir="ltr"
-        className="m-0 text-[10.5px] text-sc-text-muted overflow-x-auto max-h-40 leading-relaxed text-left whitespace-pre-wrap"
-      >
-        {v?.prompt ?? '— אין טקסט שמור —'}
-      </pre>
+      <div className="flex items-center gap-1.5 mb-1">
+        <span className="text-[11px] font-bold text-sc-text sc-num">{v?.version ?? '—'}</span>
+        {v?.current && <Pill kind="success">פעילה</Pill>}
+        {v && !v.prompt && <Pill kind="neutral">מנוע</Pill>}
+      </div>
+      {v?.note && <p className="text-[10.5px] text-sc-text-secondary m-0 mb-1 leading-snug">{v.note}</p>}
+      {v?.prompt ? (
+        <pre
+          dir="ltr"
+          className="m-0 text-[10.5px] text-sc-text-muted overflow-x-auto max-h-40 leading-relaxed text-left whitespace-pre-wrap"
+        >
+          {v.prompt}
+        </pre>
+      ) : (
+        <div className="text-[10.5px] text-sc-text-muted">גרסת מנוע (ללא override מותאם)</div>
+      )}
     </motion.div>
   )
 }

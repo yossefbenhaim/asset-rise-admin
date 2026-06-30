@@ -37,7 +37,7 @@ export function LogsTable({
         loading={loading}
         onRowClick={(r) => setActive(r)}
         csvName="logs"
-        searchPlaceholder="חיפוש בהודעה…"
+        searchPlaceholder="חיפוש בהודעה או באימייל/שם משתמש…"
         emptyTitle="אין רשומות יומן"
         emptyBody="פעולות ביקורת וכשלי עיבוד יופיעו כאן כשיתרחשו."
         toolbar={

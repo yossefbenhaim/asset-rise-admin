@@ -15,6 +15,8 @@
 // Read-only monitor → no audit, no mutations. Designed to be polled.
 import { router, requireAction } from '../trpc.js'
 import type {
+  CatalogGroup,
+  CatalogSource,
   SourceHealth,
   SourceId,
   SourceStatus,
@@ -204,6 +206,226 @@ function aiFromSignalOnly(def: (typeof SOURCE_DEFS)[number], signal: AiSignal): 
   }
 }
 
+// ---------------------------------------------------------------------------
+// FULL SOURCE CATALOG — the complete inventory of every data source the
+// analyzer connects to, grouped. Mirrors the adapter files in
+// ~/silver-castle/apps/api/src/analyzer/sources/*. Each entry carries: name,
+// connection type ('api'|'web'|'static'), the upstream provider, a Hebrew
+// "what it feeds" line, an icon, and the canonical healthId it rolls up to (so
+// the UI can pin live health from sc_source_health next to it).
+//
+// MUNICIPALITIES with scraped municipal-web data (firecrawl on city
+// urban-renewal pages):
+const MUNICIPAL_CITIES = ['חיפה', 'תל אביב-יפו', 'רמת גן', 'ירושלים']
+
+// Grouped catalog (static). healthId links to the six canonical health rows.
+const CATALOG_GROUPS: CatalogGroup[] = [
+  {
+    key: 'gis',
+    title: 'GIS / GovMap',
+    subtitle: 'שכבות מיפוי, חלקות והתחדשות עירונית ממערכת GovMap הממשלתית',
+    icon: 'Map',
+    sources: [
+      {
+        key: 'govmap',
+        name: 'GovMap — מיפוי וחלקות',
+        type: 'api',
+        provider: 'GovMap GIS',
+        feeds: 'גוש/חלקה, גבולות מגרש, שכבות מרחביות ונתוני קרקע',
+        icon: 'Map',
+        healthId: 'govmap',
+        municipalities: [],
+      },
+      {
+        key: 'landuse',
+        name: 'ייעודי קרקע',
+        type: 'api',
+        provider: 'GovMap GIS',
+        feeds: 'ייעוד הקרקע במגרש (מגורים/מסחר/תעשייה) לבדיקת התאמה',
+        icon: 'LayoutGrid',
+        healthId: 'govmap',
+        municipalities: [],
+      },
+      {
+        key: 'neighborhood',
+        name: 'הקשר שכונתי',
+        type: 'api',
+        provider: 'GovMap GIS',
+        feeds: 'מאפייני הסביבה והשכונה סביב המגרש',
+        icon: 'MapPinned',
+        healthId: 'govmap',
+        municipalities: [],
+      },
+      {
+        key: 'nadlan_deals',
+        name: 'עסקאות נדל״ן (נדל"ן)',
+        type: 'api',
+        provider: 'GovMap מרחבי · קציר דפדפן',
+        feeds: 'עסקאות נדל״ן אמיתיות סביב המגרש לחישוב מחירי שוק ורווח יזמי',
+        icon: 'Coins',
+        healthId: 'govmap',
+        municipalities: [],
+      },
+    ],
+  },
+  {
+    key: 'planning',
+    title: 'תכנון — MAVAT / תב״ע',
+    subtitle: 'זכויות בנייה ותוכניות סטטוטוריות',
+    icon: 'FileText',
+    sources: [
+      {
+        key: 'mavat',
+        name: 'MAVAT — מבא״ת / תב״ע',
+        type: 'api',
+        provider: 'מנהל התכנון (iplan)',
+        feeds: 'תוכניות סטטוטוריות, זכויות בנייה ותקנון התב״ע',
+        icon: 'FileText',
+        healthId: 'mavat',
+        municipalities: [],
+      },
+    ],
+  },
+  {
+    key: 'datagov',
+    title: 'data.gov.il — מאגרי מידע ממשלתיים',
+    subtitle: 'מאגרי CKAN פתוחים: התחדשות, קבלנים וייעודי קרקע',
+    icon: 'Database',
+    sources: [
+      {
+        key: 'datagov',
+        name: 'מתחמי התחדשות עירונית',
+        type: 'api',
+        provider: 'data.gov.il (CKAN)',
+        feeds: 'מתחמי פינוי-בינוי ועיבוי לפי עיר, וסטטוס תכנוני',
+        icon: 'Building2',
+        healthId: 'renewal',
+        municipalities: [],
+      },
+      {
+        key: 'buildingsites',
+        name: 'מתחמי בנייה',
+        type: 'api',
+        provider: 'data.gov.il (CKAN)',
+        feeds: 'אתרי בנייה פעילים ומתחמים בביצוע באזור',
+        icon: 'Construction',
+        healthId: 'renewal',
+        municipalities: [],
+      },
+      {
+        key: 'registeredcontractors',
+        name: 'קבלנים רשומים',
+        type: 'api',
+        provider: 'data.gov.il (CKAN)',
+        feeds: 'רישום קבלנים מוסמכים — אימות יזמים ופעילות באזור',
+        icon: 'HardHat',
+        healthId: 'renewal',
+        municipalities: [],
+      },
+    ],
+  },
+  {
+    key: 'municipal',
+    title: 'אתרי עיריות + Firecrawl',
+    subtitle: 'קציר עמודי התחדשות עירונית מאתרי הרשויות באמצעות Firecrawl',
+    icon: 'Landmark',
+    sources: [
+      {
+        key: 'municipal_web',
+        name: 'נתוני עירייה (קציר אתר)',
+        type: 'web',
+        provider: 'Firecrawl scrape',
+        feeds: 'מידע מקומי על התחדשות עירונית הנקצר מעמודי הרשויות',
+        icon: 'Landmark',
+        healthId: 'municipal',
+        municipalities: MUNICIPAL_CITIES,
+      },
+      {
+        key: 'municipal_sources',
+        name: 'קטלוג מקורות עירוניים (Seed)',
+        type: 'static',
+        provider: 'קטלוג כתובות פנימי',
+        feeds: 'רשימת כתובות ה-URL שמהן Firecrawl קוצר את נתוני הרשויות',
+        icon: 'Link',
+        healthId: 'municipal',
+        municipalities: [],
+      },
+    ],
+  },
+  {
+    key: 'transit',
+    title: 'תחבורה — רכבת קלה',
+    subtitle: 'תחנות ומסדרונות תחבורה ציבורית',
+    icon: 'TrainFront',
+    sources: [
+      {
+        key: 'lrt',
+        name: 'תחנות רכבת קלה',
+        type: 'static',
+        provider: 'JSON מובנה',
+        feeds: 'קרבת המגרש לתחנות רכבת קלה — מקדם נגישות ופוטנציאל',
+        icon: 'TrainFront',
+        healthId: null,
+        municipalities: [],
+      },
+    ],
+  },
+  {
+    key: 'arcgis',
+    title: 'תל אביב — ArcGIS',
+    subtitle: 'נתוני היתרי בנייה ייעודיים לעיר תל אביב',
+    icon: 'Building',
+    sources: [
+      {
+        key: 'ta_arcgis',
+        name: 'היתרי בנייה — תל אביב',
+        type: 'api',
+        provider: 'Tel-Aviv ArcGIS',
+        feeds: 'היתרי בנייה ופעילות תכנונית בתל אביב-יפו',
+        icon: 'Building',
+        healthId: 'municipal',
+        municipalities: [],
+      },
+    ],
+  },
+  {
+    key: 'policy',
+    title: 'מדיניות ותקנים',
+    subtitle: 'טבלאות מדיניות מובנות ששמשות את מנוע הניקוד',
+    icon: 'SlidersHorizontal',
+    sources: [
+      {
+        key: 'density_policy',
+        name: 'מדיניות צפיפות',
+        type: 'static',
+        provider: 'טבלת מדיניות אצורה',
+        feeds: 'תקני צפיפות אזוריים לחישוב פוטנציאל יחידות הדיור',
+        icon: 'SlidersHorizontal',
+        healthId: null,
+        municipalities: [],
+      },
+    ],
+  },
+  {
+    key: 'ai',
+    title: 'מנוע AI',
+    subtitle: 'יצירת סיכומי הניתוח והמחקר',
+    icon: 'Bot',
+    sources: [
+      {
+        key: 'ai_worker',
+        name: 'ספק AI — עובד Codex',
+        type: 'api',
+        provider: 'Codex worker (sc_analyzer_jobs)',
+        feeds: 'סיכומי ניתוח, פאנל המומחים ומסקנות מילוליות בדו״ח',
+        icon: 'Bot',
+        healthId: 'ai',
+        municipalities: [],
+      },
+    ],
+  },
+]
+
 export const sourcesRouter = router({
   // Health snapshot of all platform data sources. Pollable (the page uses
   // refetchInterval). Read-only.
@@ -267,4 +489,54 @@ export const sourcesRouter = router({
       return { sources, summary, now: new Date(nowMs).toISOString() }
     },
   ),
+
+  // Full source catalog — the complete inventory of everything the analyzer
+  // connects to, grouped, with type + what it feeds + the municipalities we
+  // have municipal-web data for. Static structure, enriched with live status
+  // from sc_source_health for entries that map to a canonical healthId.
+  catalog: requireAction('admin.sources.view').query(async ({ ctx }) => {
+    const nowMs = Date.now()
+
+    const healthRes = await ctx.db
+      .from('sc_source_health')
+      .select('source,status,latency_ms,last_ok_at,checked_at')
+
+    const live: Partial<Record<SourceId, {
+      status: SourceStatus
+      instrumented: boolean
+      latencyMs: number | null
+      lastUpdated: string | null
+    }>> = {}
+    for (const r of (healthRes.data ?? []) as Array<{
+      source: string | null
+      status: string | null
+      latency_ms: number | null
+      last_ok_at: string | null
+    }>) {
+      if (!r.source) continue
+      live[r.source as SourceId] = {
+        status: coerceStatus(r.status),
+        instrumented: true,
+        latencyMs: r.latency_ms ?? null,
+        lastUpdated: r.last_ok_at ?? null,
+      }
+    }
+
+    // Flatten to count types + municipalities.
+    const all: CatalogSource[] = CATALOG_GROUPS.flatMap((g) => g.sources)
+    const municipalities = new Set<string>()
+    for (const s of all) for (const c of s.municipalities) municipalities.add(c)
+
+    const summary = {
+      total: all.length,
+      api: all.filter((s) => s.type === 'api').length,
+      web: all.filter((s) => s.type === 'web').length,
+      static: all.filter((s) => s.type === 'static').length,
+      municipalities: municipalities.size,
+    }
+
+    const groups: CatalogGroup[] = CATALOG_GROUPS
+
+    return { groups, live, summary, now: new Date(nowMs).toISOString() }
+  }),
 })
