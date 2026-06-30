@@ -97,7 +97,7 @@ export function DataTable<T extends Record<string, unknown>>({
                 <tr
                   key={row.id}
                   onClick={() => onRowClick?.(row.original)}
-                  className={`border-b border-sc-border/60 ${onRowClick ? 'cursor-pointer hover:bg-sc-light-blue/40' : ''} transition-colors`}
+                  className={`relative border-b border-sc-border/60 transition-all duration-150 transform-gpu origin-center hover:bg-sc-light-blue/60 hover:scale-[1.012] hover:shadow-sc-card hover:z-10 ${onRowClick ? 'cursor-pointer' : ''}`}
                 >
                   {row.getVisibleCells().map(cell => (
                     <td key={cell.id} className="px-4 py-3 text-sc-text whitespace-nowrap">
