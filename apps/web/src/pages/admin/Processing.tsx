@@ -10,19 +10,17 @@ import { trpc } from '@/lib/api/trpc'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { KpiCard } from '@/components/ui/KpiCard'
-import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SkeletonCard } from '@/components/ui/Skeleton'
 import { AreaChartCard } from '@/components/charts/AreaChartCard'
 import { BarChartCard } from '@/components/charts/BarChartCard'
 import { BRAND } from '@/components/charts/chartTheme'
-import { timeAgo } from '@/lib/format'
 import { JobCard } from '@/features/processing/JobCard'
 import { QueuePanel } from '@/features/processing/QueuePanel'
 import { RunsPanel } from '@/features/processing/RunsPanel'
 
 export default function AdminProcessing() {
   const q = trpc.processing.live.useQuery(undefined, {
-    refetchInterval: 4000,
+    refetchInterval: 2000,
     refetchOnWindowFocus: true,
   })
   const d = q.data
@@ -92,16 +90,14 @@ export default function AdminProcessing() {
             />
           </div>
 
-          {/* Derived-stage caveat */}
-          {d.derivedStages && (
-            <div className="flex items-start gap-2 rounded-sc-input bg-sc-light-blue text-sc-primary px-3 py-2 text-[11.5px]">
-              <Info size={14} className="shrink-0 mt-0.5" />
-              <span>
-                השלב הנוכחי בכל עבודה הוא <span className="font-bold">הערכה</span> לפי זמן ריצה —
-                תזמון מדויק לכל שלב יישמר בשלב מאוחר יותר.
-              </span>
-            </div>
-          )}
+          {/* Live note */}
+          <div className="flex items-start gap-2 rounded-sc-input bg-sc-light-blue text-sc-primary px-3 py-2 text-[11.5px]">
+            <Info size={14} className="shrink-0 mt-0.5" />
+            <span>
+              מתעדכן חי כל 2 שניות. «מחקר AI בתהליך» = משימות המחקר האסינכרוניות שרצות כעת; ריצות
+              שהושלמו (עם משך אמיתי ומקורות) מופיעות למטה ב«ריצות אנליזה אחרונות».
+            </span>
+          </div>
 
           {/* Runs-over-time timeline (real cold computes, last 24h by hour) */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
@@ -138,42 +134,26 @@ export default function AdminProcessing() {
             <div className="lg:col-span-2 flex flex-col gap-3">
               <div className="flex items-center gap-1.5 text-[14px] font-bold text-sc-text">
                 <Activity size={15} className="text-sc-primary" />
-                בעיבוד כעת
+                מחקר AI בתהליך
                 <span className="text-sc-text-secondary font-semibold sc-num">({d.running.length})</span>
               </div>
               {d.running.length === 0 ? (
                 <div className="sc-glass p-4">
                   <EmptyState
                     icon={<Activity size={26} />}
-                    title="אין עבודות בעיבוד"
-                    body="כל העבודות הושלמו או ממתינות בתור."
+                    title="אין מחקר AI פעיל כרגע"
+                    body="כשתיכנס בקשה חדשה, משימת המחקר תופיע כאן בזמן אמת."
                   />
                 </div>
               ) : (
                 d.running.map((job, i) => (
-                  <JobCard key={job.id} job={job} stages={d.stages} index={i} />
+                  <JobCard key={job.id} job={job} index={i} />
                 ))
               )}
             </div>
 
             {/* Queue */}
             <QueuePanel jobs={d.queue} index={1} />
-          </div>
-
-          {/* Recent done + failed strips */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
-            <RecentList
-              title="הושלמו לאחרונה"
-              icon={<CheckCircle2 size={15} className="text-sc-success" />}
-              jobs={d.recentDone}
-              kind="done"
-            />
-            <RecentList
-              title="כשלים אחרונים"
-              icon={<AlertTriangle size={15} className="text-sc-danger" />}
-              jobs={d.recentFailed}
-              kind="failed"
-            />
           </div>
 
           {/* Real analyzer-compute runs (sc_report_runs) — duration + 3-phase
@@ -185,45 +165,3 @@ export default function AdminProcessing() {
   )
 }
 
-// A compact recent-jobs list (done or failed). Failed rows surface the reason.
-function RecentList({
-  title, icon, jobs, kind,
-}: {
-  title: string
-  icon: React.ReactNode
-  jobs: import('@asset-rise/shared').ProcessingJob[]
-  kind: 'done' | 'failed'
-}) {
-  return (
-    <div className="sc-glass p-4 flex flex-col gap-3">
-      <h3 className="text-[14px] font-bold text-sc-text m-0 inline-flex items-center gap-1.5">
-        {icon}{title}
-        <span className="text-sc-text-secondary font-semibold sc-num">({jobs.length})</span>
-      </h3>
-      {jobs.length === 0 ? (
-        <EmptyState
-          title={kind === 'failed' ? 'אין כשלים אחרונים' : 'אין עבודות שהושלמו'}
-          body={kind === 'failed' ? 'הצנרת רצה ללא שגיאות.' : undefined}
-        />
-      ) : (
-        <ul className="flex flex-col divide-y divide-sc-border/60 -mb-1">
-          {jobs.map((j) => (
-            <li key={j.id} className="flex items-center justify-between gap-3 py-2">
-              <div className="min-w-0">
-                <div className="text-[12.5px] font-semibold text-sc-text truncate" title={j.label}>
-                  {j.label}
-                </div>
-                <div className="text-[11px] text-sc-text-muted truncate">
-                  {kind === 'failed'
-                    ? `${j.error ?? 'שגיאה לא ידועה'} · ${timeAgo(j.updated_at)}`
-                    : timeAgo(j.completed_at ?? j.updated_at)}
-                </div>
-              </div>
-              <StatusBadge status={j.status} />
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-}

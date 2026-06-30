@@ -272,15 +272,24 @@ export const processingRouter = router({
     const running = (runningRes.data ?? []).map((r) => toProcessingJob(r as JobRow, nowMs))
     const recentDone = (recentDoneRes.data ?? []).map((r) => toProcessingJob(r as JobRow, nowMs))
     const recentFailed = (recentFailedRes.data ?? []).map((r) => toProcessingJob(r as JobRow, nowMs))
-    const recentRuns: ProcessingRun[] = ((runsRes.data ?? []) as any[]).map((r) => ({
-      id: r.id,
-      addressDisplay: r.address_display ?? null,
-      status: r.status,
-      durationMs: r.duration_ms ?? null,
-      error: r.error ?? null,
-      created_at: r.created_at,
-      stages: parseRunStages(r.stages),
-    }))
+    // Dedupe by address (keep the latest — rows arrive newest-first) so the same
+    // request re-run twice doesn't show as duplicate cards.
+    const seenAddr = new Set<string>()
+    const recentRuns: ProcessingRun[] = ((runsRes.data ?? []) as any[])
+      .filter((r) => {
+        const k = (r.address_display ?? r.id) as string
+        if (seenAddr.has(k)) return false
+        seenAddr.add(k); return true
+      })
+      .map((r) => ({
+        id: r.id,
+        addressDisplay: r.address_display ?? null,
+        status: r.status,
+        durationMs: r.duration_ms ?? null,
+        error: r.error ?? null,
+        created_at: r.created_at,
+        stages: parseRunStages(r.stages),
+      }))
 
     // Global source-category health (last snapshot any cold compute wrote).
     const sources: ProcessingSourceHealth[] = ((sourcesRes.data ?? []) as any[]).map((s) => ({

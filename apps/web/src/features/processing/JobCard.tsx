@@ -1,16 +1,16 @@
-// One in-processing (or just-finished / failed) job: header with property
-// label + status, a live-ticking elapsed timer, the 7-stage StageBar, and —
-// for failures — the failed stage + reason.
+// One in-flight AI-research job (sc_analyzer_jobs). The async research is a
+// SINGLE logical step of a full evaluate — so we show an honest "AI research in
+// progress" indicator with a live elapsed timer + an indeterminate bar, NOT a
+// fake mapping onto the 7 pipeline stages (that misled: a finished request kept
+// showing "stage 3"). Completed work is shown as real runs in RunsPanel.
 //
-// The elapsed timer ticks locally every second between the 4s server polls so
-// the number feels alive without hammering the API. It re-bases off the
-// server's elapsedSec each time fresh data arrives.
+// The elapsed timer ticks locally every second between polls so it feels alive;
+// it re-bases off the server's elapsedSec on each fresh fetch.
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { MapPin, Clock, RefreshCcw, AlertTriangle } from 'lucide-react'
+import { MapPin, Clock, RefreshCcw, Sparkles } from 'lucide-react'
 import type { ProcessingJob } from '@asset-rise/shared'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { StageBar } from './StageBar'
 
 function fmtElapsed(sec: number): string {
   const s = Math.max(0, Math.floor(sec))
@@ -19,7 +19,6 @@ function fmtElapsed(sec: number): string {
   return m > 0 ? `${m}:${String(r).padStart(2, '0')} דק׳` : `${r} ש׳`
 }
 
-// Local 1s ticker that re-seeds whenever the server's elapsedSec changes.
 function useLiveElapsed(baseSec: number, live: boolean): number {
   const [extra, setExtra] = useState(0)
   useEffect(() => {
@@ -31,14 +30,14 @@ function useLiveElapsed(baseSec: number, live: boolean): number {
   return baseSec + extra
 }
 
-export function JobCard({ job, stages, index = 0 }: {
+export function JobCard({ job, index = 0 }: {
   job: ProcessingJob
-  stages: readonly string[]
+  stages?: readonly string[]   // kept for back-compat; no longer rendered
   index?: number
 }) {
   const isRunning = job.status === 'running'
   const elapsed = useLiveElapsed(job.elapsedSec, isRunning)
-  const slow = isRunning && elapsed > 60 // heuristic "taking a while" hint
+  const slow = isRunning && elapsed > 90 // "taking a while" hint
 
   return (
     <motion.div
@@ -59,10 +58,7 @@ export function JobCard({ job, stages, index = 0 }: {
               <span className={slow ? 'text-sc-warning font-semibold' : ''}>{fmtElapsed(elapsed)}</span>
             </span>
             {job.attempts != null && job.attempts > 1 && (
-              <span className="inline-flex items-center gap-1">
-                <RefreshCcw size={12} />
-                {job.attempts} ניסיונות
-              </span>
+              <span className="inline-flex items-center gap-1"><RefreshCcw size={12} />{job.attempts} ניסיונות</span>
             )}
             {job.city && <span className="truncate">· {job.city}</span>}
           </div>
@@ -70,19 +66,18 @@ export function JobCard({ job, stages, index = 0 }: {
         <StatusBadge status={job.status} />
       </div>
 
-      <StageBar stages={stages} current={job.stageIndex} status={job.status} />
-
-      {job.status === 'failed' && (
-        <div className="flex items-start gap-2 rounded-sc-input bg-sc-danger-bg text-sc-danger px-3 py-2 text-[11.5px]">
-          <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-          <div className="min-w-0">
-            {job.failedStage && (
-              <span className="font-bold">נכשל בשלב «{job.failedStage}»: </span>
-            )}
-            <span className="break-words">{job.error ?? 'שגיאה לא ידועה'}</span>
-          </div>
-        </div>
-      )}
+      {/* Honest in-progress indicator for the async AI research (one step). */}
+      <div className="flex items-center gap-2 text-[12px] text-sc-primary font-semibold">
+        <Sparkles size={14} className="shrink-0" />
+        מחקר AI מתבצע…
+      </div>
+      <div className="h-1.5 rounded-full bg-sc-light-blue overflow-hidden">
+        <motion.div
+          className="h-full w-1/3 rounded-full bg-sc-primary"
+          animate={{ x: ['-100%', '300%'] }}
+          transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      </div>
     </motion.div>
   )
 }
