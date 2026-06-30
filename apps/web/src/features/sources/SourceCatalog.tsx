@@ -62,9 +62,13 @@ export function SourceCatalog({ data }: { data: SourcesCatalogResponse }) {
         </div>
       </div>
 
-      {data.groups.map((g) => (
-        <CatalogGroupBlock key={g.key} group={g} live={data.live} />
-      ))}
+      {/* Groups laid out side by side (e.g. תחבורה · תל אביב · מדיניות ותקנים
+          in the same row), each a self-contained column card. */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
+        {data.groups.map((g) => (
+          <CatalogGroupBlock key={g.key} group={g} live={data.live} />
+        ))}
+      </div>
     </div>
   )
 }
@@ -116,7 +120,7 @@ function CatalogGroupBlock({
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
+            <div className="px-4 pb-4 grid grid-cols-1 gap-3 items-stretch">
               {group.sources.map((s) => (
                 <CatalogSourceCard key={s.key} source={s} live={s.healthId ? live[s.healthId] : undefined} />
               ))}
