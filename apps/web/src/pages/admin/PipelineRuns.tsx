@@ -67,9 +67,44 @@ function LiveRun({ r }: { r: Run }) {
   )
 }
 
+type Search = {
+  id: string; created_at: string; city: string | null; street: string | null; building_number: string | null
+  gush: number | null; chelka: number | null; plan_number: string | null; cache_level: string | null
+  score: number | null; bucket: string | null; ai_status: string | null; has_economics: boolean | null
+  economics_source: string | null; docs_pending: boolean | null
+}
+const AI_HE: Record<string, string> = { done: 'הושלם', pending: 'ממתין', running: 'רץ', disabled: '—', failed: 'נכשל' }
+
+// One search rendered as a data-flow: address → plan → source → AI → economics → score.
+function SearchFlow({ s }: { s: Search }) {
+  const a = [s.city, s.street, s.building_number].filter(Boolean).join(' ') || '—'
+  const fresh = (s.cache_level ?? '') === 'fresh'
+  const chips: { label: string; cls: string }[] = [
+    { label: a, cls: 'bg-slate-800 text-white' },
+    { label: `גוש ${s.gush ?? '?'}${s.chelka ? '/' + s.chelka : ''}${s.plan_number ? ' · ' + s.plan_number : ''}`, cls: 'bg-indigo-100 text-indigo-800' },
+    { label: fresh ? '🔵 חיפוש טרי' : `⚡ מטמון ${(s.cache_level ?? '').toUpperCase()}`, cls: fresh ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800' },
+    { label: `AI: ${AI_HE[s.ai_status ?? ''] ?? s.ai_status ?? '—'}`, cls: 'bg-slate-100 text-slate-700' },
+    { label: s.docs_pending ? '⏳ מוריד מסמכים' : s.has_economics ? `💰 כלכלה ✓ (${s.economics_source === 'ai' ? 'Codex' : 'שומה'})` : 'כלכלה —', cls: s.has_economics ? 'bg-violet-100 text-violet-800' : 'bg-slate-100 text-slate-400' },
+    { label: `ציון ${s.score ?? '—'}`, cls: 'bg-emerald-600 text-white' },
+  ]
+  return (
+    <div className="flex items-center gap-1 flex-wrap py-2 border-b border-slate-100 last:border-0">
+      <span className="text-[11px] text-slate-400 tabular-nums w-24 shrink-0">{new Date(s.created_at).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+      {chips.map((c, i) => (
+        <span key={i} className="flex items-center gap-1">
+          {i > 0 && <span className="text-slate-300">←</span>}
+          <span className={`text-xs px-2 py-1 rounded-md font-medium ${c.cls}`}>{c.label}</span>
+        </span>
+      ))}
+    </div>
+  )
+}
+
 export default function AdminPipelineRuns() {
   // auto-refresh every 4s so the whole VPN → download → Codex chain updates LIVE
   const list = trpc.pipelineRuns.list.useQuery({ limit: 500 }, { refetchInterval: 4000, refetchOnWindowFocus: true })
+  const searchList = trpc.pipelineRuns.searches.useQuery({ limit: 200 }, { refetchInterval: 4000, refetchOnWindowFocus: true })
+  const searches = (searchList.data ?? []) as Search[]
   const rows = (list.data ?? []) as Run[]
   const live = rows.filter(r => r.stage && r.stage !== 'done' && r.status === 'started')
 
@@ -114,6 +149,15 @@ export default function AdminPipelineRuns() {
           {live.map(r => <LiveRun key={r.id} r={r} />)}
         </div>
       )}
+
+      <div className="rounded-xl border border-slate-200 bg-white p-4 mb-4">
+        <div className="text-sm font-semibold mb-2">🔎 חיפושי כתובות · זרימת נתונים ({searches.length})</div>
+        <p className="text-xs text-slate-500 mb-3">כל חיפוש כתובת — כולל פגיעות מטמון. הזרימה: כתובת ← גוש/תכנית ← מקור (מטמון/טרי) ← AI ← כלכלה ← ציון.</p>
+        <div className="max-h-[420px] overflow-y-auto">
+          {searches.length === 0 ? <div className="text-sm text-slate-400 py-3">אין חיפושים עדיין.</div>
+            : searches.map(s => <SearchFlow key={s.id} s={s} />)}
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <KpiCard label="סך שליפות" value={kpis.total} icon={<Server size={18} />} tone="primary" index={0} />

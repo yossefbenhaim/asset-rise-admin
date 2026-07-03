@@ -43,4 +43,23 @@ export const pipelineRunsRouter = router({
         last_file: string | null
       }>
     }),
+
+  // Every address SEARCH + its data-flow (cache level → plan → AI → economics).
+  // Shows even cache hits, so the admin sees where each address got its data.
+  searches: requireAction('admin.sources.view')
+    .input(z.object({ limit: z.number().int().min(1).max(500).optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      const { data, error } = await ctx.db
+        .from('sc_analyzer_searches')
+        .select('id,created_at,city,street,building_number,gush,chelka,plan_number,cache_level,score,bucket,ai_status,has_plan_page,has_economics,economics_source,docs_pending')
+        .order('created_at', { ascending: false })
+        .limit(input?.limit ?? 200)
+      if (error) throw error
+      return (data ?? []) as unknown as Array<{
+        id: string; created_at: string
+        city: string | null; street: string | null; building_number: string | null; gush: number | null; chelka: number | null
+        plan_number: string | null; cache_level: string | null; score: number | null; bucket: string | null
+        ai_status: string | null; has_plan_page: boolean | null; has_economics: boolean | null; economics_source: string | null; docs_pending: boolean | null
+      }>
+    }),
 })
