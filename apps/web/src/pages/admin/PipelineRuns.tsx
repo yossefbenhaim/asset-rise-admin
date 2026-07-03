@@ -139,8 +139,8 @@ function SearchCard({ s, onClick }: { s: Search; onClick?: () => void }) {
         {s.docs_pending
           ? <Pill tone="sky" icon={<Loader2 size={11} className="animate-spin" />}>מוריד מסמכים</Pill>
           : s.has_economics
-            ? <Pill tone="violet" icon={<Coins size={11} />}>שומה · {s.economics_source === 'ai' ? 'Codex' : 'מסמך'}</Pill>
-            : <Pill tone="slate">ללא כלכלה</Pill>}
+            ? <Pill tone="violet" icon={<Coins size={11} />}>נתונים כלכליים · {s.economics_source === 'ai' ? 'AI' : 'מהמסמכים'}</Pill>
+            : <Pill tone="slate">אין נתונים כלכליים</Pill>}
       </div>
     </div>
   )
@@ -148,7 +148,7 @@ function SearchCard({ s, onClick }: { s: Search; onClick?: () => void }) {
 
 // ── detail drawer ─────────────────────────────────────────────────────────
 const DOC_TYPE_HE: Record<string, string> = {
-  appraisal: 'שומה', binui: 'נספח בינוי', balance: 'טבלת איזון והקצאה', traffic: 'נספח תנועה',
+  appraisal: 'הערכת שמאי', binui: 'נספח בינוי', balance: 'טבלת איזון והקצאה', traffic: 'נספח תנועה',
   social: 'נספח חברתי', environment: 'נספח סביבה', takanon: 'תקנון', tasrit: 'תשריט',
   other: 'אחר', unknown: 'לא מסווג',
 }
@@ -185,7 +185,7 @@ function RunDetail({ run, search, onClose }: { run: Run; search?: Search; onClos
   const skipped = docs.filter(d => !d.ai_visible)
   const steps = run.steps ?? []
   const fresh = (search?.cache_level ?? '') === 'fresh'
-  const econSrc = search?.economics_source === 'ai' ? 'Codex (חילוץ מטקסט)' : run.economics_found ? 'מסמך שומה' : null
+  const econSrc = search?.economics_source === 'ai' ? 'חולצו ע״י AI מהטקסט' : run.economics_found ? 'חולצו מהמסמכים' : null
   return (
     <Drawer open onClose={onClose} width={540} title={
       <span className="flex items-center gap-2">
@@ -224,7 +224,7 @@ function RunDetail({ run, search, onClose }: { run: Run; search?: Search; onClos
             <Field label="קובצי ZIP">{run.zips_downloaded ?? 0}</Field>
             <Field label="קובצי PDF">{run.pdfs_extracted ?? 0}</Field>
             <Field label="נספרו בהורדה">{run.downloaded_count ?? 0}</Field>
-            <Field label="כלכלה">{econSrc ? <span className="text-violet-700 font-medium">{econSrc}</span> : 'לא נמצאה'}</Field>
+            <Field label="נתונים כלכליים">{econSrc ? <span className="text-violet-700 font-medium">{econSrc}</span> : 'לא נמצאו'}</Field>
           </div>
           {run.last_file && <div className="mt-2 text-[11px] text-slate-400 break-all">קובץ אחרון: {run.last_file}</div>}
         </DBlock>
@@ -316,7 +316,7 @@ export default function AdminPipelineRuns() {
         return <div className="text-xs" title={types}><span className="text-emerald-700 font-semibold">{read} נקראו</span>{skipped > 0 && <span className="text-slate-400"> · {skipped} דולגו</span>}{types && <div className="text-slate-500 truncate max-w-[280px]">{types}</div>}</div>
       },
     },
-    { header: 'כלכלה', id: 'econ', accessorFn: r => (r.economics_found ? 1 : 0), cell: ({ row }) => row.original.economics_found ? <span className="text-xs px-2 py-0.5 rounded bg-violet-100 text-violet-700 font-semibold">שומה ✓</span> : <span className="text-xs text-slate-400">—</span> },
+    { header: 'נתונים כלכליים', id: 'econ', accessorFn: r => (r.economics_found ? 1 : 0), cell: ({ row }) => row.original.economics_found ? <span className="text-xs px-2 py-0.5 rounded bg-violet-100 text-violet-700 font-semibold">נמצאו ✓</span> : <span className="text-xs text-slate-400">—</span> },
     { header: 'סטטוס', accessorKey: 'status', cell: ({ row }) => { const s = STATUS_HE[row.original.status ?? 'started'] ?? STATUS_HE.started; return <span className={`text-xs px-2 py-0.5 rounded font-semibold ${s.cls}`}>{s.label}</span> } },
     { header: 'משך', accessorKey: 'duration_s', cell: ({ row }) => <span className="tabular-nums text-xs text-slate-500">{row.original.duration_s != null ? `${row.original.duration_s}ש׳` : '—'}</span> },
   ], [])
@@ -332,7 +332,7 @@ export default function AdminPipelineRuns() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mb-4">
         <KpiCard label="סך שליפות" value={kpis.total} icon={<Server size={18} />} tone="primary" index={0} />
         <KpiCard label="הושלמו" value={kpis.success} icon={<CheckCircle2 size={18} />} tone="success" index={1} />
-        <KpiCard label="עם שומה" value={kpis.econ} icon={<Coins size={18} />} tone="primary" index={2} />
+        <KpiCard label="עם נתונים כלכליים" value={kpis.econ} icon={<Coins size={18} />} tone="primary" index={2} />
         <KpiCard label="מסמכים שנקראו" value={kpis.docs} icon={<FileStack size={18} />} tone="navy" index={3} />
       </div>
 
