@@ -15,6 +15,7 @@ import { sourcesRouter } from './sources.js'
 import { aiRouter } from './ai.js'
 import { logsRouter } from './logs.js'
 import { wongRouter } from './wong.js'
+import { pipelineRunsRouter } from './pipelineRuns.js'
 
 export const appRouter = router({
   auth: authRouter,
@@ -33,6 +34,7 @@ export const appRouter = router({
   ai: aiRouter,
   logs: logsRouter,
   wong: wongRouter,
+  pipelineRuns: pipelineRunsRouter,
 })
 
 export type AppRouter = typeof appRouter

@@ -12,6 +12,7 @@ import AdminReports from '@/pages/admin/Reports'
 import AdminProcessing from '@/pages/admin/Processing'
 import AdminPayments from '@/pages/admin/Payments'
 import AdminSources from '@/pages/admin/Sources'
+import AdminPipelineRuns from '@/pages/admin/PipelineRuns'
 import AdminAiAnalyst from '@/pages/admin/AiAnalyst'
 import AdminWong from '@/pages/admin/Wong'
 import AdminLogs from '@/pages/admin/Logs'
@@ -67,6 +68,7 @@ export const router = createBrowserRouter([
         { path: 'processing', element: <AdminProcessing /> },
         { path: 'payments', element: <AdminPayments /> },
         { path: 'sources', element: <AdminSources /> },
+        { path: 'pipeline-runs', element: <AdminPipelineRuns /> },
         { path: 'ai', element: <AdminAiAnalyst /> },
         { path: 'wong', element: <AdminWong /> },
         { path: 'logs', element: <AdminLogs /> },
