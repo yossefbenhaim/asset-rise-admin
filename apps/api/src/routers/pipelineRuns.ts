@@ -7,7 +7,7 @@ import { router, requireAction } from '../trpc.js'
 
 const SELECT =
   'id,created_at,finished_at,source,plan_number,mp_id,job_id,city,street,building_number,gush,' +
-  'zips_downloaded,pdfs_extracted,docs,economics_found,status,duration_s'
+  'zips_downloaded,pdfs_extracted,docs,economics_found,status,duration_s,stage,steps,downloaded_count,last_file'
 
 export const pipelineRunsRouter = router({
   list: requireAction('admin.sources.view')
@@ -37,6 +37,10 @@ export const pipelineRunsRouter = router({
         economics_found: boolean | null
         status: string | null
         duration_s: number | null
+        stage: string | null
+        steps: Array<{ t: string; msg: string }> | null
+        downloaded_count: number | null
+        last_file: string | null
       }>
     }),
 })
