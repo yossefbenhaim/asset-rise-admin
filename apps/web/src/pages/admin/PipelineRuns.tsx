@@ -1,14 +1,19 @@
-import { useMemo, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { type ColumnDef } from '@tanstack/react-table'
-import { Server, CheckCircle2, Coins, FileStack, Loader2, Zap, Database, Sparkles, Clock } from 'lucide-react'
+import { Server, CheckCircle2, Coins, FileStack, Loader2, Zap, Database, Sparkles, Clock, FileText, EyeOff, MapPin, Timer, Download } from 'lucide-react'
 import { trpc } from '@/lib/api/trpc'
 import { KpiCard } from '@/components/ui/KpiCard'
 import { DataTable } from '@/components/ui/DataTable'
+import { Drawer } from '@/components/ui/Drawer'
 
+type Doc = { type: string; ai_visible: boolean; pii_removed: number }
 type Step = { t: string; msg: string }
 type Run = {
   id: string
   created_at: string
+  finished_at: string | null
+  source: string | null
+  job_id: string | null
   plan_number: string | null
   mp_id: string | null
   city: string | null
@@ -17,7 +22,7 @@ type Run = {
   gush: number | null
   zips_downloaded: number | null
   pdfs_extracted: number | null
-  docs: Array<{ type: string; ai_visible: boolean; pii_removed: number }> | null
+  docs: Doc[] | null
   economics_found: boolean | null
   status: string | null
   duration_s: number | null
@@ -37,6 +42,7 @@ const STATUS_HE: Record<string, { label: string; cls: string }> = {
   empty: { label: 'ריק', cls: 'bg-slate-100 text-slate-600' },
   failed: { label: 'נכשל', cls: 'bg-rose-100 text-rose-700' },
   started: { label: 'רץ…', cls: 'bg-sky-100 text-sky-700' },
+  cache: { label: 'מטמון', cls: 'bg-amber-100 text-amber-700' },
 }
 const addr = (r: { city: string | null; street: string | null; building_number: string | null }) =>
   [r.city, r.street, r.building_number].filter(Boolean).join(' ') || '—'
@@ -92,13 +98,24 @@ type Search = {
   id: string; created_at: string; city: string | null; street: string | null; building_number: string | null
   gush: number | null; chelka: number | null; plan_number: string | null; cache_level: string | null
   score: number | null; bucket: string | null; ai_status: string | null; has_economics: boolean | null
-  economics_source: string | null; docs_pending: boolean | null
+  has_plan_page: boolean | null; economics_source: string | null; docs_pending: boolean | null
 }
 const AI_HE: Record<string, string> = { done: 'הושלם', pending: 'ממתין', running: 'רץ', disabled: '—', failed: 'נכשל' }
 
+// A cache-hit search often has no VPN pipeline run — synthesize a minimal run so
+// the detail drawer can still open and show its source / score / AI status.
+function searchToRun(s: Search): Run {
+  return {
+    id: s.id, created_at: s.created_at, finished_at: null, source: null, job_id: null,
+    plan_number: s.plan_number, mp_id: null, city: s.city, street: s.street, building_number: s.building_number,
+    gush: s.gush, zips_downloaded: null, pdfs_extracted: null, docs: null, economics_found: s.has_economics,
+    status: 'cache', duration_s: null, stage: null, steps: null, downloaded_count: null, last_file: null,
+  }
+}
+
 // One search rendered as a compact, mobile-first card. Address + score on top,
 // a wrapping row of clearly-labelled status pills below (source / AI / economics).
-function SearchCard({ s }: { s: Search }) {
+function SearchCard({ s, onClick }: { s: Search; onClick?: () => void }) {
   const fresh = (s.cache_level ?? '') === 'fresh'
   const aiTone: Tone = s.ai_status === 'done' ? 'emerald' : s.ai_status === 'failed' ? 'rose' : 'sky'
   const meta = [
@@ -106,7 +123,7 @@ function SearchCard({ s }: { s: Search }) {
     s.plan_number || null,
   ].filter(Boolean).join(' · ')
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3">
+    <div onClick={onClick} className="rounded-lg border border-slate-200 bg-white p-3 cursor-pointer hover:border-sc-primary/50 hover:shadow-sm transition-all">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="font-semibold text-sm truncate">{addr(s)}</div>
@@ -129,6 +146,134 @@ function SearchCard({ s }: { s: Search }) {
   )
 }
 
+// ── detail drawer ─────────────────────────────────────────────────────────
+const DOC_TYPE_HE: Record<string, string> = {
+  appraisal: 'שומה', binui: 'נספח בינוי', balance: 'טבלת איזון והקצאה', traffic: 'נספח תנועה',
+  social: 'נספח חברתי', environment: 'נספח סביבה', takanon: 'תקנון', tasrit: 'תשריט',
+  other: 'אחר', unknown: 'לא מסווג',
+}
+const fullTime = (iso: string) => new Date(iso).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+const clock = (iso: string) => new Date(iso).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+function fmtDur(sec: number | null | undefined): string {
+  if (sec == null) return '—'
+  if (sec < 60) return `${sec} שניות`
+  const m = Math.floor(sec / 60), s = sec % 60
+  return `${m}:${String(s).padStart(2, '0')} דק׳`
+}
+
+function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-[11px] text-slate-400 mb-0.5">{label}</div>
+      <div className="text-sm text-slate-800 break-words">{children}</div>
+    </div>
+  )
+}
+function DBlock({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white p-3.5">
+      <h3 className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-700 mb-3">{icon}{title}</h3>
+      {children}
+    </section>
+  )
+}
+
+function RunDetail({ run, search, onClose }: { run: Run; search?: Search; onClose: () => void }) {
+  const st = STATUS_HE[run.status ?? 'started'] ?? STATUS_HE.started
+  const docs = run.docs ?? []
+  const read = docs.filter(d => d.ai_visible)
+  const skipped = docs.filter(d => !d.ai_visible)
+  const steps = run.steps ?? []
+  const fresh = (search?.cache_level ?? '') === 'fresh'
+  const econSrc = search?.economics_source === 'ai' ? 'Codex (חילוץ מטקסט)' : run.economics_found ? 'מסמך שומה' : null
+  return (
+    <Drawer open onClose={onClose} width={540} title={
+      <span className="flex items-center gap-2">
+        <MapPin size={16} className="text-sc-primary" />{addr(run)}
+        <span className={`text-[11px] px-2 py-0.5 rounded font-semibold ${st.cls}`}>{st.label}</span>
+      </span>
+    }>
+      <div className="space-y-3">
+        {/* where the data came from */}
+        <DBlock icon={<Database size={14} className="text-sky-600" />} title="מקור הנתונים">
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="מקור">{run.source === 'ai' ? 'Codex' : 'שרת VPN (MAVAT)'}</Field>
+            <Field label="מספר תכנית"><span className="font-mono text-xs">{run.plan_number || '—'}</span></Field>
+            <Field label="mp_id"><span className="font-mono text-xs">{run.mp_id || '—'}</span></Field>
+            <Field label="גוש / חלקה">{run.gush ?? '—'}{search?.chelka ? ` / ${search.chelka}` : ''}</Field>
+            <Field label="מטמון / טרי">{search ? (fresh ? 'חיפוש טרי (חושב עכשיו)' : `מטמון ${(search.cache_level ?? '').toUpperCase()}`) : '—'}</Field>
+            <Field label="תיק תכנית (מבא״ת)">{search?.has_plan_page ? 'נסרק ✓' : '—'}</Field>
+            <Field label="ציון סופי">{search?.score != null ? <b className="text-emerald-700">{search.score}</b> : '—'}{search?.bucket ? <span className="text-slate-400 text-xs"> · {search.bucket}</span> : ''}</Field>
+            <Field label="סטטוס AI">{AI_HE[search?.ai_status ?? ''] ?? '—'}</Field>
+          </div>
+        </DBlock>
+
+        {/* timing */}
+        <DBlock icon={<Timer size={14} className="text-violet-600" />} title="תזמון">
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="התחיל">{fullTime(run.created_at)}</Field>
+            <Field label="הסתיים">{run.finished_at ? fullTime(run.finished_at) : 'עדיין רץ…'}</Field>
+            <Field label="משך כולל"><b>{fmtDur(run.duration_s)}</b></Field>
+            <Field label="שלב נוכחי">{STAGE_HE[run.stage ?? ''] ?? run.stage ?? '—'}</Field>
+          </div>
+        </DBlock>
+
+        {/* downloads */}
+        <DBlock icon={<Download size={14} className="text-sky-600" />} title="הורדות מ-MAVAT">
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="קובצי ZIP">{run.zips_downloaded ?? 0}</Field>
+            <Field label="קובצי PDF">{run.pdfs_extracted ?? 0}</Field>
+            <Field label="נספרו בהורדה">{run.downloaded_count ?? 0}</Field>
+            <Field label="כלכלה">{econSrc ? <span className="text-violet-700 font-medium">{econSrc}</span> : 'לא נמצאה'}</Field>
+          </div>
+          {run.last_file && <div className="mt-2 text-[11px] text-slate-400 break-all">קובץ אחרון: {run.last_file}</div>}
+        </DBlock>
+
+        {/* documents */}
+        <DBlock icon={<FileText size={14} className="text-emerald-600" />} title={`מסמכים (${docs.length}) · ${read.length} נקראו · ${skipped.length} דולגו`}>
+          {docs.length === 0 ? <div className="text-sm text-slate-400">אין מסמכים.</div> : (
+            <ul className="space-y-1.5">
+              {docs.map((d, i) => (
+                <li key={i} className="flex items-center gap-2 text-sm">
+                  {d.ai_visible
+                    ? <FileText size={14} className="text-emerald-600 shrink-0" />
+                    : <EyeOff size={14} className="text-slate-400 shrink-0" />}
+                  <span className="font-medium">{DOC_TYPE_HE[d.type] ?? d.type}</span>
+                  {d.ai_visible
+                    ? <span className="text-[11px] text-emerald-700">נקרא ל-AI</span>
+                    : <span className="text-[11px] text-slate-400">דולג (רגיש)</span>}
+                  {d.pii_removed > 0 && <span className="ms-auto text-[11px] text-amber-600">{d.pii_removed} פרטים אישיים הוסרו</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </DBlock>
+
+        {/* full timeline */}
+        <DBlock icon={<Clock size={14} className="text-slate-500" />} title={`ציר זמן מלא (${steps.length} שלבים)`}>
+          {steps.length === 0 ? <div className="text-sm text-slate-400">אין שלבים מתועדים.</div> : (
+            <ol className="border-s-2 border-slate-200 ps-3 space-y-1.5">
+              {steps.map((s, i) => {
+                const prev = i > 0 ? steps[i - 1] : null
+                const gap = prev ? Math.round((new Date(s.t).getTime() - new Date(prev.t).getTime()) / 1000) : 0
+                return (
+                  <li key={i} className="text-xs text-slate-600">
+                    <span className="tabular-nums text-slate-400">{clock(s.t)}</span>
+                    {gap > 0 && <span className="tabular-nums text-slate-300"> (+{gap}ש׳)</span>}
+                    {' · '}{s.msg}
+                  </li>
+                )
+              })}
+            </ol>
+          )}
+        </DBlock>
+
+        <div className="text-[10px] text-slate-300 font-mono break-all pt-1">run {run.id}{run.job_id ? ` · job ${run.job_id}` : ''}</div>
+      </div>
+    </Drawer>
+  )
+}
+
 export default function AdminPipelineRuns() {
   // auto-refresh every 4s so the whole VPN → download → Codex chain updates LIVE
   const list = trpc.pipelineRuns.list.useQuery({ limit: 500 }, { refetchInterval: 4000, refetchOnWindowFocus: true })
@@ -136,6 +281,17 @@ export default function AdminPipelineRuns() {
   const searches = (searchList.data ?? []) as Search[]
   const rows = (list.data ?? []) as Run[]
   const live = rows.filter(r => r.stage && r.stage !== 'done' && r.status === 'started')
+
+  // Row/card click → detail drawer. Match each run to its address search (for
+  // cache level / score / AI status) and vice-versa; a cache-hit search with no
+  // VPN run is shown from a synthesized run so the drawer still opens.
+  const [active, setActive] = useState<{ run: Run; search?: Search } | null>(null)
+  const sameAddr = (a: { city: string | null; street: string | null; building_number: string | null }, b: typeof a) => addr(a) === addr(b)
+  const openRun = (run: Run) => setActive({ run, search: searches.find(s => sameAddr(s, run) && (!run.plan_number || !s.plan_number || s.plan_number === run.plan_number)) })
+  const openSearch = (s: Search) => {
+    const run = rows.find(r => sameAddr(r, s) && (!s.plan_number || !r.plan_number || r.plan_number === s.plan_number))
+    setActive({ run: run ?? searchToRun(s), search: s })
+  }
 
   const kpis = useMemo(() => ({
     total: rows.length,
@@ -200,7 +356,7 @@ export default function AdminPipelineRuns() {
           ? <div className="rounded-lg border border-dashed border-slate-200 text-sm text-slate-400 py-8 text-center">אין חיפושים עדיין.</div>
           : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-[520px] overflow-y-auto pe-0.5">
-              {searches.map(s => <SearchCard key={s.id} s={s} />)}
+              {searches.map(s => <SearchCard key={s.id} s={s} onClick={() => openSearch(s)} />)}
             </div>
           )}
       </div>
@@ -216,6 +372,7 @@ export default function AdminPipelineRuns() {
             columns={columns}
             data={rows}
             loading={list.isLoading}
+            onRowClick={openRun}
             csvName="mavat-pipeline-runs"
             searchPlaceholder="חיפוש לפי כתובת / תכנית…"
             emptyTitle="אין שליפות עדיין"
@@ -223,6 +380,8 @@ export default function AdminPipelineRuns() {
           />
         </div>
       </details>
+
+      {active && <RunDetail run={active.run} search={active.search} onClose={() => setActive(null)} />}
     </div>
   )
 }
