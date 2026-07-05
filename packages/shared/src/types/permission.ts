@@ -18,6 +18,8 @@ export type Action =
   | 'admin.processing.view'
   | 'admin.payments.list'
   | 'admin.sources.view'
+  | 'admin.outreach.view'
+  | 'admin.outreach.manage'
   | 'admin.ai.view'
   | 'admin.ai.regenerate'
   | 'admin.ai.edit_prompt'
