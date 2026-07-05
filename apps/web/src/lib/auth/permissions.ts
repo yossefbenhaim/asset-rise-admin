@@ -5,6 +5,8 @@ import type { Action, RoleKey } from '@asset-rise/shared'
 const map: Record<string, Action[]> = {
   admin: [
     'admin.dashboard',
+    'admin.outreach.view',
+    'admin.outreach.manage',
     'admin.users.list', 'admin.users.update', 'admin.users.disable', 'admin.users.delete',
     'admin.leads.list', 'admin.leads.update',
     'admin.buildings.list',
@@ -80,6 +82,8 @@ const map: Record<string, Action[]> = {
   ],
   'admin.sales': [
     'admin.dashboard',
+    'admin.outreach.view',
+    'admin.outreach.manage',
     'admin.leads.list',
     'admin.leads.update',
     'admin.reports.list',
