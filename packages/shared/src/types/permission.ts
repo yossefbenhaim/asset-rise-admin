@@ -20,6 +20,8 @@ export type Action =
   | 'admin.sources.view'
   | 'admin.outreach.view'
   | 'admin.outreach.manage'
+  | 'admin.costs.view'
+  | 'admin.costs.manage'
   | 'admin.ai.view'
   | 'admin.ai.regenerate'
   | 'admin.ai.edit_prompt'

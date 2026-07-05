@@ -31,6 +31,7 @@ export const ADMIN_NAV: NavGroup[] = [
       { id: 'sources',    label: 'מקורות מידע',  to: '/sources',    icon: 'Radar',         requires: ['admin.sources.view'] },
       { id: 'pipeline-runs', label: 'שרת VPN (MAVAT)', to: '/pipeline-runs', icon: 'Server', requires: ['admin.sources.view'] },
       { id: 'outreach', label: 'מרכז מכירות', to: '/outreach', icon: 'PhoneCall', requires: ['admin.outreach.view'] },
+      { id: 'costs', label: 'עלויות', to: '/costs', icon: 'Wallet', requires: ['admin.costs.view'] },
       { id: 'ai',         label: 'בקרת AI',     to: '/ai',         icon: 'Sparkles',      requires: ['admin.ai.view'] },
       { id: 'wong',       label: 'Wong · מסמכים', to: '/wong',     icon: 'FileCheck2',    requires: ['admin.docverify.view'] },
       { id: 'logs',       label: 'לוגים',       to: '/logs',       icon: 'FileWarning',   requires: ['admin.logs.list'] },

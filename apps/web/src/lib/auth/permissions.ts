@@ -7,6 +7,8 @@ const map: Record<string, Action[]> = {
     'admin.dashboard',
     'admin.outreach.view',
     'admin.outreach.manage',
+    'admin.costs.view',
+    'admin.costs.manage',
     'admin.users.list', 'admin.users.update', 'admin.users.disable', 'admin.users.delete',
     'admin.leads.list', 'admin.leads.update',
     'admin.buildings.list',
