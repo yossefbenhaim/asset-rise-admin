@@ -21,6 +21,8 @@ const map: Record<string, Action[]> = {
     'admin.ai.view', 'admin.ai.regenerate',
     'admin.logs.list',
     'admin.docverify.view',
+    // Agents Center (mirror of migration 025).
+    'admin.agents.view',
   ],
   // Super-admin god capabilities. MUST mirror migration 006's seed exactly.
   // Only 'admin.super' gets god.* — plain 'admin' deliberately does not.
@@ -81,6 +83,8 @@ const map: Record<string, Action[]> = {
     'admin.sources.view',
     'admin.logs.list',
     'admin.docverify.view',
+    // Agents Center (mirror of migration 025).
+    'admin.agents.view',
   ],
   'admin.sales': [
     'admin.dashboard',
