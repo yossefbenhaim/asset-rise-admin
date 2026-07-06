@@ -4,7 +4,11 @@ import { format, formatDistanceToNow, parseISO } from 'date-fns'
 import { he } from 'date-fns/locale'
 
 const numFmt = new Intl.NumberFormat('he-IL')
-const nisFmt = new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS', maximumFractionDigits: 0 })
+const nisFmt = new Intl.NumberFormat('he-IL', {
+  style: 'currency',
+  currency: 'ILS',
+  maximumFractionDigits: 0,
+})
 
 export function num(n: number | null | undefined): string {
   return n == null ? '—' : numFmt.format(n)
@@ -23,11 +27,14 @@ function toDate(d: string | Date | null | undefined): Date | null {
 }
 
 export function dateShort(d: string | Date | null | undefined): string {
-  const dt = toDate(d); return dt ? format(dt, 'dd/MM/yyyy', { locale: he }) : '—'
+  const dt = toDate(d)
+  return dt ? format(dt, 'dd/MM/yyyy', { locale: he }) : '—'
 }
 export function dateTime(d: string | Date | null | undefined): string {
-  const dt = toDate(d); return dt ? format(dt, 'dd/MM/yyyy HH:mm', { locale: he }) : '—'
+  const dt = toDate(d)
+  return dt ? format(dt, 'dd/MM/yyyy HH:mm', { locale: he }) : '—'
 }
 export function timeAgo(d: string | Date | null | undefined): string {
-  const dt = toDate(d); return dt ? formatDistanceToNow(dt, { locale: he, addSuffix: true }) : '—'
+  const dt = toDate(d)
+  return dt ? formatDistanceToNow(dt, { locale: he, addSuffix: true }) : '—'
 }

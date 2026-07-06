@@ -8,21 +8,33 @@
 @font-face {
   font-family: 'Heebo';
   src: url('/fonts/Heebo-Regular.ttf') format('truetype');
-  font-weight: 400; font-style: normal; font-display: swap;
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 @font-face {
   font-family: 'Heebo';
   src: url('/fonts/Heebo-Bold.ttf') format('truetype');
-  font-weight: 700; font-style: normal; font-display: swap;
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
 }
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-* { box-sizing: border-box; }
-html, body, #root { height: 100%; margin: 0; }
-html, body {
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+html,
+body {
   /* Lock horizontal scrolling on the document — any horizontal overflow
    * must opt-in at the component level (e.g. the project-stages strip
    * inside ProjectStatusCard, which wraps a div.overflow-x-auto). */
@@ -33,7 +45,9 @@ body {
   background: var(--sc-bg);
   color: var(--sc-text);
   direction: rtl;
-  font-feature-settings: "tnum" 1, "lnum" 1;
+  font-feature-settings:
+    'tnum' 1,
+    'lnum' 1;
   -webkit-font-smoothing: antialiased;
   overflow-y: auto;
 }
@@ -50,10 +64,13 @@ body {
   scrollbar-width: thin;
   scrollbar-color: var(--sc-primary-light) transparent;
 }
-*::-webkit-scrollbar { width: 12px; height: 12px; }
+*::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
 /* Soft rounded track that reads nicely on any surface (white modal / app bg) */
 *::-webkit-scrollbar-track {
-  background: rgba(120, 140, 170, 0.10);
+  background: rgba(120, 140, 170, 0.1);
   border-radius: 999px;
   margin: 4px;
 }
@@ -69,17 +86,31 @@ body {
   background: linear-gradient(180deg, var(--sc-primary), var(--sc-navy));
   background-clip: padding-box;
 }
-*::-webkit-scrollbar-corner { background: transparent; }
-button { font-family: inherit; cursor: pointer; }
-a { color: inherit; text-decoration: none; }
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
 
 /* Accessibility: high-contrast mode — black bg / yellow text everywhere. Toggled
  * by AccessibilityWidget via body.a11y-hc. Forced with !important so it overrides
  * Tailwind utility classes. */
-body.a11y-hc, body.a11y-hc * {
+body.a11y-hc,
+body.a11y-hc * {
   background-color: #000 !important;
   color: #ff0 !important;
   border-color: #ff0 !important;
 }
-body.a11y-hc img, body.a11y-hc svg { filter: brightness(0) invert(1) !important; }
-body.a11y-hc a { text-decoration: underline !important; }
+body.a11y-hc img,
+body.a11y-hc svg {
+  filter: brightness(0) invert(1) !important;
+}
+body.a11y-hc a {
+  text-decoration: underline !important;
+}

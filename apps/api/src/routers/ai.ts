@@ -131,9 +131,7 @@ function versionOf(researchKey: string | null): string | null {
 function modelOf(request: unknown, result: unknown): string | null {
   const rq = obj(request)
   const rs = obj(result)
-  return (
-    str(rq?.model) ?? str(rq?.model_id) ?? str(rs?.model) ?? str(rs?.model_used) ?? null
-  )
+  return str(rq?.model) ?? str(rq?.model_id) ?? str(rs?.model) ?? str(rs?.model_used) ?? null
 }
 
 // Best-effort headline + longer summary out of the AiResearch result jsonb.
@@ -147,10 +145,14 @@ function summarize(result: unknown): { heading: string | null; summary: string |
 
 function jobStatus(status: string | null | undefined): AiJobStatus {
   switch (status) {
-    case 'running': return 'running'
-    case 'failed': return 'failed'
-    case 'done': return 'done'
-    default: return 'pending'
+    case 'running':
+      return 'running'
+    case 'failed':
+      return 'failed'
+    case 'done':
+      return 'done'
+    default:
+      return 'pending'
   }
 }
 
@@ -173,7 +175,9 @@ export const aiRouter = router({
   list: requireAction('admin.ai.view').query(async ({ ctx }): Promise<AiSummaryRow[]> => {
     const { data, error } = await ctx.db
       .from('sc_analyzer_jobs')
-      .select('research_key,status,request,result,error,attempts,created_at,updated_at,completed_at')
+      .select(
+        'research_key,status,request,result,error,attempts,created_at,updated_at,completed_at',
+      )
       .not('result', 'is', null)
       .order('updated_at', { ascending: false, nullsFirst: false })
       .limit(500)
@@ -207,7 +211,9 @@ export const aiRouter = router({
     .query(async ({ ctx, input }): Promise<AiSummaryDetail> => {
       const { data, error } = await ctx.db
         .from('sc_analyzer_jobs')
-        .select('research_key,status,request,result,error,attempts,created_at,updated_at,completed_at')
+        .select(
+          'research_key,status,request,result,error,attempts,created_at,updated_at,completed_at',
+        )
         .eq('research_key', input.research_key)
         .maybeSingle()
       if (error) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message })
@@ -234,9 +240,7 @@ export const aiRouter = router({
         recommendations: Array.isArray(r?.recommendations)
           ? (r!.recommendations as any[]).map(String).filter(Boolean)
           : [],
-        sources: Array.isArray(r?.sources)
-          ? (r!.sources as any[]).map(String).filter(Boolean)
-          : [],
+        sources: Array.isArray(r?.sources) ? (r!.sources as any[]).map(String).filter(Boolean) : [],
         request: data.request,
         result: data.result,
       }
@@ -293,7 +297,12 @@ export const aiRouter = router({
         .eq('agent', agent)
       const byVersion = new Map<
         string,
-        { text: string | null; note: string | null; updated_by: string | null; updated_at: string | null }
+        {
+          text: string | null
+          note: string | null
+          updated_by: string | null
+          updated_at: string | null
+        }
       >()
       for (const s of (stored ?? []) as any[]) {
         byVersion.set(s.version as string, {
@@ -334,19 +343,17 @@ export const aiRouter = router({
   editPrompt: requireAction('admin.ai.edit_prompt')
     .input(AiEditPromptInput)
     .mutation(async ({ ctx, input }): Promise<{ agent: AiAgent; version: string }> => {
-      const { error } = await ctx.db
-        .from('sc_ai_prompts')
-        .upsert(
-          {
-            agent: input.agent,
-            version: input.version,
-            text: input.text,
-            note: input.note ?? null,
-            updated_by: ctx.user.id,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'agent,version' },
-        )
+      const { error } = await ctx.db.from('sc_ai_prompts').upsert(
+        {
+          agent: input.agent,
+          version: input.version,
+          text: input.text,
+          note: input.note ?? null,
+          updated_by: ctx.user.id,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'agent,version' },
+      )
       if (error) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message })
 
       await audit(ctx.db, {
@@ -354,7 +361,12 @@ export const aiRouter = router({
         action: 'ai.edit_prompt',
         target_type: 'ai_prompt',
         target_id: `${input.agent}:${input.version}`,
-        meta: { agent: input.agent, version: input.version, len: input.text.length, has_note: !!input.note },
+        meta: {
+          agent: input.agent,
+          version: input.version,
+          len: input.text.length,
+          has_note: !!input.note,
+        },
         ip: ctx.ip,
       })
       return { agent: input.agent, version: input.version }

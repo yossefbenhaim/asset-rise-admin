@@ -11,27 +11,28 @@ export async function insertLead(
   input: CreateLeadInput,
   ip: string | null,
 ): Promise<Lead> {
-  const { data, error } = await db.from('sc_leads').insert({
-    name: input.name,
-    phone: input.phone,
-    email: input.email || null,
-    city: input.city || null,
-    building_address: input.building_address || null,
-    message: input.message || null,
-    source: input.source || 'landing',
-    status: 'new',
-    utm_source: input.utm_source || null,
-    utm_campaign: input.utm_campaign || null,
-    ip,
-  }).select(COLS).single()
+  const { data, error } = await db
+    .from('sc_leads')
+    .insert({
+      name: input.name,
+      phone: input.phone,
+      email: input.email || null,
+      city: input.city || null,
+      building_address: input.building_address || null,
+      message: input.message || null,
+      source: input.source || 'landing',
+      status: 'new',
+      utm_source: input.utm_source || null,
+      utm_campaign: input.utm_campaign || null,
+      ip,
+    })
+    .select(COLS)
+    .single()
   if (error) throw new Error(error.message)
   return data as unknown as Lead
 }
 
-export async function listLeads(
-  db: SupabaseClient,
-  filters: ListLeadsInput,
-): Promise<Lead[]> {
+export async function listLeads(db: SupabaseClient, filters: ListLeadsInput): Promise<Lead[]> {
   const limit = filters?.limit ?? 200
   let q = db.from('sc_leads').select(COLS).limit(limit)
   if (filters?.status) q = q.eq('status', filters.status)
@@ -48,10 +49,7 @@ export async function listLeads(
   return (data ?? []) as unknown as Lead[]
 }
 
-export async function updateLead(
-  db: SupabaseClient,
-  input: UpdateLeadInput,
-): Promise<Lead> {
+export async function updateLead(db: SupabaseClient, input: UpdateLeadInput): Promise<Lead> {
   const patch: Record<string, unknown> = {}
   if (input.status !== undefined) {
     patch.status = input.status

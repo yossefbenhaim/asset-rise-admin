@@ -14,7 +14,10 @@ export const buildingsRouter = router({
     const ids = buildings.map((b: any) => b.id)
     const [{ data: tenants }, { data: projects }] = await Promise.all([
       ctx.db.from('sc_tenant_profiles').select('building_id').in('building_id', ids),
-      ctx.db.from('sc_projects').select('id, building_id, current_stage, name, target_quarter').in('building_id', ids),
+      ctx.db
+        .from('sc_projects')
+        .select('id, building_id, current_stage, name, target_quarter')
+        .in('building_id', ids),
     ])
     const tenantCount = new Map<string, number>()
     for (const t of tenants ?? []) {

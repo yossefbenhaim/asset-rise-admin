@@ -132,7 +132,7 @@ function normalizeSystemLog(row: SystemLogRow): LogEntry {
     actorPhone: null,
     message: row.message?.trim() || row.severity,
     meta: row.meta ?? null,
-    request: req ?? (m && (req == null && res == null) ? row.meta : null),
+    request: req ?? (m && req == null && res == null ? row.meta : null),
     response: res,
     timestamp: row.created_at,
   }
@@ -194,16 +194,14 @@ export const logsRouter = router({
 
       // Resolve every distinct actor id → identity in ONE batched query so the
       // table can show WHO acted (name/email) instead of a raw uuid.
-      const ids = Array.from(
-        new Set(merged.map((e) => e.userId).filter((v): v is string => !!v)),
-      )
+      const ids = Array.from(new Set(merged.map(e => e.userId).filter((v): v is string => !!v)))
       if (ids.length) {
         const { data: profiles } = await ctx.db
           .from('sc_profiles')
           .select('id,email,full_name,phone')
           .in('id', ids)
         const byId = new Map<string, ProfileRow>(
-          ((profiles as ProfileRow[] | null) ?? []).map((p) => [p.id, p]),
+          ((profiles as ProfileRow[] | null) ?? []).map(p => [p.id, p]),
         )
         for (const e of merged) {
           if (!e.userId) continue
@@ -218,10 +216,10 @@ export const logsRouter = router({
       // Search across the message AND the resolved actor (name/email/phone) so
       // an admin can find "all logs for this person" by typing their email.
       const filtered = q
-        ? merged.filter((e) =>
+        ? merged.filter(e =>
             [e.message, e.actorName, e.actorEmail, e.actorPhone, e.userId]
               .filter(Boolean)
-              .some((v) => (v as string).toLowerCase().includes(q)),
+              .some(v => (v as string).toLowerCase().includes(q)),
           )
         : merged
 

@@ -6,7 +6,7 @@ import type {
   GodNegotiationMessage,
   GodNegForceStageInput,
   GodNegForceStatusInput,
-} from '@asset-rise/shared/schemas/godNegotiations'
+} from '@asset-rise/shared'
 
 // God-mode "Provider Negotiations" repo (Wave 2 — "deals"). Runs as
 // service-role (adminClient) so it reads/writes any sc_* row, bypassing RLS.
@@ -28,11 +28,16 @@ export const PG_UNIQUE_VIOLATION = '23505'
 // FK-violation SQLSTATE — e.g. linking a provider id that isn't a real profile.
 export const PG_FK_VIOLATION = '23503'
 
-function addressOf(b: {
-  street?: string | null
-  building_number?: string | null
-  city?: string | null
-} | null | undefined): string | null {
+function addressOf(
+  b:
+    | {
+        street?: string | null
+        building_number?: string | null
+        city?: string | null
+      }
+    | null
+    | undefined,
+): string | null {
   if (!b) return null
   const line = [b.street, b.building_number].filter(Boolean).join(' ')
   const full = [line, b.city].filter(Boolean).join(', ').trim()
@@ -159,9 +164,7 @@ export async function getNegotiation(
     .eq('negotiation_id', id)
     .order('created_at', { ascending: true })
   const msgs = (msgRows ?? []) as any[]
-  const senderIds = Array.from(
-    new Set(msgs.map(m => m.sender_id).filter(Boolean) as string[]),
-  )
+  const senderIds = Array.from(new Set(msgs.map(m => m.sender_id).filter(Boolean) as string[]))
   const senderById = await resolveProfiles(db, senderIds)
   const messages: GodNegotiationMessage[] = msgs.map(m => ({
     id: m.id,
@@ -325,7 +328,9 @@ export async function providerIsLinked(
 async function resolveBuildings(
   db: SupabaseClient,
   ids: string[],
-): Promise<Map<string, { city: string | null; street: string | null; building_number: string | null }>> {
+): Promise<
+  Map<string, { city: string | null; street: string | null; building_number: string | null }>
+> {
   const map = new Map<string, any>()
   if (!ids.length) return map
   const { data } = await db
@@ -358,10 +363,7 @@ async function resolveProfiles(
   return map
 }
 
-async function countMessages(
-  db: SupabaseClient,
-  negIds: string[],
-): Promise<Map<string, number>> {
+async function countMessages(db: SupabaseClient, negIds: string[]): Promise<Map<string, number>> {
   const map = new Map<string, number>()
   if (!negIds.length) return map
   const { data } = await db

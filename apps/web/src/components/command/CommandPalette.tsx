@@ -27,11 +27,15 @@ export function CommandPalette() {
     return () => window.removeEventListener('keydown', onKey)
   }, [setOpen])
 
-  const groups = ADMIN_NAV
-    .map(g => ({ ...g, items: g.items.filter(it => !it.requires || it.requires.every(r => can(roleKeys, r))) }))
-    .filter(g => g.items.length > 0)
+  const groups = ADMIN_NAV.map(g => ({
+    ...g,
+    items: g.items.filter(it => !it.requires || it.requires.every(r => can(roleKeys, r))),
+  })).filter(g => g.items.length > 0)
 
-  const go = (to: string) => { setOpen(false); nav(to) }
+  const go = (to: string) => {
+    setOpen(false)
+    nav(to)
+  }
 
   return (
     <>

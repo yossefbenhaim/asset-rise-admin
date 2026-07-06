@@ -14,13 +14,13 @@ export default function AdminLogs() {
 
   const kpis = useMemo(() => {
     const total = all.length
-    const errors = all.filter((e) => e.severity === 'error').length
-    const audit = all.filter((e) => e.service === 'audit').length
+    const errors = all.filter(e => e.severity === 'error').length
+    const audit = all.filter(e => e.service === 'audit').length
     return { total, errors, audit }
   }, [all])
 
   const rows = useMemo(
-    () => (severity === 'all' ? all : all.filter((e) => e.severity === severity)),
+    () => (severity === 'all' ? all : all.filter(e => e.severity === severity)),
     [all, severity],
   )
 
@@ -31,9 +31,27 @@ export default function AdminLogs() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-        <KpiCard label="סך רשומות" value={kpis.total} icon={<ScrollText size={18} />} tone="primary" index={0} />
-        <KpiCard label="שגיאות" value={kpis.errors} icon={<AlertTriangle size={18} />} tone="danger" index={1} />
-        <KpiCard label="פעולות ביקורת" value={kpis.audit} icon={<ShieldCheck size={18} />} tone="success" index={2} />
+        <KpiCard
+          label="סך רשומות"
+          value={kpis.total}
+          icon={<ScrollText size={18} />}
+          tone="primary"
+          index={0}
+        />
+        <KpiCard
+          label="שגיאות"
+          value={kpis.errors}
+          icon={<AlertTriangle size={18} />}
+          tone="danger"
+          index={1}
+        />
+        <KpiCard
+          label="פעולות ביקורת"
+          value={kpis.audit}
+          icon={<ShieldCheck size={18} />}
+          tone="success"
+          index={2}
+        />
       </div>
 
       <LogsTable

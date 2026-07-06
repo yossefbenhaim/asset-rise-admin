@@ -1,7 +1,16 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { GodSupportThread, GodSupportMessage, GodSupportThreadListItem } from '@asset-rise/shared'
+import type {
+  GodSupportThread,
+  GodSupportMessage,
+  GodSupportThreadListItem,
+} from '@asset-rise/shared'
 
-function addressOf(b: { street?: string | null; building_number?: string | null; city?: string | null } | null | undefined): string | null {
+function addressOf(
+  b:
+    | { street?: string | null; building_number?: string | null; city?: string | null }
+    | null
+    | undefined,
+): string | null {
   if (!b) return null
   const line = [b.street, b.building_number].filter(Boolean).join(' ')
   return [line, b.city].filter(Boolean).join(', ').trim() || null
@@ -23,19 +32,29 @@ export async function listThreads(db: SupabaseClient): Promise<GodSupportThreadL
   const buildingIds = Array.from(new Set(tRows.map(t => t.building_id).filter(Boolean)))
 
   const [{ data: msgs }, { data: profs }, { data: builds }] = await Promise.all([
-    db.from('sc_support_messages').select('thread_id, sender_kind, body, created_at').in('thread_id', threadIds).order('created_at', { ascending: true }),
-    userIds.length ? db.from('sc_profiles').select('id, full_name, email, role').in('id', userIds) : Promise.resolve({ data: [] as any[] }),
-    buildingIds.length ? db.from('sc_buildings').select('id, city, street, building_number').in('id', buildingIds) : Promise.resolve({ data: [] as any[] }),
+    db
+      .from('sc_support_messages')
+      .select('thread_id, sender_kind, body, created_at')
+      .in('thread_id', threadIds)
+      .order('created_at', { ascending: true }),
+    userIds.length
+      ? db.from('sc_profiles').select('id, full_name, email, role').in('id', userIds)
+      : Promise.resolve({ data: [] as any[] }),
+    buildingIds.length
+      ? db.from('sc_buildings').select('id, city, street, building_number').in('id', buildingIds)
+      : Promise.resolve({ data: [] as any[] }),
   ])
 
   const lastByThread = new Map<string, { sender_kind: string; body: string }>()
   const countByThread = new Map<string, number>()
   for (const m of (msgs ?? []) as any[]) {
-    lastByThread.set(m.thread_id, { sender_kind: m.sender_kind, body: m.body })  // asc → last wins
+    lastByThread.set(m.thread_id, { sender_kind: m.sender_kind, body: m.body }) // asc → last wins
     countByThread.set(m.thread_id, (countByThread.get(m.thread_id) ?? 0) + 1)
   }
-  const profById = new Map<string, any>(); for (const p of (profs ?? []) as any[]) profById.set(p.id, p)
-  const bById = new Map<string, any>(); for (const b of (builds ?? []) as any[]) bById.set(b.id, b)
+  const profById = new Map<string, any>()
+  for (const p of (profs ?? []) as any[]) profById.set(p.id, p)
+  const bById = new Map<string, any>()
+  for (const b of (builds ?? []) as any[]) bById.set(b.id, b)
 
   return tRows.map((t): GodSupportThreadListItem => {
     const last = lastByThread.get(t.id) ?? null
@@ -61,29 +80,55 @@ export async function listThreads(db: SupabaseClient): Promise<GodSupportThreadL
 // user's thread, load it, and post an admin message (+ ping the user via
 // sc_notifications so they see it in the customer app).
 
-async function resolveContext(db: SupabaseClient, userId: string, role: string | null): Promise<{ building_id: string | null; project_id: string | null }> {
+async function resolveContext(
+  db: SupabaseClient,
+  userId: string,
+  role: string | null,
+): Promise<{ building_id: string | null; project_id: string | null }> {
   if (role === 'provider') {
-    const { data } = await db.from('sc_project_providers').select('project_id').eq('provider_id', userId).order('added_at', { ascending: false }).limit(1)
+    const { data } = await db
+      .from('sc_project_providers')
+      .select('project_id')
+      .eq('provider_id', userId)
+      .order('added_at', { ascending: false })
+      .limit(1)
     const projectId = (data?.[0]?.project_id as string | undefined) ?? null
     let buildingId: string | null = null
     if (projectId) {
-      const { data: p } = await db.from('sc_projects').select('building_id').eq('id', projectId).maybeSingle()
+      const { data: p } = await db
+        .from('sc_projects')
+        .select('building_id')
+        .eq('id', projectId)
+        .maybeSingle()
       buildingId = (p?.building_id as string | undefined) ?? null
     }
     return { building_id: buildingId, project_id: projectId }
   }
-  const { data: tp } = await db.from('sc_tenant_profiles').select('building_id').eq('id', userId).maybeSingle()
+  const { data: tp } = await db
+    .from('sc_tenant_profiles')
+    .select('building_id')
+    .eq('id', userId)
+    .maybeSingle()
   const buildingId = (tp?.building_id as string | undefined) ?? null
   let projectId: string | null = null
   if (buildingId) {
-    const { data: p } = await db.from('sc_projects').select('id').eq('building_id', buildingId).order('created_at', { ascending: false }).limit(1)
+    const { data: p } = await db
+      .from('sc_projects')
+      .select('id')
+      .eq('building_id', buildingId)
+      .order('created_at', { ascending: false })
+      .limit(1)
     projectId = (p?.[0]?.id as string | undefined) ?? null
   }
   return { building_id: buildingId, project_id: projectId }
 }
 
 async function ensureThread(db: SupabaseClient, userId: string): Promise<string> {
-  const { data: existing } = await db.from('sc_support_threads').select('id').eq('user_id', userId).maybeSingle()
+  const { data: existing } = await db
+    .from('sc_support_threads')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle()
   if (existing?.id) return existing.id as string
   const { data: prof } = await db.from('sc_profiles').select('role').eq('id', userId).maybeSingle()
   const cxt = await resolveContext(db, userId, (prof?.role as string | undefined) ?? null)
@@ -121,7 +166,11 @@ async function loadMessages(db: SupabaseClient, threadId: string): Promise<GodSu
 }
 
 export async function getThread(db: SupabaseClient, userId: string): Promise<GodSupportThread> {
-  const { data: prof } = await db.from('sc_profiles').select('id, full_name, email, role').eq('id', userId).maybeSingle()
+  const { data: prof } = await db
+    .from('sc_profiles')
+    .select('id, full_name, email, role')
+    .eq('id', userId)
+    .maybeSingle()
   const threadId = await ensureThread(db, userId)
   const messages = await loadMessages(db, threadId)
   return {
@@ -136,14 +185,25 @@ export async function getThread(db: SupabaseClient, userId: string): Promise<God
   }
 }
 
-export async function sendAdminMessage(db: SupabaseClient, adminId: string, userId: string, body: string): Promise<{ thread_id: string }> {
+export async function sendAdminMessage(
+  db: SupabaseClient,
+  adminId: string,
+  userId: string,
+  body: string,
+): Promise<{ thread_id: string }> {
   const threadId = await ensureThread(db, userId)
   const now = new Date().toISOString()
   const { error: mErr } = await db.from('sc_support_messages').insert({
-    thread_id: threadId, sender_kind: 'admin', sender_id: adminId, body,
+    thread_id: threadId,
+    sender_kind: 'admin',
+    sender_id: adminId,
+    body,
   })
   if (mErr) throw new Error(mErr.message)
-  await db.from('sc_support_threads').update({ last_message_at: now, last_admin_at: now }).eq('id', threadId)
+  await db
+    .from('sc_support_threads')
+    .update({ last_message_at: now, last_admin_at: now })
+    .eq('id', threadId)
 
   // Ping the user so they see it in the customer app (bell + realtime). Unknown
   // kind renders fine (Bell fallback); link drives them to the support page.

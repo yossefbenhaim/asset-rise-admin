@@ -103,18 +103,28 @@ export const agentsRouter = router({
     .query(async ({ ctx, input }) => {
       const [reg, skills, docs, crons, activity] = await Promise.all([
         ctx.db.from('sc_agent_registry').select(REGISTRY_SELECT).eq('id', input.id).maybeSingle(),
-        ctx.db.from('sc_agent_skills')
+        ctx.db
+          .from('sc_agent_skills')
           .select('id,agent_id,name,path,description,origin,scan_verdict,status')
-          .eq('agent_id', input.id).order('name'),
-        ctx.db.from('sc_agent_docs')
+          .eq('agent_id', input.id)
+          .order('name'),
+        ctx.db
+          .from('sc_agent_docs')
           .select('id,agent_id,title,path,kind,size_bytes,modified_at')
-          .eq('agent_id', input.id).order('kind').order('title'),
-        ctx.db.from('sc_agent_crons')
+          .eq('agent_id', input.id)
+          .order('kind')
+          .order('title'),
+        ctx.db
+          .from('sc_agent_crons')
           .select('id,agent_id,schedule,description,kind,enabled,last_status')
-          .eq('agent_id', input.id).order('kind'),
-        ctx.db.from('sc_agent_activity')
+          .eq('agent_id', input.id)
+          .order('kind'),
+        ctx.db
+          .from('sc_agent_activity')
           .select('id,agent_id,at,kind,title,detail,source')
-          .eq('agent_id', input.id).order('at', { ascending: false }).limit(100),
+          .eq('agent_id', input.id)
+          .order('at', { ascending: false })
+          .limit(100),
       ])
       if (reg.error) throw reg.error
       return {
@@ -129,19 +139,36 @@ export const agentsRouter = router({
   skillContent: requireAction('admin.agents.view')
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      const { data, error } = await ctx.db.from('sc_agent_skills')
-        .select('id,name,path,content').eq('id', input.id).maybeSingle()
+      const { data, error } = await ctx.db
+        .from('sc_agent_skills')
+        .select('id,name,path,content')
+        .eq('id', input.id)
+        .maybeSingle()
       if (error) throw error
-      return (data ?? null) as { id: string; name: string; path: string | null; content: string | null } | null
+      return (data ?? null) as {
+        id: string
+        name: string
+        path: string | null
+        content: string | null
+      } | null
     }),
 
   docContent: requireAction('admin.agents.view')
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      const { data, error } = await ctx.db.from('sc_agent_docs')
-        .select('id,title,path,kind,content').eq('id', input.id).maybeSingle()
+      const { data, error } = await ctx.db
+        .from('sc_agent_docs')
+        .select('id,title,path,kind,content')
+        .eq('id', input.id)
+        .maybeSingle()
       if (error) throw error
-      return (data ?? null) as { id: string; title: string; path: string; kind: string; content: string | null } | null
+      return (data ?? null) as {
+        id: string
+        title: string
+        path: string
+        kind: string
+        content: string | null
+      } | null
     }),
 
   stats: requireAction('admin.agents.view').query(async ({ ctx }) => {
@@ -151,10 +178,24 @@ export const agentsRouter = router({
       ctx.db.from('sc_agent_docs').select('id', { count: 'exact', head: true }),
     ])
     if (reg.error) throw reg.error
-    const rows = (reg.data ?? []) as Array<{ id: string; status: string; team: string; discrepancies: string[]; synced_at: string }>
-    const active = rows.filter(r => r.status === 'active' || r.status === 'semi-active' || r.status === 'worker').length
-    const discrepancies = rows.reduce((n, r) => n + (Array.isArray(r.discrepancies) ? r.discrepancies.length : 0), 0)
-    const lastSync = rows.reduce<string | null>((m, r) => (!m || r.synced_at > m ? r.synced_at : m), null)
+    const rows = (reg.data ?? []) as Array<{
+      id: string
+      status: string
+      team: string
+      discrepancies: string[]
+      synced_at: string
+    }>
+    const active = rows.filter(
+      r => r.status === 'active' || r.status === 'semi-active' || r.status === 'worker',
+    ).length
+    const discrepancies = rows.reduce(
+      (n, r) => n + (Array.isArray(r.discrepancies) ? r.discrepancies.length : 0),
+      0,
+    )
+    const lastSync = rows.reduce<string | null>(
+      (m, r) => (!m || r.synced_at > m ? r.synced_at : m),
+      null,
+    )
     return {
       total: rows.length,
       active,

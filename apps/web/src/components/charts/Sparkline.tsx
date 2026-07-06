@@ -13,7 +13,15 @@ export function Sparkline({ data, color = BRAND.primary }: { data: number[]; col
             <stop offset="100%" stopColor={color} stopOpacity={0} />
           </linearGradient>
         </defs>
-        <Area type="monotone" dataKey="v" stroke={color} strokeWidth={1.6} fill="url(#spark)" dot={false} isAnimationActive={false} />
+        <Area
+          type="monotone"
+          dataKey="v"
+          stroke={color}
+          strokeWidth={1.6}
+          fill="url(#spark)"
+          dot={false}
+          isAnimationActive={false}
+        />
       </AreaChart>
     </ResponsiveContainer>
   )

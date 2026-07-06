@@ -32,11 +32,17 @@ export default function AdminUsers() {
   const [selected, setSelected] = useState<string | null>(null)
 
   const disable = trpc.users.disable.useMutation({
-    onSuccess: () => { toast.show('הפעולה בוצעה'); void utils.users.list.invalidate() },
+    onSuccess: () => {
+      toast.show('הפעולה בוצעה')
+      void utils.users.list.invalidate()
+    },
     onError: e => toast.show(e.message),
   })
   const del = trpc.users.delete.useMutation({
-    onSuccess: () => { toast.show('המשתמש נמחק'); void utils.users.list.invalidate() },
+    onSuccess: () => {
+      toast.show('המשתמש נמחק')
+      void utils.users.list.invalidate()
+    },
     onError: e => toast.show(e.message),
   })
 
@@ -45,7 +51,9 @@ export default function AdminUsers() {
       id: 'full_name',
       header: 'שם',
       accessorFn: r => (r.full_name as string) ?? '',
-      cell: ({ row }) => <span className="font-semibold">{(row.original.full_name as string) ?? '—'}</span>,
+      cell: ({ row }) => (
+        <span className="font-semibold">{(row.original.full_name as string) ?? '—'}</span>
+      ),
     },
     {
       id: 'email',
@@ -78,42 +86,50 @@ export default function AdminUsers() {
       header: 'נוצר',
       accessorFn: r => (r.created_at as string) ?? '',
       cell: ({ row }) => (
-        <span className="text-sc-text-secondary sc-num">{dateShort(row.original.created_at as string)}</span>
+        <span className="text-sc-text-secondary sc-num">
+          {dateShort(row.original.created_at as string)}
+        </span>
       ),
     },
     ...(isAdmin
-      ? [{
-          id: 'actions',
-          header: '',
-          enableSorting: false,
-          cell: ({ row }: { row: { original: Row } }) => {
-            const id = row.original.id as string
-            return (
-              <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  loading={disable.isLoading}
-                  onClick={() => {
-                    if (confirm('להשבית את המשתמש?')) {
-                      disable.mutate({ user_id: id, banned: true })
-                    }
-                  }}
-                >השבת</Button>
-                <Button
-                  size="sm"
-                  variant="danger"
-                  loading={del.isLoading}
-                  onClick={() => {
-                    if (confirm('למחוק לצמיתות? פעולה לא הפיכה.')) {
-                      del.mutate(id)
-                    }
-                  }}
-                >מחק</Button>
-              </div>
-            )
-          },
-        } as ColumnDef<Row, unknown>]
+      ? [
+          {
+            id: 'actions',
+            header: '',
+            enableSorting: false,
+            cell: ({ row }: { row: { original: Row } }) => {
+              const id = row.original.id as string
+              return (
+                <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    loading={disable.isLoading}
+                    onClick={() => {
+                      if (confirm('להשבית את המשתמש?')) {
+                        disable.mutate({ user_id: id, banned: true })
+                      }
+                    }}
+                  >
+                    השבת
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    loading={del.isLoading}
+                    onClick={() => {
+                      if (confirm('למחוק לצמיתות? פעולה לא הפיכה.')) {
+                        del.mutate(id)
+                      }
+                    }}
+                  >
+                    מחק
+                  </Button>
+                </div>
+              )
+            },
+          } as ColumnDef<Row, unknown>,
+        ]
       : []),
   ]
 
@@ -169,17 +185,33 @@ function UserDetailModal({ userId, onClose }: { userId: string; onClose: () => v
             <>
               <Row label="בניין" value={u.tenant_profile.building_id ?? '—'} />
               <Row label="דירה" value={u.tenant_profile.apartment_number ?? '—'} />
-              <Row label="ועד" value={
-                [u.tenant_profile.is_committee_chair && 'יו״ר', u.tenant_profile.is_committee_member && 'חבר ועד', u.tenant_profile.is_organizer && 'מארגן']
-                  .filter(Boolean).join(' · ') || '—'
-              } />
+              <Row
+                label="ועד"
+                value={
+                  [
+                    u.tenant_profile.is_committee_chair && 'יו״ר',
+                    u.tenant_profile.is_committee_member && 'חבר ועד',
+                    u.tenant_profile.is_organizer && 'מארגן',
+                  ]
+                    .filter(Boolean)
+                    .join(' · ') || '—'
+                }
+              />
             </>
           )}
           {u.admin_profile && (
-            <Row label="רמות admin" value={
-              [u.admin_profile.is_admin && 'admin', u.admin_profile.is_admin_support && 'support', u.admin_profile.is_admin_sales && 'sales']
-                .filter(Boolean).join(' · ') || '—'
-            } />
+            <Row
+              label="רמות admin"
+              value={
+                [
+                  u.admin_profile.is_admin && 'admin',
+                  u.admin_profile.is_admin_support && 'support',
+                  u.admin_profile.is_admin_sales && 'sales',
+                ]
+                  .filter(Boolean)
+                  .join(' · ') || '—'
+              }
+            />
           )}
         </div>
       )}

@@ -5,17 +5,20 @@ import { SessionProvider } from '@/lib/auth/session'
 import { ToastProvider } from '@/components/ui/Toast'
 
 export default function Providers({ children }: { children: ReactNode }) {
-  const [qc] = useState(() => new QueryClient({
-    defaultOptions: { queries: { retry: false, staleTime: 30_000, refetchOnWindowFocus: false } },
-  }))
+  const [qc] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: { retry: false, staleTime: 30_000, refetchOnWindowFocus: false },
+        },
+      }),
+  )
 
   return (
     <trpc.Provider client={trpcClient} queryClient={qc}>
       <QueryClientProvider client={qc}>
         <SessionProvider>
-          <ToastProvider>
-            {children}
-          </ToastProvider>
+          <ToastProvider>{children}</ToastProvider>
         </SessionProvider>
       </QueryClientProvider>
     </trpc.Provider>

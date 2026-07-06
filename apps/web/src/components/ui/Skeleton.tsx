@@ -11,7 +11,13 @@ export function Skeleton({ className = '', w, h = 14, rounded = '8px' }: Props) 
   )
 }
 
-export function SkeletonText({ lines = 3, className = '' }: { lines?: number; className?: string }) {
+export function SkeletonText({
+  lines = 3,
+  className = '',
+}: {
+  lines?: number
+  className?: string
+}) {
   return (
     <div className={`flex flex-col gap-2 ${className}`} aria-hidden>
       {Array.from({ length: lines }).map((_, i) => (
@@ -25,11 +31,15 @@ export function SkeletonTable({ rows = 8, cols = 5 }: { rows?: number; cols?: nu
   return (
     <div className="w-full" aria-hidden>
       <div className="flex gap-3 px-4 py-3 border-b border-sc-border">
-        {Array.from({ length: cols }).map((_, i) => <Skeleton key={i} h={11} w={`${100 / cols}%`} />)}
+        {Array.from({ length: cols }).map((_, i) => (
+          <Skeleton key={i} h={11} w={`${100 / cols}%`} />
+        ))}
       </div>
       {Array.from({ length: rows }).map((_, r) => (
         <div key={r} className="flex gap-3 px-4 py-3.5 border-b border-sc-border/60">
-          {Array.from({ length: cols }).map((_, c) => <Skeleton key={c} h={13} w={`${100 / cols}%`} />)}
+          {Array.from({ length: cols }).map((_, c) => (
+            <Skeleton key={c} h={13} w={`${100 / cols}%`} />
+          ))}
         </div>
       ))}
     </div>

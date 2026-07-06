@@ -1,7 +1,10 @@
 import { Pill } from '@/components/ui/Pill'
 
 // Shared mapping for sc_project_tasks statuses → Hebrew label + Pill kind.
-const MAP: Record<string, { label: string; kind: 'success' | 'info' | 'gold' | 'danger' | 'neutral' }> = {
+const MAP: Record<
+  string,
+  { label: string; kind: 'success' | 'info' | 'gold' | 'danger' | 'neutral' }
+> = {
   pending: { label: 'פתוח', kind: 'neutral' },
   open: { label: 'פתוח', kind: 'neutral' },
   in_progress: { label: 'בתהליך', kind: 'info' },

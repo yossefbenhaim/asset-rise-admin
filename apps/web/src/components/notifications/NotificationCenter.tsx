@@ -128,7 +128,10 @@ function useNotifications() {
     if (canReports && reports.data) {
       const weekAgo = Date.now() - 7 * 86_400_000
       const hot = reports.data
-        .filter(r => r.status === 'completed' && (r.score ?? 0) >= 80 && Date.parse(r.created_at) >= weekAgo)
+        .filter(
+          r =>
+            r.status === 'completed' && (r.score ?? 0) >= 80 && Date.parse(r.created_at) >= weekAgo,
+        )
         .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
       if (hot.length) {
         out.push({
@@ -173,8 +176,14 @@ function useNotifications() {
 
     return out
   }, [
-    canProcessing, canDashboard, canReports, canLeads,
-    processing.data, dashboard.data, reports.data, leads.data,
+    canProcessing,
+    canDashboard,
+    canReports,
+    canLeads,
+    processing.data,
+    dashboard.data,
+    reports.data,
+    leads.data,
   ])
 
   const total = groups.reduce((s, g) => s + g.count, 0)
@@ -212,7 +221,10 @@ export function NotificationCenter() {
   const nav = useNavigate()
   const { groups, total, isLoading } = useNotifications()
 
-  const go = (to: string) => { setNotifOpen(false); nav(to) }
+  const go = (to: string) => {
+    setNotifOpen(false)
+    nav(to)
+  }
 
   return (
     <Drawer open={open} onClose={() => setNotifOpen(false)} title="התראות" width={420}>
@@ -246,12 +258,17 @@ export function NotificationCenter() {
                   onClick={() => go(g.to)}
                   className="group flex items-center gap-2 text-sc-text hover:text-sc-primary transition-colors"
                 >
-                  <span className={`grid place-items-center w-7 h-7 rounded-full text-white ${toneDot[g.tone]}`}>
+                  <span
+                    className={`grid place-items-center w-7 h-7 rounded-full text-white ${toneDot[g.tone]}`}
+                  >
                     {g.icon}
                   </span>
                   <span className="text-[13px] font-bold">{g.label}</span>
                   <Pill kind={tonePill[g.tone]}>{g.count}</Pill>
-                  <ChevronLeft size={14} className="text-sc-text-muted group-hover:text-sc-primary" />
+                  <ChevronLeft
+                    size={14}
+                    className="text-sc-text-muted group-hover:text-sc-primary"
+                  />
                 </button>
               </header>
 
@@ -262,9 +279,13 @@ export function NotificationCenter() {
                       onClick={() => go(g.to)}
                       className="w-full text-right bg-sc-bg hover:bg-sc-light-blue border border-sc-border rounded-sc-input px-3 py-2.5 transition-colors"
                     >
-                      <div className="text-[13px] font-semibold text-sc-text truncate">{it.title}</div>
+                      <div className="text-[13px] font-semibold text-sc-text truncate">
+                        {it.title}
+                      </div>
                       {it.sub && (
-                        <div className="text-[11px] text-sc-text-secondary truncate mt-0.5">{it.sub}</div>
+                        <div className="text-[11px] text-sc-text-secondary truncate mt-0.5">
+                          {it.sub}
+                        </div>
                       )}
                       {it.at && (
                         <div className="text-[10px] text-sc-text-muted mt-1">{timeAgo(it.at)}</div>

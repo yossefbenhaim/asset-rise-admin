@@ -43,10 +43,34 @@ export default function AdminReports() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-        <KpiCard label="סך הכל דוחות" value={kpis.total} icon={<FileText size={18} />} tone="primary" index={0} />
-        <KpiCard label="הושלמו" value={kpis.completed} icon={<CheckCircle2 size={18} />} tone="success" index={1} />
-        <KpiCard label="בעיבוד / בתור" value={kpis.processing} icon={<Loader2 size={18} />} tone="gold" index={2} />
-        <KpiCard label="נכשלו" value={kpis.failed} icon={<AlertTriangle size={18} />} tone="danger" index={3} />
+        <KpiCard
+          label="סך הכל דוחות"
+          value={kpis.total}
+          icon={<FileText size={18} />}
+          tone="primary"
+          index={0}
+        />
+        <KpiCard
+          label="הושלמו"
+          value={kpis.completed}
+          icon={<CheckCircle2 size={18} />}
+          tone="success"
+          index={1}
+        />
+        <KpiCard
+          label="בעיבוד / בתור"
+          value={kpis.processing}
+          icon={<Loader2 size={18} />}
+          tone="gold"
+          index={2}
+        />
+        <KpiCard
+          label="נכשלו"
+          value={kpis.failed}
+          icon={<AlertTriangle size={18} />}
+          tone="danger"
+          index={3}
+        />
       </div>
 
       <DataTable<ReportRow>

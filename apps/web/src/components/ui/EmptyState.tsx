@@ -1,8 +1,16 @@
 import type { ReactNode } from 'react'
 
 export function EmptyState({
-  icon, title, body, action,
-}: { icon?: ReactNode; title: string; body?: string; action?: ReactNode }) {
+  icon,
+  title,
+  body,
+  action,
+}: {
+  icon?: ReactNode
+  title: string
+  body?: string
+  action?: ReactNode
+}) {
   return (
     <div className="text-center py-12 px-6 text-sc-text-secondary">
       {icon && <div className="mx-auto mb-3 text-sc-text-muted">{icon}</div>}

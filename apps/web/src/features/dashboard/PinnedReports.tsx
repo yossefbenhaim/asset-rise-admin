@@ -80,7 +80,7 @@ export function PinnedReports({ index = 0 }: { index?: number }) {
         />
       ) : (
         <ul className="flex flex-col divide-y divide-sc-border/60 -mb-1">
-          {rows.map((r) => (
+          {rows.map(r => (
             <li key={r.token}>
               <Link
                 to="/reports"

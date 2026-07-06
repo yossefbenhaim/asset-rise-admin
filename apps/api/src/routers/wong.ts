@@ -71,9 +71,18 @@ export const wongRouter = router({
 
     try {
       const [pending, running, failed, total, today, doneRows] = await Promise.all([
-        ctx.db.from('sc_doc_verifications').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-        ctx.db.from('sc_doc_verifications').select('id', { count: 'exact', head: true }).eq('status', 'running'),
-        ctx.db.from('sc_doc_verifications').select('id', { count: 'exact', head: true }).eq('status', 'failed'),
+        ctx.db
+          .from('sc_doc_verifications')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'pending'),
+        ctx.db
+          .from('sc_doc_verifications')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'running'),
+        ctx.db
+          .from('sc_doc_verifications')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'failed'),
         ctx.db.from('sc_doc_verifications').select('id', { count: 'exact', head: true }),
         ctx.db
           .from('sc_doc_verifications')
@@ -125,27 +134,28 @@ export const wongRouter = router({
         if (rows.length === 0) return []
 
         // Batch-resolve documents, then their owning tenants.
-        const docIds = [...new Set(rows.map((r) => r.document_id).filter((x): x is string => !!x))]
+        const docIds = [...new Set(rows.map(r => r.document_id).filter((x): x is string => !!x))]
         const docsRes = docIds.length
-          ? await ctx.db.from('sc_tenant_documents').select('id,user_id,file_name,category').in('id', docIds)
+          ? await ctx.db
+              .from('sc_tenant_documents')
+              .select('id,user_id,file_name,category')
+              .in('id', docIds)
           : { data: [] as DocRow[] }
-        const docs = new Map((((docsRes as any).data as DocRow[] | null) ?? []).map((d) => [d.id, d]))
+        const docs = new Map((((docsRes as any).data as DocRow[] | null) ?? []).map(d => [d.id, d]))
 
         const userIds = [
-          ...new Set(
-            [...docs.values()].map((d) => d.user_id).filter((x): x is string => !!x),
-          ),
+          ...new Set([...docs.values()].map(d => d.user_id).filter((x): x is string => !!x)),
         ]
         const profRes = userIds.length
           ? await ctx.db.from('sc_profiles').select('id,full_name').in('id', userIds)
           : { data: [] as ProfileRow[] }
         const profiles = new Map(
-          (((profRes as any).data as ProfileRow[] | null) ?? []).map((p) => [p.id, p]),
+          (((profRes as any).data as ProfileRow[] | null) ?? []).map(p => [p.id, p]),
         )
 
         return rows.map((r): WongVerification => {
-          const doc = r.document_id ? docs.get(r.document_id) ?? null : null
-          const tenant = doc?.user_id ? profiles.get(doc.user_id)?.full_name ?? null : null
+          const doc = r.document_id ? (docs.get(r.document_id) ?? null) : null
+          const tenant = doc?.user_id ? (profiles.get(doc.user_id)?.full_name ?? null) : null
           const v = readVerdict(r.verdict)
           const decided = r.status === 'done'
           return {

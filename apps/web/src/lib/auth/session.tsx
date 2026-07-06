@@ -7,7 +7,10 @@ import { trpc } from '@/lib/api/trpc'
 export type AuthState =
   | { state: 'loading' }
   | { state: 'anonymous' }
-  | { state: 'needs_registration'; supabase: { id: string; email: string | null; full_name: string | null } }
+  | {
+      state: 'needs_registration'
+      supabase: { id: string; email: string | null; full_name: string | null }
+    }
   | { state: 'authenticated'; user: SessionUser; roleKeys: RoleKey[] }
 
 interface SessionApi {
@@ -19,8 +22,12 @@ interface SessionApi {
 const Ctx = createContext<SessionApi | null>(null)
 
 function clearBrowserAuthState() {
-  try { localStorage.clear() } catch {}
-  try { sessionStorage.clear() } catch {}
+  try {
+    localStorage.clear()
+  } catch {}
+  try {
+    sessionStorage.clear()
+  } catch {}
   if (typeof document !== 'undefined') {
     const hostParts = window.location.hostname.split('.')
     const domains = [
@@ -34,7 +41,12 @@ function clearBrowserAuthState() {
       paths.forEach(path => {
         document.cookie = name + '=; Max-Age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=' + path
         domains.forEach(domain => {
-          document.cookie = name + '=; Max-Age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=' + path + '; domain=' + domain
+          document.cookie =
+            name +
+            '=; Max-Age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=' +
+            path +
+            '; domain=' +
+            domain
         })
       })
     })
@@ -48,10 +60,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true
     supabase.auth.getSession().then(({ data }) => {
-      if (mounted) { setSession(data.session); setBootstrapping(false) }
+      if (mounted) {
+        setSession(data.session)
+        setBootstrapping(false)
+      }
     })
     const { data: sub } = supabase.auth.onAuthStateChange((_evt, sess) => setSession(sess))
-    return () => { mounted = false; sub.subscription.unsubscribe() }
+    return () => {
+      mounted = false
+      sub.subscription.unsubscribe()
+    }
   }, [])
 
   const meQuery = trpc.auth.me.useQuery(undefined, {

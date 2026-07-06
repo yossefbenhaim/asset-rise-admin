@@ -36,14 +36,14 @@ export function VerificationsTable({
         columns={wongColumns}
         data={rows}
         loading={loading}
-        onRowClick={(r) => setActive(r)}
+        onRowClick={r => setActive(r)}
         csvName="doc-verifications"
         searchPlaceholder="חיפוש לפי מסמך, דייר או נימוק…"
         emptyTitle="אין אימותי מסמכים"
         emptyBody="כאשר דיירים יעלו מסמכים לאימות, ההכרעות של הסוכן יופיעו כאן."
         toolbar={
           <div className="flex flex-wrap gap-1.5">
-            {STATUS_TABS.map((t) => (
+            {STATUS_TABS.map(t => (
               <button
                 key={t.key}
                 onClick={() => onStatusChange(t.key)}

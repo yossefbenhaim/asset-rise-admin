@@ -12,11 +12,23 @@ import { TaskStatusPill } from './taskStatus'
 // Per-user progress: where their building stands across the 14 stages + the
 // user's own tasks (stuck ones first). Optional onOpenChat wires the system
 // chat (Phase 2).
-export function UserProgressPanel({ userId, onOpenChat }: { userId: string; onOpenChat?: () => void }) {
+export function UserProgressPanel({
+  userId,
+  onOpenChat,
+}: {
+  userId: string
+  onOpenChat?: () => void
+}) {
   const q = trpc.god.progress.user.useQuery({ user_id: userId }, { refetchOnWindowFocus: false })
   const d = q.data
 
-  if (q.isLoading) return <div className="space-y-2"><Skeleton h={40} /><Skeleton h={90} /></div>
+  if (q.isLoading)
+    return (
+      <div className="space-y-2">
+        <Skeleton h={40} />
+        <Skeleton h={90} />
+      </div>
+    )
   if (q.isError || !d) return <EmptyState title="לא ניתן לטעון התקדמות" body={q.error?.message} />
 
   if (!d.has_project) {
@@ -24,30 +36,48 @@ export function UserProgressPanel({ userId, onOpenChat }: { userId: string; onOp
       <EmptyState
         icon={<ListChecks size={26} />}
         title="אין פרויקט פעיל"
-        body={d.building_address ? `${d.building_address} — טרם נפתח פרויקט.` : 'המשתמש אינו משויך לפרויקט פעיל.'}
+        body={
+          d.building_address
+            ? `${d.building_address} — טרם נפתח פרויקט.`
+            : 'המשתמש אינו משויך לפרויקט פעיל.'
+        }
       />
     )
   }
 
   // Stuck tasks first, then open, then done; within group keep stage order.
-  const order = (t: ProgressTask) => (t.stuck ? 0 : t.status === 'done' || t.status === 'skipped' ? 2 : 1)
+  const order = (t: ProgressTask) =>
+    t.stuck ? 0 : t.status === 'done' || t.status === 'skipped' ? 2 : 1
   const tasks = [...d.tasks].sort((a, b) => order(a) - order(b))
 
   return (
     <div className="flex flex-col gap-3.5">
-      <ProgressStrip stages={d.stages} currentStageLabel={d.current_stage_label} daysAtStage={d.days_at_stage} />
+      <ProgressStrip
+        stages={d.stages}
+        currentStageLabel={d.current_stage_label}
+        daysAtStage={d.days_at_stage}
+      />
 
       {/* totals */}
       <div className="flex items-center gap-2 flex-wrap text-[12px]">
-        <Pill kind="info">{d.totals.done}/{d.totals.total} משימות הושלמו</Pill>
+        <Pill kind="info">
+          {d.totals.done}/{d.totals.total} משימות הושלמו
+        </Pill>
         {d.totals.open > 0 && <Pill kind="neutral">{d.totals.open} פתוחות</Pill>}
         {d.totals.stuck > 0 && (
           <span className="inline-flex items-center gap-1 text-sc-danger font-bold">
-            <AlertTriangle size={14} />{d.totals.stuck} תקועות
+            <AlertTriangle size={14} />
+            {d.totals.stuck} תקועות
           </span>
         )}
         {onOpenChat && (
-          <Button size="sm" variant={d.totals.stuck > 0 ? 'primary' : 'ghost'} icon={<MessageCircle size={14} />} onClick={onOpenChat} className="mr-auto">
+          <Button
+            size="sm"
+            variant={d.totals.stuck > 0 ? 'primary' : 'ghost'}
+            icon={<MessageCircle size={14} />}
+            onClick={onOpenChat}
+            className="mr-auto"
+          >
             פתח צ'אט מערכת
           </Button>
         )}
@@ -70,16 +100,25 @@ export function UserProgressPanel({ userId, onOpenChat }: { userId: string; onOp
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="text-[13px] font-semibold text-sc-text">{t.title ?? '—'}</span>
                     {t.requires_doc && (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] text-sc-text-muted" title="דורש מסמך">
+                      <span
+                        className="inline-flex items-center gap-0.5 text-[10px] text-sc-text-muted"
+                        title="דורש מסמך"
+                      >
                         <FileWarning size={11} /> מסמך
                       </span>
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 mt-1 text-[11px] text-sc-text-muted flex-wrap">
-                    {t.stage_id && <Pill kind="neutral">{PROJECT_STAGE_LABEL[t.stage_id as ProjectStageId]}</Pill>}
+                    {t.stage_id && (
+                      <Pill kind="neutral">
+                        {PROJECT_STAGE_LABEL[t.stage_id as ProjectStageId]}
+                      </Pill>
+                    )}
                     {t.due_at && <span className="sc-num">יעד: {dateShort(t.due_at)}</span>}
                     {t.days_open != null && t.status !== 'done' && (
-                      <span className={`sc-num ${t.stuck ? 'text-sc-danger font-semibold' : ''}`}>{t.days_open} ימים פתוחה</span>
+                      <span className={`sc-num ${t.stuck ? 'text-sc-danger font-semibold' : ''}`}>
+                        {t.days_open} ימים פתוחה
+                      </span>
                     )}
                   </div>
                 </div>

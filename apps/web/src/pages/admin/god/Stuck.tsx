@@ -27,26 +27,60 @@ const columns: ColumnDef<Row, unknown>[] = [
       return (
         <div className="leading-tight">
           <div className="font-semibold text-sc-text">{r.owner_name ?? '— (לא משויך)'}</div>
-          {r.owner_role_label && <div className="text-[11px] text-sc-text-muted">{r.owner_role_label}</div>}
+          {r.owner_role_label && (
+            <div className="text-[11px] text-sc-text-muted">{r.owner_role_label}</div>
+          )}
         </div>
       )
     },
   },
-  { id: 'building', header: 'בניין', accessorFn: r => r.building_address ?? '', cell: ({ row }) => row.original.building_address ?? '—' },
-  { id: 'stage', header: 'שלב', accessorFn: r => r.stage_label ?? '', cell: ({ row }) => row.original.stage_label ? <Pill kind="neutral">{row.original.stage_label}</Pill> : '—' },
-  { id: 'task', header: 'משימה', accessorFn: r => r.title ?? '', cell: ({ row }) => <span className="text-sc-text">{row.original.title ?? '—'}</span> },
+  {
+    id: 'building',
+    header: 'בניין',
+    accessorFn: r => r.building_address ?? '',
+    cell: ({ row }) => row.original.building_address ?? '—',
+  },
+  {
+    id: 'stage',
+    header: 'שלב',
+    accessorFn: r => r.stage_label ?? '',
+    cell: ({ row }) =>
+      row.original.stage_label ? <Pill kind="neutral">{row.original.stage_label}</Pill> : '—',
+  },
+  {
+    id: 'task',
+    header: 'משימה',
+    accessorFn: r => r.title ?? '',
+    cell: ({ row }) => <span className="text-sc-text">{row.original.title ?? '—'}</span>,
+  },
   {
     id: 'days',
     header: 'ימים תקוע',
     accessorFn: r => r.days,
     cell: ({ row }) => (
       <span className="inline-flex items-center gap-1 font-bold text-sc-danger sc-num">
-        <AlertTriangle size={13} />{row.original.days}
+        <AlertTriangle size={13} />
+        {row.original.days}
       </span>
     ),
   },
-  { id: 'due', header: 'יעד', accessorFn: r => r.due_at ?? '', cell: ({ row }) => row.original.due_at ? <span className="sc-num text-sc-text-secondary">{dateShort(row.original.due_at)}</span> : '—' },
-  { id: 'status', header: 'סטטוס', accessorFn: r => r.status ?? '', cell: ({ row }) => <TaskStatusPill status={row.original.status} /> },
+  {
+    id: 'due',
+    header: 'יעד',
+    accessorFn: r => r.due_at ?? '',
+    cell: ({ row }) =>
+      row.original.due_at ? (
+        <span className="sc-num text-sc-text-secondary">{dateShort(row.original.due_at)}</span>
+      ) : (
+        '—'
+      ),
+  },
+  {
+    id: 'status',
+    header: 'סטטוס',
+    accessorFn: r => r.status ?? '',
+    cell: ({ row }) => <TaskStatusPill status={row.original.status} />,
+  },
 ]
 
 export default function GodStuck() {
@@ -67,24 +101,54 @@ export default function GodStuck() {
           className="bg-sc-bg border border-sc-border rounded-sc-input py-2 px-3 text-[13px] text-sc-text outline-none focus:border-sc-primary cursor-pointer"
           aria-label="סף ימים"
         >
-          {DAY_OPTS.map(o => <option key={o} value={o}>מעל {o} ימים</option>)}
+          {DAY_OPTS.map(o => (
+            <option key={o} value={o}>
+              מעל {o} ימים
+            </option>
+          ))}
         </select>
       </div>
 
       {q.isLoading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3"><SkeletonCard /><SkeletonCard /><SkeletonCard /></div>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
       ) : q.isError || !d ? (
         <EmptyState title="לא ניתן לטעון" body={q.error?.message} />
       ) : (
         <>
           <div className="grid grid-cols-3 gap-3 mb-4">
-            <KpiCard label="משימות תקועות" value={d.count} icon={<ListChecks size={18} />} tone={d.count > 0 ? 'danger' : 'success'} index={0} />
-            <KpiCard label="משתמשים תקועים" value={d.byUser.length} icon={<Users size={18} />} tone={d.byUser.length > 0 ? 'gold' : 'success'} index={1} />
-            <KpiCard label="בניינים מושפעים" value={d.byBuilding.length} icon={<Building2 size={18} />} tone="primary" index={2} />
+            <KpiCard
+              label="משימות תקועות"
+              value={d.count}
+              icon={<ListChecks size={18} />}
+              tone={d.count > 0 ? 'danger' : 'success'}
+              index={0}
+            />
+            <KpiCard
+              label="משתמשים תקועים"
+              value={d.byUser.length}
+              icon={<Users size={18} />}
+              tone={d.byUser.length > 0 ? 'gold' : 'success'}
+              index={1}
+            />
+            <KpiCard
+              label="בניינים מושפעים"
+              value={d.byBuilding.length}
+              icon={<Building2 size={18} />}
+              tone="primary"
+              index={2}
+            />
           </div>
 
           {d.count === 0 ? (
-            <EmptyState icon={<ListChecks size={26} />} title="אין תקיעות" body={`אין משימות פתוחות מעל ${days} ימים. כל המשתמשים מתקדמים.`} />
+            <EmptyState
+              icon={<ListChecks size={26} />}
+              title="אין תקיעות"
+              body={`אין משימות פתוחות מעל ${days} ימים. כל המשתמשים מתקדמים.`}
+            />
           ) : (
             <DataTable<Row>
               columns={columns}

@@ -7,7 +7,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      // Deep subpath imports (e.g. '@asset-rise/shared/schemas/godWorkflow') must
+      // Deep subpath imports (e.g. '@asset-rise/shared') must
       // be matched BEFORE the bare-package alias, otherwise the bare alias rewrites
       // them to '<...>/index.ts/schemas/...' (ENOTDIR). This mirrors the tsconfig
       // path map '@asset-rise/shared/*' → 'packages/shared/src/*'.

@@ -14,7 +14,7 @@ import type {
   GodSetBatonInput,
   GodResolveDualApprovalInput,
   BatonSlot,
-} from '@asset-rise/shared/schemas/godWorkflow'
+} from '@asset-rise/shared'
 
 // God-mode "Workflow / Baton / Dual-approval" repo (Wave 2). Runs as
 // service-role (adminClient) so it reads/writes any sc_* row, bypassing RLS.
@@ -38,11 +38,16 @@ const BATON_COLUMN: Record<BatonSlot, string> = {
   developer: 'active_developer_id',
 }
 
-function addressOf(b: {
-  street?: string | null
-  building_number?: string | null
-  city?: string | null
-} | null | undefined): string | null {
+function addressOf(
+  b:
+    | {
+        street?: string | null
+        building_number?: string | null
+        city?: string | null
+      }
+    | null
+    | undefined,
+): string | null {
   if (!b) return null
   const line = [b.street, b.building_number].filter(Boolean).join(' ')
   const full = [line, b.city].filter(Boolean).join(', ').trim()
@@ -151,9 +156,7 @@ export async function getWorkflowDetail(
   // Building tasks for this project (sc_building_tasks.project_id).
   const { data: btRows } = await db
     .from('sc_building_tasks')
-    .select(
-      'id, kind, title, assigned_role, assigned_to, status, priority, done_at, created_at',
-    )
+    .select('id, kind, title, assigned_role, assigned_to, status, priority, done_at, created_at')
     .eq('project_id', projectId)
     .order('created_at', { ascending: true })
   const buildingTaskRows = (btRows ?? []) as any[]
@@ -286,7 +289,12 @@ export async function loadTaskTarget(
 export async function loadDualApprovalTarget(
   db: SupabaseClient,
   id: string,
-): Promise<{ id: string; project_id: string | null; action: string | null; status: string | null }> {
+): Promise<{
+  id: string
+  project_id: string | null
+  action: string | null
+  status: string | null
+}> {
   const { data, error } = await db
     .from('sc_dual_approvals')
     .select('id, project_id, action, status')
@@ -395,7 +403,9 @@ export async function resolveDualApproval(db: SupabaseClient, input: GodResolveD
 async function resolveBuildings(
   db: SupabaseClient,
   ids: string[],
-): Promise<Map<string, { city: string | null; street: string | null; building_number: string | null }>> {
+): Promise<
+  Map<string, { city: string | null; street: string | null; building_number: string | null }>
+> {
   const map = new Map<string, any>()
   if (!ids.length) return map
   const { data } = await db

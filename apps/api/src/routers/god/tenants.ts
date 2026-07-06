@@ -79,142 +79,132 @@ export const godTenantsRouter = router({
   }),
 
   // ── Writes (all audited via godMutation) ─────────────────────────────────────
-  editTenantProfile: godProcedure
-    .input(GodEditTenantProfileInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.tenants.update',
-          target_type: 'tenant',
-          target_id: input.id,
-          meta: {
-            full_name: input.full_name,
-            phone: input.phone,
-            apartment_number: input.apartment_number,
-            ownership_percentage: input.ownership_percentage,
-          },
+  editTenantProfile: godProcedure.input(GodEditTenantProfileInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.tenants.update',
+        target_type: 'tenant',
+        target_id: input.id,
+        meta: {
+          full_name: input.full_name,
+          phone: input.phone,
+          apartment_number: input.apartment_number,
+          ownership_percentage: input.ownership_percentage,
         },
-        async () => {
-          await assertTenantTarget(ctx.db, input.id)
-          return editTenantProfile(ctx.db, input)
-        },
-      ),
+      },
+      async () => {
+        await assertTenantTarget(ctx.db, input.id)
+        return editTenantProfile(ctx.db, input)
+      },
     ),
+  ),
 
   // "Change the vaad" — toggle committee/organizer roles.
-  setVaadRoles: godProcedure
-    .input(GodSetVaadRolesInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.tenants.set_vaad',
-          target_type: 'tenant',
-          target_id: input.id,
-          meta: {
-            is_committee_chair: input.is_committee_chair,
-            is_committee_member: input.is_committee_member,
-            is_organizer: input.is_organizer,
-          },
+  setVaadRoles: godProcedure.input(GodSetVaadRolesInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.tenants.set_vaad',
+        target_type: 'tenant',
+        target_id: input.id,
+        meta: {
+          is_committee_chair: input.is_committee_chair,
+          is_committee_member: input.is_committee_member,
+          is_organizer: input.is_organizer,
         },
-        async () => {
-          await assertTenantTarget(ctx.db, input.id)
-          return setVaadRoles(ctx.db, input)
-        },
-      ),
+      },
+      async () => {
+        await assertTenantTarget(ctx.db, input.id)
+        return setVaadRoles(ctx.db, input)
+      },
     ),
+  ),
 
-  moveBuilding: godProcedure
-    .input(GodMoveBuildingInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.tenants.move_building',
-          target_type: 'tenant',
-          target_id: input.id,
-          meta: { building_id: input.building_id },
-        },
-        async () => {
-          await assertTenantTarget(ctx.db, input.id)
-          try {
-            return await moveBuilding(ctx.db, input.id, input.building_id)
-          } catch (e: any) {
-            if (e.message === 'BUILDING_NOT_FOUND') {
-              throw new TRPCError({ code: 'BAD_REQUEST', message: 'הבניין שנבחר לא נמצא' })
-            }
-            throw e
+  moveBuilding: godProcedure.input(GodMoveBuildingInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.tenants.move_building',
+        target_type: 'tenant',
+        target_id: input.id,
+        meta: { building_id: input.building_id },
+      },
+      async () => {
+        await assertTenantTarget(ctx.db, input.id)
+        try {
+          return await moveBuilding(ctx.db, input.id, input.building_id)
+        } catch (e: any) {
+          if (e.message === 'BUILDING_NOT_FOUND') {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'הבניין שנבחר לא נמצא' })
           }
-        },
-      ),
+          throw e
+        }
+      },
     ),
+  ),
 
   // Reversible ban — the default 'soft' destructive action.
-  setBanned: godProcedure
-    .input(GodSetTenantBannedInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.tenants.set_banned',
-          target_type: 'tenant',
-          target_id: input.id,
-          meta: { banned: input.banned },
-        },
-        async () => {
-          // Don't let a super-admin ban their own session out.
-          if (input.id === ctx.user?.id) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'אי אפשר להשבית את עצמך' })
-          }
-          await assertTenantTarget(ctx.db, input.id)
-          return setTenantBanned(ctx.db, input.id, input.banned)
-        },
-      ),
+  setBanned: godProcedure.input(GodSetTenantBannedInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.tenants.set_banned',
+        target_type: 'tenant',
+        target_id: input.id,
+        meta: { banned: input.banned },
+      },
+      async () => {
+        // Don't let a super-admin ban their own session out.
+        if (input.id === ctx.user?.id) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'אי אפשר להשבית את עצמך' })
+        }
+        await assertTenantTarget(ctx.db, input.id)
+        return setTenantBanned(ctx.db, input.id, input.banned)
+      },
     ),
+  ),
 
   // HARD delete — the escalation. UI types the email; the API re-verifies the
   // email matches the target so a stale id can't be deleted with a wrong email.
-  deleteTenant: godProcedure
-    .input(GodDeleteTenantInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.tenants.delete',
-          target_type: 'tenant',
-          target_id: input.id,
-          meta: { confirm_email: input.confirm_email },
-        },
-        async () => {
-          if (input.id === ctx.user?.id) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'אי אפשר למחוק את עצמך' })
+  deleteTenant: godProcedure.input(GodDeleteTenantInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.tenants.delete',
+        target_type: 'tenant',
+        target_id: input.id,
+        meta: { confirm_email: input.confirm_email },
+      },
+      async () => {
+        if (input.id === ctx.user?.id) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'אי אפשר למחוק את עצמך' })
+        }
+        const target = await loadTenantTarget(ctx.db, input.id).catch(() => null)
+        if (!target) throw new TRPCError({ code: 'NOT_FOUND', message: 'דייר לא נמצא' })
+        // Never act on an admin/super-admin/provider account through the
+        // tenant surface — keeps the audit target_type honest and blocks
+        // attacking a peer account with an arbitrary auth-user id.
+        if (target.role !== 'tenant') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'הרשומה אינה דייר' })
+        }
+        // Server-side interlock — typed email must match the target's email.
+        const expected = (target.email ?? '').trim().toLowerCase()
+        if (!expected || input.confirm_email.trim().toLowerCase() !== expected) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'האימייל שהוקלד אינו תואם לדייר המיועד למחיקה',
+          })
+        }
+        try {
+          return await deleteTenant(ctx.db, input.id)
+        } catch (e: any) {
+          if (e instanceof FkRestrictError) {
+            throw new TRPCError({ code: 'CONFLICT', message: e.message })
           }
-          const target = await loadTenantTarget(ctx.db, input.id).catch(() => null)
-          if (!target) throw new TRPCError({ code: 'NOT_FOUND', message: 'דייר לא נמצא' })
-          // Never act on an admin/super-admin/provider account through the
-          // tenant surface — keeps the audit target_type honest and blocks
-          // attacking a peer account with an arbitrary auth-user id.
-          if (target.role !== 'tenant') {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'הרשומה אינה דייר' })
-          }
-          // Server-side interlock — typed email must match the target's email.
-          const expected = (target.email ?? '').trim().toLowerCase()
-          if (!expected || input.confirm_email.trim().toLowerCase() !== expected) {
-            throw new TRPCError({
-              code: 'BAD_REQUEST',
-              message: 'האימייל שהוקלד אינו תואם לדייר המיועד למחיקה',
-            })
-          }
-          try {
-            return await deleteTenant(ctx.db, input.id)
-          } catch (e: any) {
-            if (e instanceof FkRestrictError) {
-              throw new TRPCError({ code: 'CONFLICT', message: e.message })
-            }
-            throw e
-          }
-        },
-      ),
+          throw e
+        }
+      },
     ),
+  ),
 })

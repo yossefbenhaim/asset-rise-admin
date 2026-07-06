@@ -2,7 +2,16 @@
 // icon, a count-up value, a prev-period delta where computable, and (for the
 // flow metrics) a 14-day sparkline. Pure presentation — data comes from the
 // analyticsRouter.dashboard payload.
-import { FileText, CalendarDays, Wallet, TrendingUp, Users, Loader2, AlertTriangle, Gauge } from 'lucide-react'
+import {
+  FileText,
+  CalendarDays,
+  Wallet,
+  TrendingUp,
+  Users,
+  Loader2,
+  AlertTriangle,
+  Gauge,
+} from 'lucide-react'
 import type { DashboardData } from '@asset-rise/shared'
 import { KpiCard } from '@/components/ui/KpiCard'
 import { Sparkline } from '@/components/charts/Sparkline'
@@ -41,7 +50,7 @@ export function KpiRow({ d }: { d: DashboardData }) {
         index={3}
         label="המרה לתשלום"
         value={d.paidConversion ?? 0}
-        format={(n) => `${n.toFixed(1)}%`}
+        format={n => `${n.toFixed(1)}%`}
         icon={<TrendingUp size={18} />}
         tone="success"
       />
@@ -57,7 +66,7 @@ export function KpiRow({ d }: { d: DashboardData }) {
         index={5}
         label="ציון ממוצע"
         value={d.avgScore ?? 0}
-        format={(n) => `${n}`}
+        format={n => `${n}`}
         icon={<Gauge size={18} />}
         tone="primary"
       />

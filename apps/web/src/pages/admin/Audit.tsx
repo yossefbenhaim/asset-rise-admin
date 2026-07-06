@@ -36,7 +36,9 @@ export default function AdminAudit() {
       header: 'תאריך',
       accessorFn: r => (r.created_at as string) ?? '',
       cell: ({ row }) => (
-        <span className="text-sc-text-secondary sc-num">{dateTime(row.original.created_at as string)}</span>
+        <span className="text-sc-text-secondary sc-num">
+          {dateTime(row.original.created_at as string)}
+        </span>
       ),
     },
     {
@@ -45,11 +47,13 @@ export default function AdminAudit() {
       accessorFn: r => (r.actor_email as string) ?? (r.actor_id as string) ?? '',
       cell: ({ row }) => {
         const r = row.original as { actor_email?: string; actor_id?: string }
-        return r.actor_email
-          ? <span>{r.actor_email}</span>
-          : r.actor_id
-            ? <span className="text-sc-text-muted">{r.actor_id.slice(0, 8)}…</span>
-            : <span className="text-sc-text-muted">מערכת</span>
+        return r.actor_email ? (
+          <span>{r.actor_email}</span>
+        ) : r.actor_id ? (
+          <span className="text-sc-text-muted">{r.actor_id.slice(0, 8)}…</span>
+        ) : (
+          <span className="text-sc-text-muted">מערכת</span>
+        )
       },
     },
     {
@@ -64,9 +68,16 @@ export default function AdminAudit() {
       accessorFn: r => (r.target_type as string) ?? '',
       cell: ({ row }) => {
         const r = row.original as { target_type?: string; target_id?: string }
-        return r.target_type
-          ? <span className="text-[12px]">{r.target_type}{r.target_id ? <span className="text-sc-text-muted"> · {r.target_id.slice(0, 12)}…</span> : null}</span>
-          : <span className="text-sc-text-muted">—</span>
+        return r.target_type ? (
+          <span className="text-[12px]">
+            {r.target_type}
+            {r.target_id ? (
+              <span className="text-sc-text-muted"> · {r.target_id.slice(0, 12)}…</span>
+            ) : null}
+          </span>
+        ) : (
+          <span className="text-sc-text-muted">—</span>
+        )
       },
     },
     {
@@ -74,7 +85,9 @@ export default function AdminAudit() {
       header: 'IP',
       accessorFn: r => (r.ip as string) ?? '',
       cell: ({ row }) => (
-        <span className="text-[12px] text-sc-text-secondary" dir="ltr">{(row.original.ip as string) ?? '—'}</span>
+        <span className="text-[12px] text-sc-text-secondary" dir="ltr">
+          {(row.original.ip as string) ?? '—'}
+        </span>
       ),
     },
     {
@@ -82,9 +95,11 @@ export default function AdminAudit() {
       header: 'מטא',
       enableSorting: false,
       cell: ({ row }) =>
-        row.original.meta
-          ? <code className="text-[11px] break-all">{JSON.stringify(row.original.meta)}</code>
-          : <span className="text-sc-text-muted">—</span>,
+        row.original.meta ? (
+          <code className="text-[11px] break-all">{JSON.stringify(row.original.meta)}</code>
+        ) : (
+          <span className="text-sc-text-muted">—</span>
+        ),
     },
   ]
 
@@ -176,8 +191,12 @@ export default function AdminAudit() {
           </label>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" onClick={apply}>סנן</Button>
-          <Button size="sm" variant="ghost" onClick={reset}>נקה</Button>
+          <Button size="sm" onClick={apply}>
+            סנן
+          </Button>
+          <Button size="sm" variant="ghost" onClick={reset}>
+            נקה
+          </Button>
         </div>
       </ControlPanel>
 
@@ -198,7 +217,11 @@ export default function AdminAudit() {
         {active && (
           <div className="space-y-3 text-[13px]">
             <AuditField label="תאריך" value={dateTime(active.created_at as string)} />
-            <AuditField label="מבצע (אימייל)" value={(active.actor_email as string) ?? '—'} mono={!active.actor_email} />
+            <AuditField
+              label="מבצע (אימייל)"
+              value={(active.actor_email as string) ?? '—'}
+              mono={!active.actor_email}
+            />
             <AuditField label="מבצע (UUID)" value={(active.actor_id as string) ?? 'מערכת'} mono />
             <AuditField label="פעולה" value={(active.action as string) ?? '—'} mono />
             <AuditField label="סוג יעד" value={(active.target_type as string) ?? '—'} />
@@ -207,7 +230,10 @@ export default function AdminAudit() {
             {active.meta ? (
               <div>
                 <div className="text-sc-text-secondary mb-1">מטא / שינויים</div>
-                <pre className="whitespace-pre-wrap break-all bg-sc-bg border border-sc-border rounded-sc-input p-3 text-[11px]" dir="ltr">
+                <pre
+                  className="whitespace-pre-wrap break-all bg-sc-bg border border-sc-border rounded-sc-input p-3 text-[11px]"
+                  dir="ltr"
+                >
                   {JSON.stringify(active.meta, null, 2)}
                 </pre>
               </div>
@@ -223,7 +249,12 @@ function AuditField({ label, value, mono }: { label: string; value: string; mono
   return (
     <div className="flex gap-2">
       <div className="text-sc-text-secondary w-28 shrink-0">{label}</div>
-      <div className={`flex-1 break-all ${mono ? 'font-mono text-[12px]' : ''}`} dir={mono ? 'ltr' : undefined}>{value}</div>
+      <div
+        className={`flex-1 break-all ${mono ? 'font-mono text-[12px]' : ''}`}
+        dir={mono ? 'ltr' : undefined}
+      >
+        {value}
+      </div>
     </div>
   )
 }

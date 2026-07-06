@@ -11,7 +11,7 @@ import type {
   GodCalendarListInput,
   GodCalendarItem,
   GodMiscCounts,
-} from '@asset-rise/shared/schemas/godMisc'
+} from '@asset-rise/shared'
 
 // God-mode "Cross-domain Admin / Misc" repo (Wave 3 — content + comms). Runs as
 // service-role (adminClient) so it reads/writes any sc_* row, bypassing RLS.
@@ -39,11 +39,16 @@ function sanitizeTerm(q: string): string {
   return q.replace(/[(),%_*\\]/g, ' ').trim()
 }
 
-function addressOf(b: {
-  street?: string | null
-  building_number?: string | null
-  city?: string | null
-} | null | undefined): string | null {
+function addressOf(
+  b:
+    | {
+        street?: string | null
+        building_number?: string | null
+        city?: string | null
+      }
+    | null
+    | undefined,
+): string | null {
   if (!b) return null
   const line = [b.street, b.building_number].filter(Boolean).join(' ')
   const full = [line, b.city].filter(Boolean).join(', ').trim()
@@ -52,11 +57,7 @@ function addressOf(b: {
 
 function matchesTerm(haystacks: (string | null | undefined)[], safe: string): boolean {
   if (!safe) return true
-  return haystacks
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase()
-    .includes(safe)
+  return haystacks.filter(Boolean).join(' ').toLowerCase().includes(safe)
 }
 
 // ── Batch resolvers ───────────────────────────────────────────────────────────
@@ -87,7 +88,9 @@ async function resolveProjects(
 async function resolveBuildings(
   db: SupabaseClient,
   ids: string[],
-): Promise<Map<string, { city: string | null; street: string | null; building_number: string | null }>> {
+): Promise<
+  Map<string, { city: string | null; street: string | null; building_number: string | null }>
+> {
   const map = new Map<string, any>()
   const uniq = Array.from(new Set(ids.filter(Boolean)))
   if (!uniq.length) return map
@@ -158,9 +161,7 @@ export async function listFamilyLinks(
 ): Promise<GodFamilyLinkItem[]> {
   let q = db
     .from('sc_family_links')
-    .select(
-      'id, primary_user_id, member_user_id, member_display_name, created_at, removed_at',
-    )
+    .select('id, primary_user_id, member_user_id, member_display_name, created_at, removed_at')
     .order('created_at', { ascending: false })
     .limit(input.limit ?? 200)
   // Active only unless include_removed — "active" = removed_at IS NULL.
@@ -267,7 +268,9 @@ export async function listInspections(
   const projectById = await resolveProjects(db, rows.map(r => r.project_id).filter(Boolean))
   const buildingById = await resolveBuildings(
     db,
-    Array.from(projectById.values()).map(p => p.building_id).filter(Boolean) as string[],
+    Array.from(projectById.values())
+      .map(p => p.building_id)
+      .filter(Boolean) as string[],
   )
   const providerById = await resolveProfiles(db, rows.map(r => r.provider_id).filter(Boolean))
 
@@ -294,7 +297,10 @@ export async function listInspections(
       } as GodInspectionItem
     })
     .filter(i =>
-      matchesTerm([i.project_name, i.building_address, i.provider_name, i.title, i.inspection_type], safe),
+      matchesTerm(
+        [i.project_name, i.building_address, i.provider_name, i.title, i.inspection_type],
+        safe,
+      ),
     )
 }
 
@@ -364,9 +370,7 @@ export async function listRatings(
         created_at: r.created_at ?? null,
       } as GodRatingItem
     })
-    .filter(i =>
-      matchesTerm([i.provider_name, i.submitter_name, i.review_text, i.source], safe),
-    )
+    .filter(i => matchesTerm([i.provider_name, i.submitter_name, i.review_text, i.source], safe))
 }
 
 // setRatingVerified — flip the verified flag (reversible moderation). Returns the
@@ -404,10 +408,7 @@ export async function removeRating(
 }
 
 // getRatingLabel — provider/submitter label for the audit meta on a remove.
-export async function getRatingLabel(
-  db: SupabaseClient,
-  id: string,
-): Promise<string | null> {
+export async function getRatingLabel(db: SupabaseClient, id: string): Promise<string | null> {
   const { data } = await db
     .from('sc_provider_ratings')
     .select('provider_id, submitted_by')
@@ -470,11 +471,17 @@ export async function listCalendarEvents(
         created_at: r.created_at ?? null,
       } as GodCalendarItem
     })
-    .filter(i => matchesTerm([i.title, i.building_address, i.project_name, i.creator_name, i.location], safe))
+    .filter(i =>
+      matchesTerm([i.title, i.building_address, i.project_name, i.creator_name, i.location], safe),
+    )
 }
 
 // ── Counts (header dashboard) ───────────────────────────────────────────────────
-async function countRows(db: SupabaseClient, table: string, activeOnly?: 'family_links'): Promise<number> {
+async function countRows(
+  db: SupabaseClient,
+  table: string,
+  activeOnly?: 'family_links',
+): Promise<number> {
   let q = db.from(table).select('id', { count: 'exact', head: true })
   if (activeOnly === 'family_links') q = q.is('removed_at', null)
   const { count, error } = await q
@@ -483,20 +490,21 @@ async function countRows(db: SupabaseClient, table: string, activeOnly?: 'family
 }
 
 export async function getMiscCounts(db: SupabaseClient): Promise<GodMiscCounts> {
-  const [
+  const [family_invitations, family_links_active, inspections, ratings, calendar_events, meetings] =
+    await Promise.all([
+      countRows(db, 'sc_family_invitations'),
+      countRows(db, 'sc_family_links', 'family_links'),
+      countRows(db, 'sc_inspections'),
+      countRows(db, 'sc_provider_ratings'),
+      countRows(db, 'sc_calendar_events'),
+      countRows(db, 'sc_negotiation_meetings'),
+    ])
+  return {
     family_invitations,
     family_links_active,
     inspections,
     ratings,
     calendar_events,
     meetings,
-  ] = await Promise.all([
-    countRows(db, 'sc_family_invitations'),
-    countRows(db, 'sc_family_links', 'family_links'),
-    countRows(db, 'sc_inspections'),
-    countRows(db, 'sc_provider_ratings'),
-    countRows(db, 'sc_calendar_events'),
-    countRows(db, 'sc_negotiation_meetings'),
-  ])
-  return { family_invitations, family_links_active, inspections, ratings, calendar_events, meetings }
+  }
 }

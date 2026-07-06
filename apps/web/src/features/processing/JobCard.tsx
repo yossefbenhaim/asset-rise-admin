@@ -24,15 +24,18 @@ function useLiveElapsed(baseSec: number, live: boolean): number {
   useEffect(() => {
     setExtra(0)
     if (!live) return
-    const id = setInterval(() => setExtra((e) => e + 1), 1000)
+    const id = setInterval(() => setExtra(e => e + 1), 1000)
     return () => clearInterval(id)
   }, [baseSec, live])
   return baseSec + extra
 }
 
-export function JobCard({ job, index = 0 }: {
+export function JobCard({
+  job,
+  index = 0,
+}: {
   job: ProcessingJob
-  stages?: readonly string[]   // kept for back-compat; no longer rendered
+  stages?: readonly string[] // kept for back-compat; no longer rendered
   index?: number
 }) {
   const isRunning = job.status === 'running'
@@ -50,15 +53,22 @@ export function JobCard({ job, index = 0 }: {
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 text-[14px] font-bold text-sc-text truncate">
             <MapPin size={14} className="text-sc-primary shrink-0" />
-            <span className="truncate" title={job.label}>{job.label}</span>
+            <span className="truncate" title={job.label}>
+              {job.label}
+            </span>
           </div>
           <div className="flex items-center gap-2 mt-1 text-[11.5px] text-sc-text-muted">
             <span className="inline-flex items-center gap-1">
               <Clock size={12} className={slow ? 'text-sc-warning' : ''} />
-              <span className={slow ? 'text-sc-warning font-semibold' : ''}>{fmtElapsed(elapsed)}</span>
+              <span className={slow ? 'text-sc-warning font-semibold' : ''}>
+                {fmtElapsed(elapsed)}
+              </span>
             </span>
             {job.attempts != null && job.attempts > 1 && (
-              <span className="inline-flex items-center gap-1"><RefreshCcw size={12} />{job.attempts} ניסיונות</span>
+              <span className="inline-flex items-center gap-1">
+                <RefreshCcw size={12} />
+                {job.attempts} ניסיונות
+              </span>
             )}
             {job.city && <span className="truncate">· {job.city}</span>}
           </div>

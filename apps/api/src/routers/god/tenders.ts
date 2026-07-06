@@ -103,72 +103,66 @@ export const godTendersRouter = router({
   // Plain lifecycle move (draft/open/closed/cancelled; reopen = closed→open).
   // Awarding is blocked here — use forceAward. The interlock (no-op / terminal
   // 'awarded') runs inside the repo write fn so a rejected move is audited.
-  setTenderStatus: godProcedure
-    .input(GodSetTenderStatusInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.tenders.set_status',
-          target_type: 'tender',
-          target_id: input.id,
-          meta: { status: input.status },
-        },
-        async () => {
-          try {
-            return await setTenderStatus(ctx.db, input.id, input.status)
-          } catch (e) {
-            rethrow(e)
-          }
-        },
-      ),
+  setTenderStatus: godProcedure.input(GodSetTenderStatusInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.tenders.set_status',
+        target_type: 'tender',
+        target_id: input.id,
+        meta: { status: input.status },
+      },
+      async () => {
+        try {
+          return await setTenderStatus(ctx.db, input.id, input.status)
+        } catch (e) {
+          rethrow(e)
+        }
+      },
     ),
+  ),
 
   // Result-overriding award. DangerConfirm types the tender title; the backend
   // re-verifies it before mutating. BYPASSES the normal poll/bid flow.
-  forceAward: godProcedure
-    .input(GodForceAwardInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.tenders.force_award',
-          target_type: 'tender',
-          target_id: input.id,
-          meta: { bid_id: input.bid_id, confirm: input.confirm, bypass: 'normal_bid_flow' },
-        },
-        async () => {
-          await assertConfirmMatches(ctx.db, input.id, input.confirm)
-          try {
-            return await forceAward(ctx.db, input.id, input.bid_id)
-          } catch (e) {
-            rethrow(e)
-          }
-        },
-      ),
+  forceAward: godProcedure.input(GodForceAwardInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.tenders.force_award',
+        target_type: 'tender',
+        target_id: input.id,
+        meta: { bid_id: input.bid_id, confirm: input.confirm, bypass: 'normal_bid_flow' },
+      },
+      async () => {
+        await assertConfirmMatches(ctx.db, input.id, input.confirm)
+        try {
+          return await forceAward(ctx.db, input.id, input.bid_id)
+        } catch (e) {
+          rethrow(e)
+        }
+      },
     ),
+  ),
 
   // Force-cancel. DangerConfirm types the tender title; the backend re-verifies
   // it before cancelling.
-  cancelTender: godProcedure
-    .input(GodCancelTenderInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.tenders.cancel',
-          target_type: 'tender',
-          target_id: input.id,
-          meta: { confirm: input.confirm },
-        },
-        async () => {
-          await assertConfirmMatches(ctx.db, input.id, input.confirm)
-          try {
-            return await cancelTender(ctx.db, input.id)
-          } catch (e) {
-            rethrow(e)
-          }
-        },
-      ),
+  cancelTender: godProcedure.input(GodCancelTenderInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.tenders.cancel',
+        target_type: 'tender',
+        target_id: input.id,
+        meta: { confirm: input.confirm },
+      },
+      async () => {
+        await assertConfirmMatches(ctx.db, input.id, input.confirm)
+        try {
+          return await cancelTender(ctx.db, input.id)
+        } catch (e) {
+          rethrow(e)
+        }
+      },
     ),
+  ),
 })

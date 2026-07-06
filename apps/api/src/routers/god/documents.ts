@@ -5,7 +5,7 @@ import {
   GodDocumentGetInput,
   GodDocumentSetVisibilityInput,
   GodDocumentRemoveInput,
-} from '@asset-rise/shared/schemas/godDocuments'
+} from '@asset-rise/shared'
 import { router, requireLevel } from '../../trpc.js'
 import { godProcedure, godMutation, logGod } from '../../lib/god.js'
 import {
@@ -142,11 +142,13 @@ export const godDocumentsRouter = router({
       // recorded key fails (e.g. a row still on the old prefix, or vice versa),
       // retry the alternate prefix before giving up.
       const altOf = (k: string): string | null =>
-        k.startsWith('asset-rise/') ? 'silver-castle/' + k.slice('asset-rise/'.length)
-        : k.startsWith('silver-castle/') ? 'asset-rise/' + k.slice('silver-castle/'.length)
-        : null
+        k.startsWith('asset-rise/')
+          ? 'silver-castle/' + k.slice('asset-rise/'.length)
+          : k.startsWith('silver-castle/')
+            ? 'asset-rise/' + k.slice('silver-castle/'.length)
+            : null
       let signed = await ctx.db.storage.from('documents').createSignedUrl(path, 60 * 5)
-      if ((signed.error || !signed.data?.signedUrl)) {
+      if (signed.error || !signed.data?.signedUrl) {
         const alt = altOf(path)
         if (alt) signed = await ctx.db.storage.from('documents').createSignedUrl(alt, 60 * 5)
       }
@@ -163,87 +165,83 @@ export const godDocumentsRouter = router({
   // setVisibility — override who can see a doc. The precondition (a non-private
   // target needs a building_id) runs INSIDE the write fn so a rejected attempt is
   // also audited.
-  setVisibility: godProcedure
-    .input(GodDocumentSetVisibilityInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.documents.set_visibility',
-          target_type: 'document',
-          target_id: input.id,
-          meta: { visibility: input.visibility, confirm: input.confirm ?? null },
-        },
-        async () => {
-          const target = await loadDocumentTarget(ctx.db, input.id).catch(() => null)
-          if (!target) notFound()
-          // Migration 024 CHECK: a non-'private' visibility MUST carry a
-          // building_id. Pre-check it so the operator gets a precise Hebrew
-          // error instead of a generic CHECK-violation translation.
-          if (input.visibility !== 'private' && !target.building_id) {
-            throw new TRPCError({
-              code: 'PRECONDITION_FAILED',
-              message: 'אי אפשר לחשוף מסמך שאינו משויך לבניין. שייך/י אותו לבניין תחילה.',
-            })
-          }
-          // Exposing a doc more widely is destructive-ish — the UI passes the
-          // typed token; the backend treats it only as a non-empty guard for the
-          // non-private targets.
-          if (input.visibility !== 'private' && !(input.confirm ?? '').trim()) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'נדרש אישור לשינוי החשיפה' })
-          }
-          try {
-            return await setVisibility(ctx.db, input.id, input.visibility)
-          } catch (e) {
-            rethrow(e)
-          }
-        },
-      ),
+  setVisibility: godProcedure.input(GodDocumentSetVisibilityInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.documents.set_visibility',
+        target_type: 'document',
+        target_id: input.id,
+        meta: { visibility: input.visibility, confirm: input.confirm ?? null },
+      },
+      async () => {
+        const target = await loadDocumentTarget(ctx.db, input.id).catch(() => null)
+        if (!target) notFound()
+        // Migration 024 CHECK: a non-'private' visibility MUST carry a
+        // building_id. Pre-check it so the operator gets a precise Hebrew
+        // error instead of a generic CHECK-violation translation.
+        if (input.visibility !== 'private' && !target.building_id) {
+          throw new TRPCError({
+            code: 'PRECONDITION_FAILED',
+            message: 'אי אפשר לחשוף מסמך שאינו משויך לבניין. שייך/י אותו לבניין תחילה.',
+          })
+        }
+        // Exposing a doc more widely is destructive-ish — the UI passes the
+        // typed token; the backend treats it only as a non-empty guard for the
+        // non-private targets.
+        if (input.visibility !== 'private' && !(input.confirm ?? '').trim()) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'נדרש אישור לשינוי החשיפה' })
+        }
+        try {
+          return await setVisibility(ctx.db, input.id, input.visibility)
+        } catch (e) {
+          rethrow(e)
+        }
+      },
     ),
+  ),
 
   // removeDocument — SOFT remove ("mark hidden"). The interlock (non-empty
   // confirm token) runs INSIDE godMutation so a rejected/probing attempt is also
   // audited. The prior visibility/building/project are recorded in the audit meta
   // so the action is hand-reversible.
-  removeDocument: godProcedure
-    .input(GodDocumentRemoveInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
+  removeDocument: godProcedure.input(GodDocumentRemoveInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.documents.remove',
+        target_type: 'document',
+        target_id: input.id,
+        meta: { confirm: input.confirm, soft: true, storage_object_deleted: false },
+      },
+      async () => {
+        if (!input.confirm.trim()) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'נדרש אישור להסרת המסמך' })
+        }
+        const target = await loadDocumentTarget(ctx.db, input.id).catch(() => null)
+        if (!target) notFound()
+        // Record the PRIOR values BEFORE the soft-remove nulls them, so the
+        // action is reversible from the immutable audit (the remove sets
+        // building_id/project_id=null + visibility=private; without this the
+        // original association would be unrecoverable from the log).
+        await logGod(ctx, {
           action: 'god.documents.remove',
           target_type: 'document',
           target_id: input.id,
-          meta: { confirm: input.confirm, soft: true, storage_object_deleted: false },
-        },
-        async () => {
-          if (!input.confirm.trim()) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'נדרש אישור להסרת המסמך' })
-          }
-          const target = await loadDocumentTarget(ctx.db, input.id).catch(() => null)
-          if (!target) notFound()
-          // Record the PRIOR values BEFORE the soft-remove nulls them, so the
-          // action is reversible from the immutable audit (the remove sets
-          // building_id/project_id=null + visibility=private; without this the
-          // original association would be unrecoverable from the log).
-          await logGod(ctx, {
-            action: 'god.documents.remove',
-            target_type: 'document',
-            target_id: input.id,
-            meta: {
-              phase: 'prev',
-              title: target.title,
-              visibility: target.visibility,
-              building_id: target.building_id,
-              project_id: target.project_id,
-            },
-          })
-          try {
-            return await removeDocument(ctx.db, input.id)
-          } catch (e) {
-            rethrow(e)
-          }
-        },
-      ),
+          meta: {
+            phase: 'prev',
+            title: target.title,
+            visibility: target.visibility,
+            building_id: target.building_id,
+            project_id: target.project_id,
+          },
+        })
+        try {
+          return await removeDocument(ctx.db, input.id)
+        } catch (e) {
+          rethrow(e)
+        }
+      },
     ),
+  ),
 })

@@ -9,7 +9,15 @@ import { Modal } from '@/components/ui/Modal'
 import { DataTable } from '@/components/ui/DataTable'
 import { DangerConfirm } from '@/components/ui/DangerConfirm'
 import { useToast } from '@/components/ui/Toast'
-import { FileText, Eye, Trash2, FolderOpen, ShieldAlert, ExternalLink, Download } from 'lucide-react'
+import {
+  FileText,
+  Eye,
+  Trash2,
+  FolderOpen,
+  ShieldAlert,
+  ExternalLink,
+  Download,
+} from 'lucide-react'
 import {
   DOCUMENT_VISIBILITIES,
   DOCUMENT_VISIBILITY_LABEL,
@@ -20,7 +28,7 @@ import {
   type GodDocumentSourceKind,
   type GodDocumentListItem,
   type GodDocumentDetail,
-} from '@asset-rise/shared/schemas/godDocuments'
+} from '@asset-rise/shared'
 
 // God-mode "Documents" page (Wave 3 — content + comms). Lists ALL
 // sc_tenant_documents across buildings/projects with the resolved uploader +
@@ -119,7 +127,10 @@ function sourceLabel(s: string | null | undefined): string {
 // What we can render inline in the Drawer/Modal via the signed URL. Images and
 // PDFs preview in-place; everything else (docx, xlsx, zip…) only gets an
 // open-in-new-tab / download affordance.
-function previewKindOf(mime: string | null | undefined, fileName: string | null | undefined): 'image' | 'pdf' | 'none' {
+function previewKindOf(
+  mime: string | null | undefined,
+  fileName: string | null | undefined,
+): 'image' | 'pdf' | 'none' {
   const m = (mime ?? '').toLowerCase()
   const name = (fileName ?? '').toLowerCase()
   if (m.startsWith('image/') || /\.(png|jpe?g|gif|webp|svg|bmp)$/.test(name)) return 'image'
@@ -196,7 +207,9 @@ const columns: ColumnDef<DocRow, unknown>[] = [
     header: 'מעלה',
     accessorFn: d => d.uploader_name || d.uploader_email || '',
     cell: ({ row }) => (
-      <span className="text-[12px]">{row.original.uploader_name || row.original.uploader_email || '—'}</span>
+      <span className="text-[12px]">
+        {row.original.uploader_name || row.original.uploader_email || '—'}
+      </span>
     ),
   },
 ]
@@ -246,16 +259,28 @@ export default function GodDocuments() {
             emptyBody="לא נמצאו מסמכים."
             toolbar={
               <>
-                <select className={`${inputCls} sm:w-44`} value={visibility} onChange={e => setVisibility(e.target.value)}>
+                <select
+                  className={`${inputCls} sm:w-44`}
+                  value={visibility}
+                  onChange={e => setVisibility(e.target.value)}
+                >
                   <option value="">כל החשיפות</option>
                   {DOCUMENT_VISIBILITIES.map(v => (
-                    <option key={v} value={v}>{DOCUMENT_VISIBILITY_LABEL[v]}</option>
+                    <option key={v} value={v}>
+                      {DOCUMENT_VISIBILITY_LABEL[v]}
+                    </option>
                   ))}
                 </select>
-                <select className={`${inputCls} sm:w-40`} value={sourceKind} onChange={e => setSourceKind(e.target.value)}>
+                <select
+                  className={`${inputCls} sm:w-40`}
+                  value={sourceKind}
+                  onChange={e => setSourceKind(e.target.value)}
+                >
                   <option value="">כל המקורות</option>
                   {DOCUMENT_SOURCE_KINDS.map(s => (
-                    <option key={s} value={s}>{DOCUMENT_SOURCE_KIND_LABEL[s]}</option>
+                    <option key={s} value={s}>
+                      {DOCUMENT_SOURCE_KIND_LABEL[s]}
+                    </option>
                   ))}
                 </select>
                 <input
@@ -288,7 +313,9 @@ function DocumentDetail({ id, onClose }: { id: string; onClose: () => void }) {
   if (detail.isError || !detail.data) {
     return (
       <Modal open onClose={onClose} title="פרטי מסמך">
-        <div className="text-center py-6 text-sc-danger text-[13px]">{detail.error?.message ?? 'לא נמצא'}</div>
+        <div className="text-center py-6 text-sc-danger text-[13px]">
+          {detail.error?.message ?? 'לא נמצא'}
+        </div>
       </Modal>
     )
   }
@@ -307,11 +334,20 @@ function DocumentDetailBody({ d, onClose }: { d: GodDocumentDetail; onClose: () 
   }
 
   const setVisM = god.god.documents.setVisibility.useMutation({
-    onSuccess: () => { toast.show('חשיפת המסמך עודכנה'); setVisConfirmOpen(false); refresh() },
+    onSuccess: () => {
+      toast.show('חשיפת המסמך עודכנה')
+      setVisConfirmOpen(false)
+      refresh()
+    },
     onError: e => toast.show(e.message),
   })
   const removeM = god.god.documents.removeDocument.useMutation({
-    onSuccess: () => { toast.show('המסמך הוסתר'); setRemoveOpen(false); onClose(); refresh() },
+    onSuccess: () => {
+      toast.show('המסמך הוסתר')
+      setRemoveOpen(false)
+      onClose()
+      refresh()
+    },
     onError: e => toast.show(e.message),
   })
 
@@ -330,7 +366,9 @@ function DocumentDetailBody({ d, onClose }: { d: GodDocumentDetail; onClose: () 
         title={`מסמך: ${d.title || d.file_name || d.id}`}
         footer={
           <div className="flex gap-2 justify-end">
-            <Button variant="ghost" onClick={onClose}>סגור</Button>
+            <Button variant="ghost" onClick={onClose}>
+              סגור
+            </Button>
           </div>
         }
       >
@@ -341,15 +379,53 @@ function DocumentDetailBody({ d, onClose }: { d: GodDocumentDetail; onClose: () 
             <Row label="שם קובץ" value={d.file_name || '—'} />
             <Row label="סוג (kind)" value={<Pill kind="neutral">{kindLabel(d.kind)}</Pill>} />
             <Row label="קטגוריה (legacy)" value={d.category || '—'} />
-            <Row label="חשיפה נוכחית" value={<Pill kind={visibilityPillKind(d.visibility) as any}>{visibilityLabel(d.visibility)}</Pill>} />
-            <Row label="חסוי" value={d.is_confidential ? <Pill kind="warning">חסוי</Pill> : <Pill kind="neutral">לא חסוי</Pill>} />
-            <Row label="מקור" value={`${sourceLabel(d.source_kind)}${d.source_label ? ` · ${d.source_label}` : ''}`} />
+            <Row
+              label="חשיפה נוכחית"
+              value={
+                <Pill kind={visibilityPillKind(d.visibility) as any}>
+                  {visibilityLabel(d.visibility)}
+                </Pill>
+              }
+            />
+            <Row
+              label="חסוי"
+              value={
+                d.is_confidential ? (
+                  <Pill kind="warning">חסוי</Pill>
+                ) : (
+                  <Pill kind="neutral">לא חסוי</Pill>
+                )
+              }
+            />
+            <Row
+              label="מקור"
+              value={`${sourceLabel(d.source_kind)}${d.source_label ? ` · ${d.source_label}` : ''}`}
+            />
             <Row label="בניין" value={d.building_address || '—'} />
             <Row label="פרויקט" value={d.project_name || '—'} />
-            <Row label="בעלים" value={d.owner_name ? `${d.owner_name}${d.owner_email ? ` · ${d.owner_email}` : ''}` : '—'} />
-            <Row label="מעלה" value={d.uploader_name ? `${d.uploader_name}${d.uploader_email ? ` · ${d.uploader_email}` : ''}` : '—'} />
+            <Row
+              label="בעלים"
+              value={
+                d.owner_name ? `${d.owner_name}${d.owner_email ? ` · ${d.owner_email}` : ''}` : '—'
+              }
+            />
+            <Row
+              label="מעלה"
+              value={
+                d.uploader_name
+                  ? `${d.uploader_name}${d.uploader_email ? ` · ${d.uploader_email}` : ''}`
+                  : '—'
+              }
+            />
             <Row label="סוג קובץ" value={d.mime_type || '—'} />
-            <Row label="נתיב אחסון (קריאה בלבד)" value={<span className="break-all text-[11px] text-sc-text-muted">{d.storage_path || '—'}</span>} />
+            <Row
+              label="נתיב אחסון (קריאה בלבד)"
+              value={
+                <span className="break-all text-[11px] text-sc-text-muted">
+                  {d.storage_path || '—'}
+                </span>
+              }
+            />
             {d.created_at && (
               <Row label="נוצר" value={new Date(d.created_at).toLocaleString('he-IL')} />
             )}
@@ -361,14 +437,21 @@ function DocumentDetailBody({ d, onClose }: { d: GodDocumentDetail; onClose: () 
           {/* Set visibility */}
           <Section title="שינוי חשיפה" icon={<Eye size={15} />} danger>
             <p className="text-sc-text-secondary text-[12px] m-0 mb-2">
-              קביעת מי רואה את המסמך. חשיפה לבניין/ספק חושפת אותו ליותר אנשים — נדרש אישור. מסמך שאינו פרטי חייב להיות משויך לבניין.
+              קביעת מי רואה את המסמך. חשיפה לבניין/ספק חושפת אותו ליותר אנשים — נדרש אישור. מסמך
+              שאינו פרטי חייב להיות משויך לבניין.
             </p>
             <div className="flex flex-wrap items-end gap-2">
               <label className="block">
                 <span className={labelCls}>בחר/י חשיפה</span>
-                <select className={`${inputCls} min-w-[200px]`} value={visibility} onChange={e => setVisibility(e.target.value)}>
+                <select
+                  className={`${inputCls} min-w-[200px]`}
+                  value={visibility}
+                  onChange={e => setVisibility(e.target.value)}
+                >
                   {DOCUMENT_VISIBILITIES.map(v => (
-                    <option key={v} value={v}>{DOCUMENT_VISIBILITY_LABEL[v]}</option>
+                    <option key={v} value={v}>
+                      {DOCUMENT_VISIBILITY_LABEL[v]}
+                    </option>
                   ))}
                 </select>
               </label>
@@ -382,7 +465,9 @@ function DocumentDetailBody({ d, onClose }: { d: GodDocumentDetail; onClose: () 
                     ? setVisConfirmOpen(true)
                     : setVisM.mutate({ id: d.id, visibility: visibility as GodDocumentVisibility })
                 }
-              >עדכן חשיפה</Button>
+              >
+                עדכן חשיפה
+              </Button>
             </div>
             {blockedNoBuilding && (
               <p className="text-sc-danger text-[12px] mt-2 m-0">
@@ -394,14 +479,17 @@ function DocumentDetailBody({ d, onClose }: { d: GodDocumentDetail; onClose: () 
           {/* Soft remove */}
           <Section title="הסרת מסמך (הסתרה)" icon={<Trash2 size={15} />} danger>
             <p className="text-sc-text-secondary text-[12px] m-0 mb-2">
-              הסרה רכה: המסמך יסומן פרטי וינותק מהבניין/פרויקט כך שייעלם מכל הצדדים פרט למעלה אותו. הקובץ באחסון נשמר ואינו נמחק.
+              הסרה רכה: המסמך יסומן פרטי וינותק מהבניין/פרויקט כך שייעלם מכל הצדדים פרט למעלה אותו.
+              הקובץ באחסון נשמר ואינו נמחק.
             </p>
             <Button
               size="sm"
               variant="danger"
               icon={<Trash2 size={14} />}
               onClick={() => setRemoveOpen(true)}
-            >הסר מסמך</Button>
+            >
+              הסר מסמך
+            </Button>
           </Section>
         </div>
       </Modal>
@@ -413,14 +501,21 @@ function DocumentDetailBody({ d, onClose }: { d: GodDocumentDetail; onClose: () 
         confirmText={removeToken}
         confirmLabel={`חשוף כ«${visibilityLabel(visibility)}»`}
         loading={setVisM.isLoading}
-        onConfirm={() => setVisM.mutate({ id: d.id, visibility: visibility as GodDocumentVisibility, confirm: removeToken })}
+        onConfirm={() =>
+          setVisM.mutate({
+            id: d.id,
+            visibility: visibility as GodDocumentVisibility,
+            confirm: removeToken,
+          })
+        }
         body={
           <div className="space-y-2">
             <p className="text-sc-danger font-semibold m-0 flex items-center gap-1">
               <ShieldAlert size={14} /> פעולה חושפת!
             </p>
             <p className="m-0">
-              שינוי החשיפה ל«{visibilityLabel(visibility)}» יחשוף את המסמך ליותר אנשים (כל דיירי הבניין / ספק הפרויקט). ודא/י שזו הכוונה.
+              שינוי החשיפה ל«{visibilityLabel(visibility)}» יחשוף את המסמך ליותר אנשים (כל דיירי
+              הבניין / ספק הפרויקט). ודא/י שזו הכוונה.
             </p>
           </div>
         }
@@ -440,7 +535,8 @@ function DocumentDetailBody({ d, onClose }: { d: GodDocumentDetail; onClose: () 
               <FolderOpen size={14} /> פעולה הרסנית!
             </p>
             <p className="m-0">
-              הסרת המסמך תסמן אותו פרטי ותנתק אותו מהבניין/פרויקט — הוא ייעלם מכל הצדדים פרט למעלה אותו. הקובץ באחסון לא יימחק והרשומה לא תימחק מהמסד.
+              הסרת המסמך תסמן אותו פרטי ותנתק אותו מהבניין/פרויקט — הוא ייעלם מכל הצדדים פרט למעלה
+              אותו. הקובץ באחסון לא יימחק והרשומה לא תימחק מהמסד.
             </p>
           </div>
         }
@@ -469,13 +565,17 @@ function DocumentPreview({ d }: { d: GodDocumentDetail }) {
           למסמך אין קובץ מאוחסן (נתיב אחסון חסר), לכן אין מה להציג.
         </p>
       ) : signed.isLoading ? (
-        <div className="text-center py-6 text-sc-text-secondary text-[13px]">מפיק קישור מאובטח…</div>
+        <div className="text-center py-6 text-sc-text-secondary text-[13px]">
+          מפיק קישור מאובטח…
+        </div>
       ) : signed.isError || !url ? (
         <div className="space-y-2">
           <p className="text-sc-danger text-[12px] m-0">
             {signed.error?.message ?? 'לא ניתן להפיק קישור לקובץ.'}
           </p>
-          <Button size="sm" variant="secondary" onClick={() => signed.refetch()}>נסה/י שוב</Button>
+          <Button size="sm" variant="secondary" onClick={() => signed.refetch()}>
+            נסה/י שוב
+          </Button>
         </div>
       ) : (
         <div className="space-y-3">
@@ -495,7 +595,8 @@ function DocumentPreview({ d }: { d: GodDocumentDetail }) {
             />
           ) : (
             <p className="text-sc-text-secondary text-[12px] m-0">
-              לא ניתן להציג סוג קובץ זה בתצוגה מקדימה ({d.mime_type || d.file_name || 'לא ידוע'}). פתח/י בכרטיסייה חדשה.
+              לא ניתן להציג סוג קובץ זה בתצוגה מקדימה ({d.mime_type || d.file_name || 'לא ידוע'}).
+              פתח/י בכרטיסייה חדשה.
             </p>
           )}
 
@@ -507,8 +608,15 @@ function DocumentPreview({ d }: { d: GodDocumentDetail }) {
             >
               פתח את המסמך
             </Button>
-            <a href={url} download={d.file_name || undefined} target="_blank" rel="noopener noreferrer">
-              <Button variant="secondary" icon={<Download size={15} />}>הורד</Button>
+            <a
+              href={url}
+              download={d.file_name || undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="secondary" icon={<Download size={15} />}>
+                הורד
+              </Button>
             </a>
           </div>
           <p className="text-sc-text-muted text-[11px] m-0">
@@ -521,7 +629,10 @@ function DocumentPreview({ d }: { d: GodDocumentDetail }) {
 }
 
 function Section({
-  title, icon, children, danger,
+  title,
+  icon,
+  children,
+  danger,
 }: {
   title: string
   icon?: React.ReactNode
@@ -529,9 +640,14 @@ function Section({
   danger?: boolean
 }) {
   return (
-    <div className={`rounded-sc-input border p-3 ${danger ? 'border-sc-danger bg-sc-danger-bg/30' : 'border-sc-border'}`}>
-      <div className={`font-bold text-[13px] mb-2 flex items-center gap-2 ${danger ? 'text-sc-danger' : 'text-sc-text'}`}>
-        {icon}{title}
+    <div
+      className={`rounded-sc-input border p-3 ${danger ? 'border-sc-danger bg-sc-danger-bg/30' : 'border-sc-border'}`}
+    >
+      <div
+        className={`font-bold text-[13px] mb-2 flex items-center gap-2 ${danger ? 'text-sc-danger' : 'text-sc-text'}`}
+      >
+        {icon}
+        {title}
       </div>
       {children}
     </div>

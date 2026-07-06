@@ -4,7 +4,15 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import {
-  ExternalLink, RefreshCw, Sparkles, Pin, PinOff, Save, AlertTriangle, MapPin, Hash,
+  ExternalLink,
+  RefreshCw,
+  Sparkles,
+  Pin,
+  PinOff,
+  Save,
+  AlertTriangle,
+  MapPin,
+  Hash,
 } from 'lucide-react'
 import { trpc } from '@/lib/api/trpc'
 import { Drawer } from '@/components/ui/Drawer'
@@ -31,11 +39,17 @@ export function ReportDrawer({ token, onClose }: { token: string; onClose: () =>
   }
 
   const rerun = trpc.reports.rerun.useMutation({
-    onSuccess: () => { toast.show('הדוח נשלח להרצה מחדש'); refresh() },
+    onSuccess: () => {
+      toast.show('הדוח נשלח להרצה מחדש')
+      refresh()
+    },
     onError: e => toast.show(e.message),
   })
   const regenAi = trpc.reports.regenerateAi.useMutation({
-    onSuccess: () => { toast.show('רענון AI נשלח לתור'); refresh() },
+    onSuccess: () => {
+      toast.show('רענון AI נשלח לתור')
+      refresh()
+    },
     onError: e => toast.show(e.message),
   })
 
@@ -60,7 +74,9 @@ export function ReportDrawer({ token, onClose }: { token: string; onClose: () =>
             <div className="flex flex-wrap items-center gap-2 mt-2 text-[12px] text-sc-text-secondary">
               <StatusBadge status={d.status} />
               {d.city && (
-                <span className="inline-flex items-center gap-1"><MapPin size={12} /> {d.city}</span>
+                <span className="inline-flex items-center gap-1">
+                  <MapPin size={12} /> {d.city}
+                </span>
               )}
               {(d.gush != null || d.helka != null) && (
                 <span className="inline-flex items-center gap-1 sc-num">
@@ -107,9 +123,14 @@ export function ReportDrawer({ token, onClose }: { token: string; onClose: () =>
             <Section title="מצב מחקר (Job)">
               <Row label="סטטוס" value={<StatusBadge status={d.job.status} />} />
               {d.research_key && (
-                <Row label="מפתח" value={<code className="text-[11px] break-all">{d.research_key}</code>} />
+                <Row
+                  label="מפתח"
+                  value={<code className="text-[11px] break-all">{d.research_key}</code>}
+                />
               )}
-              {d.job.attempts != null && <Row label="ניסיונות" value={<span className="sc-num">{d.job.attempts}</span>} />}
+              {d.job.attempts != null && (
+                <Row label="ניסיונות" value={<span className="sc-num">{d.job.attempts}</span>} />
+              )}
               {d.job.updated_at && <Row label="עודכן" value={dateTime(d.job.updated_at)} />}
               {d.job.error && (
                 <div className="mt-1 flex gap-2 items-start text-[12px] text-sc-danger bg-sc-danger-bg rounded-sc-input p-2">
@@ -123,8 +144,12 @@ export function ReportDrawer({ token, onClose }: { token: string; onClose: () =>
           {/* Lead + meta */}
           <Section title="ליד ופרטים">
             {d.lead_name && <Row label="שם" value={d.lead_name} />}
-            {d.lead_phone && <Row label="טלפון" value={<a href={`tel:${d.lead_phone}`}>{d.lead_phone}</a>} />}
-            {d.lead_email && <Row label="אימייל" value={<a href={`mailto:${d.lead_email}`}>{d.lead_email}</a>} />}
+            {d.lead_phone && (
+              <Row label="טלפון" value={<a href={`tel:${d.lead_phone}`}>{d.lead_phone}</a>} />
+            )}
+            {d.lead_email && (
+              <Row label="אימייל" value={<a href={`mailto:${d.lead_email}`}>{d.lead_email}</a>} />
+            )}
             <Row label="נוצר" value={dateTime(d.created_at)} />
             {d.accessed_at && <Row label="נצפה לאחרונה" value={dateTime(d.accessed_at)} />}
           </Section>
@@ -188,7 +213,9 @@ function ReportSummary({ report }: { report: unknown }) {
       <div className="flex flex-wrap gap-2 mb-3">
         {track && <Pill kind="navy">{trackLabel(track)}</Pill>}
         {time && typeof time === 'object' && (
-          <Pill kind="info">⏱ {time.min}–{time.max} שנים</Pill>
+          <Pill kind="info">
+            ⏱ {time.min}–{time.max} שנים
+          </Pill>
         )}
         {potential && typeof potential === 'object' && potential.target_units != null && (
           <Pill kind="gold">
@@ -214,7 +241,9 @@ function ReportSummary({ report }: { report: unknown }) {
           <div className="text-[11px] font-bold text-sc-text-secondary mb-1">המלצות</div>
           <ul className="m-0 pr-4 space-y-1">
             {recommendations.slice(0, 5).map((rec, i) => (
-              <li key={i} className="text-[12px] text-sc-text-secondary leading-snug">{rec}</li>
+              <li key={i} className="text-[12px] text-sc-text-secondary leading-snug">
+                {rec}
+              </li>
             ))}
           </ul>
         </div>
@@ -234,7 +263,10 @@ function trackLabel(track: string): string {
 }
 
 function EditFields({
-  token, initialScore, initialAddress, onSaved,
+  token,
+  initialScore,
+  initialAddress,
+  onSaved,
 }: {
   token: string
   initialScore: number | null
@@ -245,25 +277,37 @@ function EditFields({
   const [score, setScore] = useState(initialScore != null ? String(initialScore) : '')
   const [address, setAddress] = useState(initialAddress ?? '')
 
-  useEffect(() => { setScore(initialScore != null ? String(initialScore) : '') }, [initialScore])
-  useEffect(() => { setAddress(initialAddress ?? '') }, [initialAddress])
+  useEffect(() => {
+    setScore(initialScore != null ? String(initialScore) : '')
+  }, [initialScore])
+  useEffect(() => {
+    setAddress(initialAddress ?? '')
+  }, [initialAddress])
 
   const update = trpc.reports.updateFields.useMutation({
-    onSuccess: () => { toast.show('הדוח עודכן'); onSaved() },
+    onSuccess: () => {
+      toast.show('הדוח עודכן')
+      onSaved()
+    },
     onError: e => toast.show(e.message),
   })
 
   const scoreNum = score === '' ? null : Number(score)
-  const scoreInvalid = score !== '' && (!Number.isInteger(scoreNum) || scoreNum! < 0 || scoreNum! > 100)
+  const scoreInvalid =
+    score !== '' && (!Number.isInteger(scoreNum) || scoreNum! < 0 || scoreNum! > 100)
   const dirty =
     (scoreNum !== initialScore && !scoreInvalid) ||
     (address.trim() !== (initialAddress ?? '').trim() && address.trim().length > 0)
 
   const save = () => {
-    if (scoreInvalid) { toast.show('ציון חייב להיות 0–100'); return }
+    if (scoreInvalid) {
+      toast.show('ציון חייב להיות 0–100')
+      return
+    }
     const payload: { token: string; score?: number; address_display?: string } = { token }
     if (scoreNum != null && scoreNum !== initialScore) payload.score = scoreNum
-    if (address.trim() && address.trim() !== (initialAddress ?? '').trim()) payload.address_display = address.trim()
+    if (address.trim() && address.trim() !== (initialAddress ?? '').trim())
+      payload.address_display = address.trim()
     update.mutate(payload)
   }
 
@@ -301,7 +345,10 @@ function EditFields({
 }
 
 function FlagEditor({
-  token, pinned, note, onSaved,
+  token,
+  pinned,
+  note,
+  onSaved,
 }: {
   token: string
   pinned: boolean
@@ -310,10 +357,15 @@ function FlagEditor({
 }) {
   const toast = useToast()
   const [noteVal, setNoteVal] = useState(note)
-  useEffect(() => { setNoteVal(note) }, [note])
+  useEffect(() => {
+    setNoteVal(note)
+  }, [note])
 
   const setFlag = trpc.reports.setFlag.useMutation({
-    onSuccess: () => { toast.show('עודכן'); onSaved() },
+    onSuccess: () => {
+      toast.show('עודכן')
+      onSaved()
+    },
     onError: e => toast.show(e.message),
   })
 

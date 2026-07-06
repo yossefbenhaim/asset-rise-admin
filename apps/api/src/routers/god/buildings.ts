@@ -80,117 +80,109 @@ export const godBuildingsRouter = router({
   }),
 
   // ── Writes (all audited via godMutation) ─────────────────────────────────────
-  editBuilding: godProcedure
-    .input(GodEditBuildingInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.buildings.update',
-          target_type: 'building',
-          target_id: input.id,
-          meta: {
-            city: input.city ?? undefined,
-            street: input.street ?? undefined,
-            building_number: input.building_number ?? undefined,
-          },
+  editBuilding: godProcedure.input(GodEditBuildingInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.buildings.update',
+        target_type: 'building',
+        target_id: input.id,
+        meta: {
+          city: input.city ?? undefined,
+          street: input.street ?? undefined,
+          building_number: input.building_number ?? undefined,
         },
-        async () => {
-          try {
-            return await editBuilding(ctx.db, input)
-          } catch (e) {
-            rethrow(e)
-          }
-        },
-      ),
+      },
+      async () => {
+        try {
+          return await editBuilding(ctx.db, input)
+        } catch (e) {
+          rethrow(e)
+        }
+      },
     ),
+  ),
 
-  forceProjectStage: godProcedure
-    .input(GodForceProjectStageInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.buildings.force_stage',
-          target_type: 'project',
-          target_id: input.project_id,
-          meta: { stage: input.stage },
-        },
-        async () => {
-          try {
-            return await forceProjectStage(ctx.db, input)
-          } catch (e) {
-            rethrow(e)
-          }
-        },
-      ),
+  forceProjectStage: godProcedure.input(GodForceProjectStageInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.buildings.force_stage',
+        target_type: 'project',
+        target_id: input.project_id,
+        meta: { stage: input.stage },
+      },
+      async () => {
+        try {
+          return await forceProjectStage(ctx.db, input)
+        } catch (e) {
+          rethrow(e)
+        }
+      },
     ),
+  ),
 
-  reassignRole: godProcedure
-    .input(GodReassignRoleInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.buildings.reassign_role',
-          target_type: 'project',
-          target_id: input.project_id,
-          meta: { slot: input.slot, provider_id: input.provider_id },
-        },
-        async () => {
-          try {
-            return await reassignRole(ctx.db, input)
-          } catch (e) {
-            // A non-null provider_id that isn't a real profile violates the
-            // active_*_id FK (sc_profiles) — surface a clear Hebrew message.
-            if (isFkViolation(e)) {
-              throw new TRPCError({
-                code: 'BAD_REQUEST',
-                message: 'הספק שנבחר אינו קיים במערכת',
-              })
-            }
-            rethrow(e)
-          }
-        },
-      ),
-    ),
-
-  deleteBuilding: godProcedure
-    .input(GodDeleteBuildingInput)
-    .mutation(async ({ ctx, input }) => {
-      // The interlock (existence + typed-address match) runs INSIDE godMutation
-      // so EVERY attempt at this — the single most destructive op — is audited,
-      // including a rejected/probing one with a wrong or stale confirm token.
-      return godMutation(
-        ctx,
-        {
-          action: 'god.buildings.delete',
-          target_type: 'building',
-          target_id: input.id,
-          meta: { confirm: input.confirm },
-        },
-        async () => {
-          const live = await getBuildingAddress(ctx.db, input.id)
-          if (!live) notFound()
-          if (input.confirm.trim() !== live.address.trim()) {
+  reassignRole: godProcedure.input(GodReassignRoleInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.buildings.reassign_role',
+        target_type: 'project',
+        target_id: input.project_id,
+        meta: { slot: input.slot, provider_id: input.provider_id },
+      },
+      async () => {
+        try {
+          return await reassignRole(ctx.db, input)
+        } catch (e) {
+          // A non-null provider_id that isn't a real profile violates the
+          // active_*_id FK (sc_profiles) — surface a clear Hebrew message.
+          if (isFkViolation(e)) {
             throw new TRPCError({
               code: 'BAD_REQUEST',
-              message: 'הכתובת שהוקלדה אינה תואמת את כתובת הבניין',
+              message: 'הספק שנבחר אינו קיים במערכת',
             })
           }
-          try {
-            return await deleteBuilding(ctx.db, input.id)
-          } catch (e) {
-            if (isFkViolation(e)) {
-              throw new TRPCError({
-                code: 'PRECONDITION_FAILED',
-                message:
-                  'לא ניתן למחוק את הבניין — קיימות רשומות מקושרות שמונעות מחיקה (למשל מו״מ עם יו״ר משויך). יש להסיר אותן תחילה.',
-              })
-            }
-            rethrow(e)
+          rethrow(e)
+        }
+      },
+    ),
+  ),
+
+  deleteBuilding: godProcedure.input(GodDeleteBuildingInput).mutation(async ({ ctx, input }) => {
+    // The interlock (existence + typed-address match) runs INSIDE godMutation
+    // so EVERY attempt at this — the single most destructive op — is audited,
+    // including a rejected/probing one with a wrong or stale confirm token.
+    return godMutation(
+      ctx,
+      {
+        action: 'god.buildings.delete',
+        target_type: 'building',
+        target_id: input.id,
+        meta: { confirm: input.confirm },
+      },
+      async () => {
+        const live = await getBuildingAddress(ctx.db, input.id)
+        if (!live) notFound()
+        if (input.confirm.trim() !== live.address.trim()) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'הכתובת שהוקלדה אינה תואמת את כתובת הבניין',
+          })
+        }
+        try {
+          return await deleteBuilding(ctx.db, input.id)
+        } catch (e) {
+          if (isFkViolation(e)) {
+            throw new TRPCError({
+              code: 'PRECONDITION_FAILED',
+              message:
+                'לא ניתן למחוק את הבניין — קיימות רשומות מקושרות שמונעות מחיקה (למשל מו״מ עם יו״ר משויך). יש להסיר אותן תחילה.',
+            })
           }
-        },
-      )
-    }),
+          rethrow(e)
+        }
+      },
+    )
+  }),
 })

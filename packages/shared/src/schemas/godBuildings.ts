@@ -64,10 +64,9 @@ export const GodEditBuildingInput = z
     street: z.string().trim().min(1).max(160).optional(),
     building_number: z.string().trim().min(1).max(40).optional(),
   })
-  .refine(
-    v => v.city !== undefined || v.street !== undefined || v.building_number !== undefined,
-    { message: 'יש לספק לפחות שדה אחד לעדכון' },
-  )
+  .refine(v => v.city !== undefined || v.street !== undefined || v.building_number !== undefined, {
+    message: 'יש לספק לפחות שדה אחד לעדכון',
+  })
 export type GodEditBuildingInput = z.infer<typeof GodEditBuildingInput>
 
 export const GodForceProjectStageInput = z.object({

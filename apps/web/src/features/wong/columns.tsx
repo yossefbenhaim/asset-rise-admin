@@ -45,13 +45,13 @@ export const wongColumns: ColumnDef<WongVerification, unknown>[] = [
   {
     id: 'status',
     header: 'סטטוס',
-    accessorFn: (r) => r.status,
+    accessorFn: r => r.status,
     cell: ({ row }) => <StatusBadge status={row.original.status} />,
   },
   {
     id: 'doc',
     header: 'מסמך',
-    accessorFn: (r) => r.docLabel,
+    accessorFn: r => r.docLabel,
     cell: ({ row }) => {
       const { docLabel, docName } = row.original
       return (
@@ -75,7 +75,7 @@ export const wongColumns: ColumnDef<WongVerification, unknown>[] = [
     id: 'category',
     header: 'סוג',
     enableSorting: false,
-    accessorFn: (r) => r.docCategory ?? '',
+    accessorFn: r => r.docCategory ?? '',
     cell: ({ row }) => {
       const c = row.original.docCategory
       if (!c) return <span className="text-sc-text-muted">—</span>
@@ -85,7 +85,7 @@ export const wongColumns: ColumnDef<WongVerification, unknown>[] = [
   {
     id: 'tenant',
     header: 'דייר',
-    accessorFn: (r) => r.tenant ?? '',
+    accessorFn: r => r.tenant ?? '',
     cell: ({ row }) =>
       row.original.tenant ? (
         <span className="text-sc-text">{row.original.tenant}</span>
@@ -97,14 +97,14 @@ export const wongColumns: ColumnDef<WongVerification, unknown>[] = [
     id: 'verdict',
     header: 'הכרעת הסוכן',
     enableSorting: false,
-    accessorFn: (r) => (r.aiApproved === null ? 2 : r.aiApproved ? 1 : 0),
+    accessorFn: r => (r.aiApproved === null ? 2 : r.aiApproved ? 1 : 0),
     cell: ({ row }) => <AiVerdict approved={row.original.aiApproved} />,
   },
   {
     id: 'reason',
     header: 'נימוק',
     enableSorting: false,
-    accessorFn: (r) => r.reason ?? '',
+    accessorFn: r => r.reason ?? '',
     cell: ({ row }) => {
       const reason = row.original.reason ?? row.original.error
       if (!reason) return <span className="text-sc-text-muted">—</span>
@@ -121,7 +121,7 @@ export const wongColumns: ColumnDef<WongVerification, unknown>[] = [
   {
     id: 'createdAt',
     header: 'מתי',
-    accessorFn: (r) => r.createdAt,
+    accessorFn: r => r.createdAt,
     cell: ({ row }) => (
       <span className="text-sc-text-secondary sc-num" title={dateTime(row.original.createdAt)}>
         {timeAgo(row.original.createdAt)}

@@ -19,7 +19,7 @@ import {
   type GodPollListItem,
   type GodPollDetail,
   type GodPollOption,
-} from '@asset-rise/shared/schemas/godPolls'
+} from '@asset-rise/shared'
 
 type PollRow = GodPollListItem & Record<string, unknown>
 
@@ -37,11 +37,16 @@ function statusLabel(s: string | null | undefined): string {
 
 function statusPillKind(s: string | null | undefined): React.ComponentProps<typeof Pill>['kind'] {
   switch (s) {
-    case 'open': return 'success'
-    case 'finalized': return 'gold'
-    case 'closed': return 'warning'
-    case 'expired': return 'danger'
-    default: return 'neutral'
+    case 'open':
+      return 'success'
+    case 'finalized':
+      return 'gold'
+    case 'closed':
+      return 'warning'
+    case 'expired':
+      return 'danger'
+    default:
+      return 'neutral'
   }
 }
 
@@ -54,7 +59,9 @@ const columns: ColumnDef<PollRow, unknown>[] = [
       <div className="flex items-center gap-2 flex-wrap">
         <span className="font-semibold text-sc-text">{row.original.question || '(ללא שאלה)'}</span>
         {row.original.result_user_id && (
-          <Pill kind="gold"><Crown size={11} /> תוצאה נקבעה</Pill>
+          <Pill kind="gold">
+            <Crown size={11} /> תוצאה נקבעה
+          </Pill>
         )}
       </div>
     ),
@@ -78,24 +85,30 @@ const columns: ColumnDef<PollRow, unknown>[] = [
     header: 'בניין',
     accessorFn: r => r.building_address ?? '',
     cell: ({ row }) =>
-      row.original.building_address
-        ? <span className="text-sc-text-secondary">{row.original.building_address}</span>
-        : <span className="text-sc-text-muted">—</span>,
+      row.original.building_address ? (
+        <span className="text-sc-text-secondary">{row.original.building_address}</span>
+      ) : (
+        <span className="text-sc-text-muted">—</span>
+      ),
   },
   {
     id: 'option_count',
     header: 'אפשרויות',
     accessorFn: r => r.option_count,
-    cell: ({ row }) => <span className="sc-num text-sc-text-secondary">{row.original.option_count}</span>,
+    cell: ({ row }) => (
+      <span className="sc-num text-sc-text-secondary">{row.original.option_count}</span>
+    ),
   },
   {
     id: 'threshold_pct',
     header: 'אחוז סף',
     accessorFn: r => r.threshold_pct ?? -1,
     cell: ({ row }) =>
-      row.original.threshold_pct != null
-        ? <span className="sc-num text-sc-text-secondary">{row.original.threshold_pct}%</span>
-        : <span className="text-sc-text-muted">—</span>,
+      row.original.threshold_pct != null ? (
+        <span className="sc-num text-sc-text-secondary">{row.original.threshold_pct}%</span>
+      ) : (
+        <span className="text-sc-text-muted">—</span>
+      ),
   },
   {
     id: 'vote_count',
@@ -150,16 +163,28 @@ export default function GodPolls() {
           emptyBody="לא נמצאו הצבעות התואמות את הסינון."
           toolbar={
             <>
-              <select className={`${inputCls} sm:w-44`} value={kind} onChange={e => setKind(e.target.value)}>
+              <select
+                className={`${inputCls} sm:w-44`}
+                value={kind}
+                onChange={e => setKind(e.target.value)}
+              >
                 <option value="">כל הסוגים</option>
                 {POLL_KINDS.map(k => (
-                  <option key={k} value={k}>{POLL_KIND_LABEL[k]}</option>
+                  <option key={k} value={k}>
+                    {POLL_KIND_LABEL[k]}
+                  </option>
                 ))}
               </select>
-              <select className={`${inputCls} sm:w-44`} value={status} onChange={e => setStatus(e.target.value)}>
+              <select
+                className={`${inputCls} sm:w-44`}
+                value={status}
+                onChange={e => setStatus(e.target.value)}
+              >
                 <option value="">כל הסטטוסים</option>
                 {POLL_STATUSES.map(s => (
-                  <option key={s} value={s}>{POLL_STATUS_LABEL[s]}</option>
+                  <option key={s} value={s}>
+                    {POLL_STATUS_LABEL[s]}
+                  </option>
                 ))}
               </select>
               <Button icon={<Plus size={16} />} onClick={() => setCreating(true)}>
@@ -196,7 +221,9 @@ function PollDetail({ id, onClose }: { id: string; onClose: () => void }) {
   if (detail.isError || !detail.data) {
     return (
       <Modal open onClose={onClose} title="פרטי הצבעה">
-        <div className="text-center py-6 text-sc-danger text-[13px]">{detail.error?.message ?? 'הצבעה לא נמצאה'}</div>
+        <div className="text-center py-6 text-sc-danger text-[13px]">
+          {detail.error?.message ?? 'הצבעה לא נמצאה'}
+        </div>
       </Modal>
     )
   }
@@ -207,7 +234,10 @@ function PollDetail({ id, onClose }: { id: string; onClose: () => void }) {
 type Toast = ReturnType<typeof useToast>
 
 function PollDetailBody({
-  p, onClose, onChanged, toast,
+  p,
+  onClose,
+  onChanged,
+  toast,
 }: {
   p: GodPollDetail
   onClose: () => void
@@ -217,11 +247,17 @@ function PollDetailBody({
   const [overrideOpen, setOverrideOpen] = useState(false)
 
   const finalizeM = trpc.god.polls.forceFinalize.useMutation({
-    onSuccess: () => { toast.show('ההצבעה הוכרעה'); onChanged() },
+    onSuccess: () => {
+      toast.show('ההצבעה הוכרעה')
+      onChanged()
+    },
     onError: e => toast.show(e.message),
   })
   const reopenM = trpc.god.polls.reopen.useMutation({
-    onSuccess: () => { toast.show('ההצבעה נפתחה מחדש'); onChanged() },
+    onSuccess: () => {
+      toast.show('ההצבעה נפתחה מחדש')
+      onChanged()
+    },
     onError: e => toast.show(e.message),
   })
 
@@ -235,7 +271,9 @@ function PollDetailBody({
       title={`הצבעה: ${p.question || p.id}`}
       footer={
         <div className="flex gap-2 justify-end">
-          <Button variant="ghost" onClick={onClose}>סגור</Button>
+          <Button variant="ghost" onClick={onClose}>
+            סגור
+          </Button>
         </div>
       }
     >
@@ -243,14 +281,21 @@ function PollDetailBody({
         {/* Summary */}
         <div className="space-y-1">
           <Row label="סוג" value={<Pill kind="navy">{kindLabel(p.kind)}</Pill>} />
-          <Row label="סטטוס" value={<Pill kind={statusPillKind(p.status)}>{statusLabel(p.status)}</Pill>} />
+          <Row
+            label="סטטוס"
+            value={<Pill kind={statusPillKind(p.status)}>{statusLabel(p.status)}</Pill>}
+          />
           <Row label="בניין" value={p.building_address || '—'} />
           <Row label="אחוז סף" value={p.threshold_pct != null ? `${p.threshold_pct}%` : '—'} />
           {p.description && <Row label="תיאור" value={p.description} />}
           {p.result_user_id && (
             <Row
               label="תוצאה"
-              value={<Pill kind="gold"><Crown size={11} /> {p.result_user_name || p.result_user_id}</Pill>}
+              value={
+                <Pill kind="gold">
+                  <Crown size={11} /> {p.result_user_name || p.result_user_id}
+                </Pill>
+              }
             />
           )}
         </div>
@@ -262,7 +307,11 @@ function PollDetailBody({
           ) : (
             <div className="space-y-2">
               {p.options.map(o => (
-                <TallyRow key={o.id} o={o} isWinner={!!p.result_user_id && o.user_id === p.result_user_id} />
+                <TallyRow
+                  key={o.id}
+                  o={o}
+                  isWinner={!!p.result_user_id && o.user_id === p.result_user_id}
+                />
               ))}
             </div>
           )}
@@ -316,7 +365,10 @@ function PollDetailBody({
         <OverrideResultModal
           p={p}
           onClose={() => setOverrideOpen(false)}
-          onChanged={() => { setOverrideOpen(false); onChanged() }}
+          onChanged={() => {
+            setOverrideOpen(false)
+            onChanged()
+          }}
           toast={toast}
         />
       )}
@@ -333,9 +385,15 @@ function TallyRow({ o, isWinner }: { o: GodPollOption; isWinner: boolean }) {
     >
       <div className="flex items-baseline gap-2">
         <div className="font-semibold text-[13px]">{o.user_name || o.label || '(ללא תווית)'}</div>
-        {isWinner && <Pill kind="gold"><Crown size={11} /> זוכה</Pill>}
+        {isWinner && (
+          <Pill kind="gold">
+            <Crown size={11} /> זוכה
+          </Pill>
+        )}
         <div className="flex-1" />
-        <div className="font-bold text-[13px]">{o.vote_count} ({o.vote_pct}%)</div>
+        <div className="font-bold text-[13px]">
+          {o.vote_count} ({o.vote_pct}%)
+        </div>
       </div>
       {/* Read-only tally bar */}
       <div className="mt-1.5 h-2 rounded-full bg-sc-bg overflow-hidden">
@@ -351,7 +409,10 @@ function TallyRow({ o, isWinner }: { o: GodPollOption; isWinner: boolean }) {
 // overrideResult interlock — pick the winning option (or clear) and/or a status,
 // then DangerConfirm by typing the poll question.
 function OverrideResultModal({
-  p, onClose, onChanged, toast,
+  p,
+  onClose,
+  onChanged,
+  toast,
 }: {
   p: GodPollDetail
   onClose: () => void
@@ -367,7 +428,10 @@ function OverrideResultModal({
   const [confirmOpen, setConfirmOpen] = useState(false)
 
   const overrideM = trpc.god.polls.overrideResult.useMutation({
-    onSuccess: () => { toast.show('התוצאה נקבעה ידנית'); onChanged() },
+    onSuccess: () => {
+      toast.show('התוצאה נקבעה ידנית')
+      onChanged()
+    },
     onError: e => toast.show(e.message),
   })
 
@@ -380,12 +444,10 @@ function OverrideResultModal({
       title="קביעת תוצאה ידנית"
       footer={
         <div className="flex gap-2 justify-end">
-          <Button variant="ghost" onClick={onClose}>ביטול</Button>
-          <Button
-            variant="danger"
-            disabled={nothingSelected}
-            onClick={() => setConfirmOpen(true)}
-          >
+          <Button variant="ghost" onClick={onClose}>
+            ביטול
+          </Button>
+          <Button variant="danger" disabled={nothingSelected} onClick={() => setConfirmOpen(true)}>
             המשך
           </Button>
         </div>
@@ -399,7 +461,11 @@ function OverrideResultModal({
         {/* Result winner */}
         <div className="rounded-sc-input border border-sc-border p-3 space-y-2">
           <label className="flex items-center gap-2 font-semibold">
-            <input type="checkbox" checked={setResult} onChange={e => setSetResult(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={setResult}
+              onChange={e => setSetResult(e.target.checked)}
+            />
             קבע זוכה (result_user_id)
           </label>
           {setResult && (
@@ -426,7 +492,11 @@ function OverrideResultModal({
         {/* Status */}
         <div className="rounded-sc-input border border-sc-border p-3 space-y-2">
           <label className="flex items-center gap-2 font-semibold">
-            <input type="checkbox" checked={setStatus} onChange={e => setSetStatus(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={setStatus}
+              onChange={e => setSetStatus(e.target.checked)}
+            />
             קבע סטטוס
           </label>
           {setStatus && (
@@ -436,7 +506,9 @@ function OverrideResultModal({
               onChange={e => setStatusVal(e.target.value as PollStatus)}
             >
               {POLL_STATUSES.map(s => (
-                <option key={s} value={s}>{POLL_STATUS_LABEL[s]}</option>
+                <option key={s} value={s}>
+                  {POLL_STATUS_LABEL[s]}
+                </option>
               ))}
             </select>
           )}
@@ -454,7 +526,7 @@ function OverrideResultModal({
           overrideM.mutate({
             id: p.id,
             set_result: setResult,
-            result_user_id: setResult ? (resultUserId || null) : undefined,
+            result_user_id: setResult ? resultUserId || null : undefined,
             status: setStatus ? statusVal : undefined,
             confirm: p.question ?? '',
           })
@@ -464,11 +536,22 @@ function OverrideResultModal({
             <p className="text-sc-danger font-semibold m-0">פעולה עוקפת את ספירת הקולות!</p>
             <p className="m-0">
               {setResult && (
-                <>הזוכה ייקבע ל-<b>{resultUserId
-                  ? (candidateOptions.find(o => o.user_id === resultUserId)?.user_name || resultUserId)
-                  : '(ללא זוכה — ניקוי)'}</b>. </>
+                <>
+                  הזוכה ייקבע ל-
+                  <b>
+                    {resultUserId
+                      ? candidateOptions.find(o => o.user_id === resultUserId)?.user_name ||
+                        resultUserId
+                      : '(ללא זוכה — ניקוי)'}
+                  </b>
+                  .{' '}
+                </>
               )}
-              {setStatus && <>הסטטוס ייקבע ל-<b>{POLL_STATUS_LABEL[statusVal]}</b>. </>}
+              {setStatus && (
+                <>
+                  הסטטוס ייקבע ל-<b>{POLL_STATUS_LABEL[statusVal]}</b>.{' '}
+                </>
+              )}
             </p>
           </div>
         }
@@ -523,43 +606,81 @@ function CreatePollModal({ onClose }: { onClose: () => void }) {
       title="הצבעה חדשה"
       footer={
         <div className="flex gap-2 justify-end">
-          <Button variant="ghost" onClick={onClose}>ביטול</Button>
-          <Button disabled={!canSubmit} loading={createM.isLoading} onClick={submit}>צור הצבעה</Button>
+          <Button variant="ghost" onClick={onClose}>
+            ביטול
+          </Button>
+          <Button disabled={!canSubmit} loading={createM.isLoading} onClick={submit}>
+            צור הצבעה
+          </Button>
         </div>
       }
     >
       <div className="space-y-3 text-[13px]">
         <Field label="בניין">
-          <select className={inputCls} value={buildingId} onChange={e => setBuildingId(e.target.value)}>
+          <select
+            className={inputCls}
+            value={buildingId}
+            onChange={e => setBuildingId(e.target.value)}
+          >
             <option value="">— בחר/י בניין —</option>
             {(buildings.data ?? []).map(b => (
-              <option key={b.id} value={b.id}>{b.label}</option>
+              <option key={b.id} value={b.id}>
+                {b.label}
+              </option>
             ))}
           </select>
         </Field>
 
         <Field label="סוג">
-          <select className={inputCls} value={kind} onChange={e => setKind(e.target.value as PollKind)}>
+          <select
+            className={inputCls}
+            value={kind}
+            onChange={e => setKind(e.target.value as PollKind)}
+          >
             {POLL_KINDS.map(k => (
-              <option key={k} value={k}>{POLL_KIND_LABEL[k]}</option>
+              <option key={k} value={k}>
+                {POLL_KIND_LABEL[k]}
+              </option>
             ))}
           </select>
         </Field>
 
         <Field label="שאלה">
-          <input className={inputCls} value={question} onChange={e => setQuestion(e.target.value)} placeholder="שאלת ההצבעה…" />
+          <input
+            className={inputCls}
+            value={question}
+            onChange={e => setQuestion(e.target.value)}
+            placeholder="שאלת ההצבעה…"
+          />
         </Field>
 
         <Field label="תיאור (אופציונלי)">
-          <textarea className={inputCls} rows={2} value={description} onChange={e => setDescription(e.target.value)} />
+          <textarea
+            className={inputCls}
+            rows={2}
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+          />
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="אחוז סף">
-            <input className={inputCls} type="number" min={1} max={100} value={thresholdPct} onChange={e => setThresholdPct(e.target.value)} />
+            <input
+              className={inputCls}
+              type="number"
+              min={1}
+              max={100}
+              value={thresholdPct}
+              onChange={e => setThresholdPct(e.target.value)}
+            />
           </Field>
           <Field label="תאריך יעד (אופציונלי)">
-            <input className={inputCls} type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)} />
+            <input
+              className={inputCls}
+              type="datetime-local"
+              value={deadline}
+              onChange={e => setDeadline(e.target.value)}
+            />
           </Field>
         </div>
 
@@ -570,18 +691,27 @@ function CreatePollModal({ onClose }: { onClose: () => void }) {
                 <input
                   className={inputCls}
                   value={opt}
-                  onChange={e => setOptions(prev => prev.map((v, j) => (j === i ? e.target.value : v)))}
+                  onChange={e =>
+                    setOptions(prev => prev.map((v, j) => (j === i ? e.target.value : v)))
+                  }
                   placeholder={`אפשרות ${i + 1}`}
                 />
                 <Button
                   variant="ghost"
                   size="sm"
                   icon={<Trash2 size={14} />}
-                  onClick={() => setOptions(prev => (prev.length > 1 ? prev.filter((_, j) => j !== i) : ['']))}
+                  onClick={() =>
+                    setOptions(prev => (prev.length > 1 ? prev.filter((_, j) => j !== i) : ['']))
+                  }
                 />
               </div>
             ))}
-            <Button variant="secondary" size="sm" icon={<Plus size={14} />} onClick={() => setOptions(prev => [...prev, ''])}>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Plus size={14} />}
+              onClick={() => setOptions(prev => [...prev, ''])}
+            >
               הוסף אפשרות
             </Button>
           </div>
@@ -591,10 +721,22 @@ function CreatePollModal({ onClose }: { onClose: () => void }) {
   )
 }
 
-function Section({ title, children, danger }: { title: string; children: React.ReactNode; danger?: boolean }) {
+function Section({
+  title,
+  children,
+  danger,
+}: {
+  title: string
+  children: React.ReactNode
+  danger?: boolean
+}) {
   return (
-    <div className={`rounded-sc-input border p-3 ${danger ? 'border-sc-danger bg-sc-danger-bg/30' : 'border-sc-border'}`}>
-      <div className={`font-bold text-[13px] mb-2 ${danger ? 'text-sc-danger' : 'text-sc-text'}`}>{title}</div>
+    <div
+      className={`rounded-sc-input border p-3 ${danger ? 'border-sc-danger bg-sc-danger-bg/30' : 'border-sc-border'}`}
+    >
+      <div className={`font-bold text-[13px] mb-2 ${danger ? 'text-sc-danger' : 'text-sc-text'}`}>
+        {title}
+      </div>
       {children}
     </div>
   )

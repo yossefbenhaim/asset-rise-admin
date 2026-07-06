@@ -4,7 +4,7 @@ import type {
   GodDocumentListItem,
   GodDocumentDetail,
   GodDocumentVisibility,
-} from '@asset-rise/shared/schemas/godDocuments'
+} from '@asset-rise/shared'
 
 // God-mode "Documents" repo (Wave 3 — content + comms). Runs as service-role
 // (adminClient) so it reads/writes any sc_* row, bypassing RLS. Routers gate
@@ -38,7 +38,10 @@ const COLS =
   'mime_type, storage_path, file_url, is_confidential, created_at, updated_at'
 
 function addressOf(
-  b: { street?: string | null; building_number?: string | null; city?: string | null } | null | undefined,
+  b:
+    | { street?: string | null; building_number?: string | null; city?: string | null }
+    | null
+    | undefined,
 ): string | null {
   if (!b) return null
   const line = [b.street, b.building_number].filter(Boolean).join(' ')
@@ -49,7 +52,9 @@ function addressOf(
 async function resolveBuildings(
   db: SupabaseClient,
   ids: string[],
-): Promise<Map<string, { city: string | null; street: string | null; building_number: string | null }>> {
+): Promise<
+  Map<string, { city: string | null; street: string | null; building_number: string | null }>
+> {
   const map = new Map<string, any>()
   if (!ids.length) return map
   const { data } = await db
@@ -303,7 +308,11 @@ export async function removeDocument(
   id: string,
 ): Promise<{
   ok: true
-  prev: { visibility: GodDocumentVisibility | null; building_id: string | null; project_id: string | null }
+  prev: {
+    visibility: GodDocumentVisibility | null
+    building_id: string | null
+    project_id: string | null
+  }
 }> {
   const target = await loadDocumentTarget(db, id)
   const { error } = await db

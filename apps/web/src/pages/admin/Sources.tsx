@@ -34,7 +34,9 @@ export default function AdminSources() {
       <div className="sc-page__head">
         <div>
           <h1>מקורות נתונים</h1>
-          <div className="sub">בריאות וקטלוג מלא של כל מקורות המידע שמזינים את מנוע הניתוח · מתרענן כל 15 שניות</div>
+          <div className="sub">
+            בריאות וקטלוג מלא של כל מקורות המידע שמזינים את מנוע הניתוח · מתרענן כל 15 שניות
+          </div>
         </div>
         <Button variant="ghost" onClick={() => q.refetch()} disabled={q.isFetching}>
           <RefreshCw size={15} className={q.isFetching ? 'animate-spin' : ''} />
@@ -45,11 +47,18 @@ export default function AdminSources() {
       {q.isLoading ? (
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <SkeletonCard /><SkeletonCard /><SkeletonCard /><SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-            <SkeletonCard /><SkeletonCard /><SkeletonCard />
-            <SkeletonCard /><SkeletonCard /><SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
           </div>
         </div>
       ) : q.isError || !d ? (
@@ -102,8 +111,8 @@ export default function AdminSources() {
             <div className="flex items-start gap-2 rounded-sc-input bg-sc-light-blue text-sc-primary px-3 py-2 text-[11.5px]">
               <Info size={14} className="shrink-0 mt-0.5" />
               <span>
-                {d.summary.instrumented}/{d.summary.total} מקורות מדווחים בריאות בזמן אמת מטבלת הניטור.
-                שאר המקורות מסומנים «ממתין לבדיקה ראשונה» עד שייכתב עבורם אות בריאות ראשון.
+                {d.summary.instrumented}/{d.summary.total} מקורות מדווחים בריאות בזמן אמת מטבלת
+                הניטור. שאר המקורות מסומנים «ממתין לבדיקה ראשונה» עד שייכתב עבורם אות בריאות ראשון.
               </span>
             </div>
           )}
@@ -119,7 +128,8 @@ export default function AdminSources() {
             </div>
           ) : cat.isLoading ? (
             <div className="flex flex-col gap-3 mt-2">
-              <SkeletonCard /><SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
             </div>
           ) : null}
 

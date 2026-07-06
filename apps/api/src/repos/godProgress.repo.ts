@@ -21,7 +21,12 @@ import {
 
 const OPEN_STATUSES = ['pending', 'open', 'in_progress', 'awaiting_approval', 'blocked']
 const DEVELOPER_OWNED: ProjectStageId[] = [
-  'SECOND_APPRAISAL', 'DEADLINES_REVIEW', 'PERMITS', 'EVACUATION', 'CONSTRUCTION', 'DELIVERY',
+  'SECOND_APPRAISAL',
+  'DEADLINES_REVIEW',
+  'PERMITS',
+  'EVACUATION',
+  'CONSTRUCTION',
+  'DELIVERY',
 ]
 
 function daysSince(iso: string | null | undefined, nowMs: number): number | null {
@@ -31,7 +36,12 @@ function daysSince(iso: string | null | undefined, nowMs: number): number | null
   return Math.max(0, Math.floor((nowMs - t) / 86_400_000))
 }
 
-function addressOf(b: { street?: string | null; building_number?: string | null; city?: string | null } | null | undefined): string | null {
+function addressOf(
+  b:
+    | { street?: string | null; building_number?: string | null; city?: string | null }
+    | null
+    | undefined,
+): string | null {
   if (!b) return null
   const line = [b.street, b.building_number].filter(Boolean).join(' ')
   return [line, b.city].filter(Boolean).join(', ').trim() || null
@@ -39,12 +49,20 @@ function addressOf(b: { street?: string | null; building_number?: string | null;
 
 // Hebrew label for a role / provider_type / vaad position.
 const PROVIDER_LABEL: Record<string, string> = {
-  developer: 'יזם', lawyer: 'עו״ד', architect: 'אדריכל', appraiser: 'שמאי',
-  contractor: 'קבלן', coordinator: 'גורם מארגן', generic: 'נותן שירות',
+  developer: 'יזם',
+  lawyer: 'עו״ד',
+  architect: 'אדריכל',
+  appraiser: 'שמאי',
+  contractor: 'קבלן',
+  coordinator: 'גורם מארגן',
+  generic: 'נותן שירות',
 }
 function roleLabelFor(p: {
-  role?: string | null; provider_type?: string | null
-  is_committee_chair?: boolean; is_committee_member?: boolean; is_organizer?: boolean
+  role?: string | null
+  provider_type?: string | null
+  is_committee_chair?: boolean
+  is_committee_member?: boolean
+  is_organizer?: boolean
 }): string {
   if (p.role === 'provider') return PROVIDER_LABEL[p.provider_type ?? 'generic'] ?? 'נותן שירות'
   if (p.is_committee_chair) return 'יו״ר נציגות'
@@ -56,8 +74,11 @@ function roleLabelFor(p: {
 // The owner_role values a given user's tasks can carry (for unassigned,
 // role-targeted tasks). Assigned tasks match by owner_user_id directly.
 function ownerRolesFor(p: {
-  role?: string | null; provider_type?: string | null
-  is_committee_chair?: boolean; is_committee_member?: boolean; is_organizer?: boolean
+  role?: string | null
+  provider_type?: string | null
+  is_committee_chair?: boolean
+  is_committee_member?: boolean
+  is_organizer?: boolean
 }): Set<string> {
   const s = new Set<string>()
   if (p.role === 'provider') {
@@ -71,7 +92,17 @@ function ownerRolesFor(p: {
   return s
 }
 
-function isStuck(t: { status: string | null; completed_at: string | null; created_at: string | null; updated_at: string | null; due_at: string | null }, nowMs: number, days: number): boolean {
+function isStuck(
+  t: {
+    status: string | null
+    completed_at: string | null
+    created_at: string | null
+    updated_at: string | null
+    due_at: string | null
+  },
+  nowMs: number,
+  days: number,
+): boolean {
   if (!t.status || !OPEN_STATUSES.includes(t.status)) return false
   if (t.completed_at) return false
   if (t.due_at && Date.parse(t.due_at) < nowMs) return true
@@ -96,11 +127,23 @@ function buildStages(
       : id === currentStage
         ? 'current'
         : 'upcoming'
-    return { id, label: PROJECT_STAGE_LABEL[id], status, tasksDone: done, tasksTotal: tasks.length, stuckCount: stuck }
+    return {
+      id,
+      label: PROJECT_STAGE_LABEL[id],
+      status,
+      tasksDone: done,
+      tasksTotal: tasks.length,
+      stuckCount: stuck,
+    }
   })
 }
 
-async function lastStageEventDays(db: SupabaseClient, projectId: string, projectCreatedAt: string | null, nowMs: number): Promise<number | null> {
+async function lastStageEventDays(
+  db: SupabaseClient,
+  projectId: string,
+  projectCreatedAt: string | null,
+  nowMs: number,
+): Promise<number | null> {
   const { data } = await db
     .from('sc_audit_log')
     .select('created_at')
@@ -115,12 +158,16 @@ async function lastStageEventDays(db: SupabaseClient, projectId: string, project
 async function resolveProfiles(db: SupabaseClient, ids: string[]): Promise<Map<string, any>> {
   const map = new Map<string, any>()
   if (!ids.length) return map
-  const { data } = await db.from('sc_profiles').select('id, full_name, email, role, provider_type').in('id', ids)
+  const { data } = await db
+    .from('sc_profiles')
+    .select('id, full_name, email, role, provider_type')
+    .in('id', ids)
   for (const p of (data ?? []) as any[]) map.set(p.id, p)
   return map
 }
 
-const TASK_COLS = 'id, project_id, stage_id, title, owner_role, owner_user_id, status, required, requires_doc, due_at, completed_at, created_at, updated_at'
+const TASK_COLS =
+  'id, project_id, stage_id, title, owner_role, owner_user_id, status, required, requires_doc, due_at, completed_at, created_at, updated_at'
 
 function toProgressTask(t: any, ownerName: string | null, nowMs: number): ProgressTask {
   return {
@@ -191,11 +238,20 @@ export async function getUserProgress(db: SupabaseClient, userId: string): Promi
   // Resolve the project row (by id for providers, by building for tenants).
   let proj: any = null
   if (projectId) {
-    const { data } = await db.from('sc_projects').select('id, name, building_id, current_stage, completed_stages, created_at').eq('id', projectId).maybeSingle()
+    const { data } = await db
+      .from('sc_projects')
+      .select('id, name, building_id, current_stage, completed_stages, created_at')
+      .eq('id', projectId)
+      .maybeSingle()
     proj = data
     buildingId = proj?.building_id ?? buildingId
   } else if (buildingId) {
-    const { data } = await db.from('sc_projects').select('id, name, building_id, current_stage, completed_stages, created_at').eq('building_id', buildingId).order('created_at', { ascending: false }).limit(1)
+    const { data } = await db
+      .from('sc_projects')
+      .select('id, name, building_id, current_stage, completed_stages, created_at')
+      .eq('building_id', buildingId)
+      .order('created_at', { ascending: false })
+      .limit(1)
     proj = data?.[0] ?? null
     projectId = proj?.id ?? null
   }
@@ -215,15 +271,27 @@ export async function getUserProgress(db: SupabaseClient, userId: string): Promi
   }
   if (!proj || !projectId) {
     if (buildingId) {
-      const { data: b } = await db.from('sc_buildings').select('city, street, building_number').eq('id', buildingId).maybeSingle()
+      const { data: b } = await db
+        .from('sc_buildings')
+        .select('city, street, building_number')
+        .eq('id', buildingId)
+        .maybeSingle()
       empty.building_address = addressOf(b)
     }
     return empty
   }
 
   const [{ data: bRow }, { data: taskRows }, daysAtStage] = await Promise.all([
-    db.from('sc_buildings').select('city, street, building_number').eq('id', proj.building_id).maybeSingle(),
-    db.from('sc_project_tasks').select(TASK_COLS).eq('project_id', projectId).order('created_at', { ascending: true }),
+    db
+      .from('sc_buildings')
+      .select('city, street, building_number')
+      .eq('id', proj.building_id)
+      .maybeSingle(),
+    db
+      .from('sc_project_tasks')
+      .select(TASK_COLS)
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: true }),
     lastStageEventDays(db, projectId, proj.created_at ?? null, nowMs),
   ])
   const allTasks = (taskRows ?? []) as any[]
@@ -232,7 +300,8 @@ export async function getUserProgress(db: SupabaseClient, userId: string): Promi
 
   // This user's tasks: assigned to them, OR unassigned + targeted at their role.
   const mine = allTasks.filter(
-    t => t.owner_user_id === userId || (!t.owner_user_id && t.owner_role && roleSet.has(t.owner_role)),
+    t =>
+      t.owner_user_id === userId || (!t.owner_user_id && t.owner_role && roleSet.has(t.owner_role)),
   )
   const tasks = mine.map(t => toProgressTask(t, base.full_name, nowMs))
   const done = tasks.filter(t => t.status === 'done' || t.status === 'skipped').length
@@ -256,12 +325,21 @@ export async function getUserProgress(db: SupabaseClient, userId: string): Promi
 }
 
 // ── Per-building progress ───────────────────────────────────────────────────
-export async function getBuildingProgress(db: SupabaseClient, buildingId: string): Promise<BuildingProgress> {
+export async function getBuildingProgress(
+  db: SupabaseClient,
+  buildingId: string,
+): Promise<BuildingProgress> {
   const nowMs = Date.now()
-  const { data: b } = await db.from('sc_buildings').select('id, city, street, building_number').eq('id', buildingId).maybeSingle()
+  const { data: b } = await db
+    .from('sc_buildings')
+    .select('id, city, street, building_number')
+    .eq('id', buildingId)
+    .maybeSingle()
   const { data: pData } = await db
     .from('sc_projects')
-    .select('id, name, building_id, current_stage, completed_stages, created_at, active_coordinator_id, active_developer_id')
+    .select(
+      'id, name, building_id, current_stage, completed_stages, created_at, active_coordinator_id, active_developer_id',
+    )
     .eq('building_id', buildingId)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -282,7 +360,11 @@ export async function getBuildingProgress(db: SupabaseClient, buildingId: string
   if (!proj) return baseEmpty
 
   const [{ data: taskRows }, daysAtStage] = await Promise.all([
-    db.from('sc_project_tasks').select(TASK_COLS).eq('project_id', proj.id).order('created_at', { ascending: true }),
+    db
+      .from('sc_project_tasks')
+      .select(TASK_COLS)
+      .eq('project_id', proj.id)
+      .order('created_at', { ascending: true }),
     lastStageEventDays(db, proj.id, proj.created_at ?? null, nowMs),
   ])
   const allTasks = (taskRows ?? []) as any[]
@@ -296,11 +378,21 @@ export async function getBuildingProgress(db: SupabaseClient, buildingId: string
   if (devOwned && proj.active_developer_id) {
     const m = await resolveProfiles(db, [proj.active_developer_id])
     const p = m.get(proj.active_developer_id)
-    baton = { id: proj.active_developer_id, full_name: p?.full_name ?? null, email: p?.email ?? null, role: 'יזם' }
+    baton = {
+      id: proj.active_developer_id,
+      full_name: p?.full_name ?? null,
+      email: p?.email ?? null,
+      role: 'יזם',
+    }
   } else if (proj.active_coordinator_id) {
     const m = await resolveProfiles(db, [proj.active_coordinator_id])
     const p = m.get(proj.active_coordinator_id)
-    baton = { id: proj.active_coordinator_id, full_name: p?.full_name ?? null, email: p?.email ?? null, role: 'גורם מארגן' }
+    baton = {
+      id: proj.active_coordinator_id,
+      full_name: p?.full_name ?? null,
+      email: p?.email ?? null,
+      role: 'גורם מארגן',
+    }
   } else {
     const { data: chair } = await db
       .from('sc_tenant_profiles')
@@ -312,7 +404,12 @@ export async function getBuildingProgress(db: SupabaseClient, buildingId: string
     if (chairId) {
       const m = await resolveProfiles(db, [chairId])
       const p = m.get(chairId)
-      baton = { id: chairId, full_name: p?.full_name ?? null, email: p?.email ?? null, role: 'יו״ר נציגות' }
+      baton = {
+        id: chairId,
+        full_name: p?.full_name ?? null,
+        email: p?.email ?? null,
+        role: 'יו״ר נציגות',
+      }
     }
   }
 
@@ -335,7 +432,11 @@ export async function getBuildingProgress(db: SupabaseClient, buildingId: string
 }
 
 // ── Stuck overview (proactive "who needs help") ─────────────────────────────
-export async function getStuckOverview(db: SupabaseClient, days: number, limit: number): Promise<StuckOverview> {
+export async function getStuckOverview(
+  db: SupabaseClient,
+  days: number,
+  limit: number,
+): Promise<StuckOverview> {
   const nowMs = Date.now()
   // Pull open tasks (bounded) and filter to stuck in memory (the OR over
   // due_at/age isn't a single PostgREST predicate).
@@ -357,53 +458,80 @@ export async function getStuckOverview(db: SupabaseClient, days: number, limit: 
     const { data } = await db.from('sc_projects').select('id, building_id').in('id', projectIds)
     for (const p of (data ?? []) as any[]) projById.set(p.id, p)
   }
-  const buildingIds = Array.from(new Set([...projById.values()].map(p => p.building_id).filter(Boolean)))
+  const buildingIds = Array.from(
+    new Set([...projById.values()].map(p => p.building_id).filter(Boolean)),
+  )
   const bById = new Map<string, any>()
   if (buildingIds.length) {
-    const { data } = await db.from('sc_buildings').select('id, city, street, building_number').in('id', buildingIds)
+    const { data } = await db
+      .from('sc_buildings')
+      .select('id, city, street, building_number')
+      .in('id', buildingIds)
     for (const b of (data ?? []) as any[]) bById.set(b.id, b)
   }
   const profById = await resolveProfiles(db, ownerIds)
 
-  const items: StuckItem[] = stuckRows.map(t => {
-    const proj = t.project_id ? projById.get(t.project_id) : null
-    const bid = proj?.building_id ?? null
-    const moved = t.updated_at ?? t.created_at
-    const dueOver = t.due_at && Date.parse(t.due_at) < nowMs ? daysSince(t.due_at, nowMs) : null
-    const days = Math.max(daysSince(moved, nowMs) ?? 0, dueOver ?? 0)
-    return {
-      task_id: t.id,
-      title: t.title ?? null,
-      stage_id: (t.stage_id ?? null) as ProjectStageId | null,
-      stage_label: t.stage_id ? PROJECT_STAGE_LABEL[t.stage_id as ProjectStageId] ?? null : null,
-      status: t.status ?? null,
-      project_id: t.project_id ?? null,
-      building_id: bid,
-      building_address: addressOf(bid ? bById.get(bid) : null),
-      owner_user_id: t.owner_user_id ?? null,
-      owner_name: t.owner_user_id ? (profById.get(t.owner_user_id)?.full_name ?? null) : null,
-      owner_role: t.owner_role ?? null,
-      owner_role_label: t.owner_user_id
-        ? roleLabelFor(profById.get(t.owner_user_id) ?? {})
-        : (t.owner_role ?? null),
-      due_at: t.due_at ?? null,
-      created_at: t.created_at ?? null,
-      days,
-    }
-  }).sort((a, b) => b.days - a.days).slice(0, limit)
+  const items: StuckItem[] = stuckRows
+    .map(t => {
+      const proj = t.project_id ? projById.get(t.project_id) : null
+      const bid = proj?.building_id ?? null
+      const moved = t.updated_at ?? t.created_at
+      const dueOver = t.due_at && Date.parse(t.due_at) < nowMs ? daysSince(t.due_at, nowMs) : null
+      const days = Math.max(daysSince(moved, nowMs) ?? 0, dueOver ?? 0)
+      return {
+        task_id: t.id,
+        title: t.title ?? null,
+        stage_id: (t.stage_id ?? null) as ProjectStageId | null,
+        stage_label: t.stage_id
+          ? (PROJECT_STAGE_LABEL[t.stage_id as ProjectStageId] ?? null)
+          : null,
+        status: t.status ?? null,
+        project_id: t.project_id ?? null,
+        building_id: bid,
+        building_address: addressOf(bid ? bById.get(bid) : null),
+        owner_user_id: t.owner_user_id ?? null,
+        owner_name: t.owner_user_id ? (profById.get(t.owner_user_id)?.full_name ?? null) : null,
+        owner_role: t.owner_role ?? null,
+        owner_role_label: t.owner_user_id
+          ? roleLabelFor(profById.get(t.owner_user_id) ?? {})
+          : (t.owner_role ?? null),
+        due_at: t.due_at ?? null,
+        created_at: t.created_at ?? null,
+        days,
+      }
+    })
+    .sort((a, b) => b.days - a.days)
+    .slice(0, limit)
 
   // Groupings.
-  const byUserMap = new Map<string, { name: string | null; role_label: string | null; count: number; max_days: number }>()
-  const byBuildingMap = new Map<string, { address: string | null; count: number; max_days: number }>()
+  const byUserMap = new Map<
+    string,
+    { name: string | null; role_label: string | null; count: number; max_days: number }
+  >()
+  const byBuildingMap = new Map<
+    string,
+    { address: string | null; count: number; max_days: number }
+  >()
   for (const it of items) {
     if (it.owner_user_id) {
-      const e = byUserMap.get(it.owner_user_id) ?? { name: it.owner_name, role_label: it.owner_role_label, count: 0, max_days: 0 }
-      e.count++; e.max_days = Math.max(e.max_days, it.days)
+      const e = byUserMap.get(it.owner_user_id) ?? {
+        name: it.owner_name,
+        role_label: it.owner_role_label,
+        count: 0,
+        max_days: 0,
+      }
+      e.count++
+      e.max_days = Math.max(e.max_days, it.days)
       byUserMap.set(it.owner_user_id, e)
     }
     if (it.building_id) {
-      const e = byBuildingMap.get(it.building_id) ?? { address: it.building_address, count: 0, max_days: 0 }
-      e.count++; e.max_days = Math.max(e.max_days, it.days)
+      const e = byBuildingMap.get(it.building_id) ?? {
+        address: it.building_address,
+        count: 0,
+        max_days: 0,
+      }
+      e.count++
+      e.max_days = Math.max(e.max_days, it.days)
       byBuildingMap.set(it.building_id, e)
     }
   }
@@ -412,7 +540,11 @@ export async function getStuckOverview(db: SupabaseClient, days: number, limit: 
     days,
     count: items.length,
     items,
-    byUser: [...byUserMap.entries()].map(([user_id, v]) => ({ user_id, ...v })).sort((a, b) => b.count - a.count),
-    byBuilding: [...byBuildingMap.entries()].map(([building_id, v]) => ({ building_id, ...v })).sort((a, b) => b.count - a.count),
+    byUser: [...byUserMap.entries()]
+      .map(([user_id, v]) => ({ user_id, ...v }))
+      .sort((a, b) => b.count - a.count),
+    byBuilding: [...byBuildingMap.entries()]
+      .map(([building_id, v]) => ({ building_id, ...v }))
+      .sort((a, b) => b.count - a.count),
   }
 }

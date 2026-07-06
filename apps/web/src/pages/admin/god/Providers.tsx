@@ -102,7 +102,9 @@ const columns: ColumnDef<ProviderRow, unknown>[] = [
     accessorFn: r => r.email ?? '',
     cell: ({ row }) =>
       row.original.email ? (
-        <span className="text-sc-text-secondary" dir="ltr">{row.original.email}</span>
+        <span className="text-sc-text-secondary" dir="ltr">
+          {row.original.email}
+        </span>
       ) : (
         <span className="text-sc-text-muted">—</span>
       ),
@@ -113,7 +115,9 @@ const columns: ColumnDef<ProviderRow, unknown>[] = [
     accessorFn: r => r.phone ?? '',
     cell: ({ row }) =>
       row.original.phone ? (
-        <span className="text-sc-text-secondary sc-num" dir="ltr">{row.original.phone}</span>
+        <span className="text-sc-text-secondary sc-num" dir="ltr">
+          {row.original.phone}
+        </span>
       ) : (
         <span className="text-sc-text-muted">—</span>
       ),
@@ -190,15 +194,15 @@ export default function GodProviders() {
           >
             <option value="">כל הסוגים</option>
             {PROVIDER_TYPES.map(t => (
-              <option key={t} value={t}>{PROVIDER_TYPE_LABEL[t]}</option>
+              <option key={t} value={t}>
+                {PROVIDER_TYPE_LABEL[t]}
+              </option>
             ))}
           </select>
         }
       />
 
-      {activeId && (
-        <ProviderDetail id={activeId} onClose={() => setActiveId(null)} />
-      )}
+      {activeId && <ProviderDetail id={activeId} onClose={() => setActiveId(null)} />}
     </div>
   )
 }
@@ -223,25 +227,25 @@ function ProviderDetail({ id, onClose }: { id: string; onClose: () => void }) {
   if (detail.isError || !detail.data) {
     return (
       <Modal open onClose={onClose} title="פרטי ספק">
-        <div className="text-center py-6 text-sc-danger text-[13px]">{detail.error?.message ?? 'ספק לא נמצא'}</div>
+        <div className="text-center py-6 text-sc-danger text-[13px]">
+          {detail.error?.message ?? 'ספק לא נמצא'}
+        </div>
       </Modal>
     )
   }
 
   return (
-    <ProviderDetailBody
-      p={detail.data}
-      onClose={onClose}
-      onChanged={invalidate}
-      toast={toast}
-    />
+    <ProviderDetailBody p={detail.data} onClose={onClose} onChanged={invalidate} toast={toast} />
   )
 }
 
 type Toast = ReturnType<typeof useToast>
 
 function ProviderDetailBody({
-  p, onClose, onChanged, toast,
+  p,
+  onClose,
+  onChanged,
+  toast,
 }: {
   p: GodProviderDetail
   onClose: () => void
@@ -259,11 +263,17 @@ function ProviderDetailBody({
   )
 
   const editM = trpc.god.providers.editProviderProfile.useMutation({
-    onSuccess: () => { toast.show('פרופיל הספק עודכן'); onChanged() },
+    onSuccess: () => {
+      toast.show('פרופיל הספק עודכן')
+      onChanged()
+    },
     onError: e => toast.show(e.message),
   })
   const banM = trpc.god.providers.setBanned.useMutation({
-    onSuccess: () => { toast.show('סטטוס ההשבתה עודכן'); onChanged() },
+    onSuccess: () => {
+      toast.show('סטטוס ההשבתה עודכן')
+      onChanged()
+    },
     onError: e => toast.show(e.message),
   })
 
@@ -279,7 +289,9 @@ function ProviderDetailBody({
       title={`ספק: ${p.full_name || p.email || p.id}`}
       footer={
         <div className="flex gap-2 justify-end">
-          <Button variant="ghost" onClick={onClose}>סגור</Button>
+          <Button variant="ghost" onClick={onClose}>
+            סגור
+          </Button>
         </div>
       }
     >
@@ -290,9 +302,7 @@ function ProviderDetailBody({
           <Row label="סוג ספק" value={<Pill kind="navy">{typeLabel(p.provider_type)}</Pill>} />
           <Row
             label="סטטוס"
-            value={
-              p.banned ? <Pill kind="danger">מושבת</Pill> : <Pill kind="success">פעיל</Pill>
-            }
+            value={p.banned ? <Pill kind="danger">מושבת</Pill> : <Pill kind="success">פעיל</Pill>}
           />
         </div>
 
@@ -311,7 +321,11 @@ function ProviderDetailBody({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <div className={labelCls}>שם מלא</div>
-              <input className={inputCls} value={fullName} onChange={e => setFullName(e.target.value)} />
+              <input
+                className={inputCls}
+                value={fullName}
+                onChange={e => setFullName(e.target.value)}
+              />
             </div>
             <div>
               <div className={labelCls}>טלפון</div>
@@ -354,7 +368,9 @@ function ProviderDetailBody({
                   completed_projects: completedNum,
                 })
               }
-            >שמור פרופיל</Button>
+            >
+              שמור פרופיל
+            </Button>
           </div>
         </Section>
 
@@ -375,7 +391,9 @@ function ProviderDetailBody({
               icon={<Ban size={14} />}
               loading={banM.isLoading}
               onClick={() => banM.mutate({ id: p.id, banned: !p.banned })}
-            >{p.banned ? 'בטל השבתה' : 'השבת'}</Button>
+            >
+              {p.banned ? 'בטל השבתה' : 'השבת'}
+            </Button>
           </div>
         </Section>
       </div>
@@ -395,7 +413,8 @@ function TypeProfileSection({ p }: { p: GodProviderDetail }) {
   }
   const tp = (p.type_profile ?? {}) as Record<string, unknown>
   const entries = Object.entries(tp).filter(
-    ([k, v]) => !TYPE_FIELD_SKIP.has(k) && v != null && !(Array.isArray(v) && v.length === 0) && v !== '',
+    ([k, v]) =>
+      !TYPE_FIELD_SKIP.has(k) && v != null && !(Array.isArray(v) && v.length === 0) && v !== '',
   )
 
   return (
@@ -422,10 +441,22 @@ function renderValue(v: unknown): React.ReactNode {
   return String(v)
 }
 
-function Section({ title, children, danger }: { title: string; children: React.ReactNode; danger?: boolean }) {
+function Section({
+  title,
+  children,
+  danger,
+}: {
+  title: string
+  children: React.ReactNode
+  danger?: boolean
+}) {
   return (
-    <div className={`rounded-sc-input border p-3 ${danger ? 'border-sc-danger bg-sc-danger-bg/30' : 'border-sc-border'}`}>
-      <div className={`font-bold text-[13px] mb-2 ${danger ? 'text-sc-danger' : 'text-sc-text'}`}>{title}</div>
+    <div
+      className={`rounded-sc-input border p-3 ${danger ? 'border-sc-danger bg-sc-danger-bg/30' : 'border-sc-border'}`}
+    >
+      <div className={`font-bold text-[13px] mb-2 ${danger ? 'text-sc-danger' : 'text-sc-text'}`}>
+        {title}
+      </div>
       {children}
     </div>
   )

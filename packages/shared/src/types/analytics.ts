@@ -40,26 +40,26 @@ export type DashboardData = {
   /** delta % of this 7d window vs the previous 7d window */
   reportsWeekDelta: number | null
 
-  revenuePaid: number          // sum of paid sc_payments (all time)
-  revenueMonth: number         // sum of paid sc_payments this calendar-ish 30d
+  revenuePaid: number // sum of paid sc_payments (all time)
+  revenueMonth: number // sum of paid sc_payments this calendar-ish 30d
   revenueMonthDelta: number | null
 
   usersTotal: number
   usersNewMonth: number
   usersNewMonthDelta: number | null
 
-  reportsProcessing: number    // jobs running + pending
-  reportsFailed: number        // jobs failed
+  reportsProcessing: number // jobs running + pending
+  reportsFailed: number // jobs failed
 
-  avgScore: number | null      // avg sc_analyzer_reports.score
+  avgScore: number | null // avg sc_analyzer_reports.score
   /** paid payments / total reports, as a percentage */
   paidConversion: number | null
 
   // ── chart series ───────────────────────────────────────────────
-  reportsPerDay: DashboardPoint[]    // last 30 days
-  revenuePerDay: DashboardPoint[]    // last 30 days
+  reportsPerDay: DashboardPoint[] // last 30 days
+  revenuePerDay: DashboardPoint[] // last 30 days
   scoreDistribution: DashboardBucket[] // 0-39 / 40-59 / 60-79 / 80-100
-  topSources: DashboardBucket[]      // sc_leads.source counts
+  topSources: DashboardBucket[] // sc_leads.source counts
 
   // small spark series for KPI cards (last 14d)
   reportsSpark: number[]

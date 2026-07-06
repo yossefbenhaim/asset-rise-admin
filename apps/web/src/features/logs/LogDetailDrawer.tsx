@@ -64,29 +64,52 @@ export function LogDetailDrawer({ entry, onClose }: { entry: LogEntry; onClose: 
         {/* Who acted — resolved identity + contact */}
         {hasActor && (
           <Section title="מי ביצע">
-            <Row label="שם" value={
-              entry.actorName
-                ? <span className="inline-flex items-center gap-1"><User size={12} className="shrink-0" />{entry.actorName}</span>
-                : <span className="text-sc-text-muted">לא ידוע</span>
-            } />
+            <Row
+              label="שם"
+              value={
+                entry.actorName ? (
+                  <span className="inline-flex items-center gap-1">
+                    <User size={12} className="shrink-0" />
+                    {entry.actorName}
+                  </span>
+                ) : (
+                  <span className="text-sc-text-muted">לא ידוע</span>
+                )
+              }
+            />
             {entry.actorEmail && (
-              <Row label="אימייל" value={
-                <a href={`mailto:${entry.actorEmail}`} className="inline-flex items-center gap-1 break-all text-sc-primary sc-num">
-                  <Mail size={12} className="shrink-0" /> {entry.actorEmail}
-                </a>
-              } />
+              <Row
+                label="אימייל"
+                value={
+                  <a
+                    href={`mailto:${entry.actorEmail}`}
+                    className="inline-flex items-center gap-1 break-all text-sc-primary sc-num"
+                  >
+                    <Mail size={12} className="shrink-0" /> {entry.actorEmail}
+                  </a>
+                }
+              />
             )}
             {entry.actorPhone && (
-              <Row label="טלפון" value={
-                <a href={`tel:${entry.actorPhone}`} className="inline-flex items-center gap-1 break-all text-sc-primary sc-num">
-                  <Phone size={12} className="shrink-0" /> {entry.actorPhone}
-                </a>
-              } />
+              <Row
+                label="טלפון"
+                value={
+                  <a
+                    href={`tel:${entry.actorPhone}`}
+                    className="inline-flex items-center gap-1 break-all text-sc-primary sc-num"
+                  >
+                    <Phone size={12} className="shrink-0" /> {entry.actorPhone}
+                  </a>
+                }
+              />
             )}
             {entry.userId && (
-              <Row label="מזהה" value={
-                <code className="text-[11px] break-all text-sc-text-muted">{entry.userId}</code>
-              } />
+              <Row
+                label="מזהה"
+                value={
+                  <code className="text-[11px] break-all text-sc-text-muted">{entry.userId}</code>
+                }
+              />
             )}
             {!entry.actorName && !entry.actorEmail && !entry.actorPhone && entry.userId && (
               <p className="text-[11.5px] text-sc-text-muted m-0">הפרופיל לא נמצא (ייתכן שנמחק).</p>
@@ -96,18 +119,24 @@ export function LogDetailDrawer({ entry, onClose }: { entry: LogEntry; onClose: 
 
         {/* References */}
         <Section title="הפניות">
-          <Row label="מקור" value={
-            <span className="inline-flex items-center gap-1">
-              <Server size={12} /> {SERVICE_LABEL[entry.service] ?? entry.service}
-            </span>
-          } />
-          {entry.reportId && (
-            <Row label="מזהה דוח" value={
-              <span className="inline-flex items-center gap-1 break-all">
-                <Hash size={12} className="shrink-0" />
-                <code className="text-[11px] break-all">{entry.reportId}</code>
+          <Row
+            label="מקור"
+            value={
+              <span className="inline-flex items-center gap-1">
+                <Server size={12} /> {SERVICE_LABEL[entry.service] ?? entry.service}
               </span>
-            } />
+            }
+          />
+          {entry.reportId && (
+            <Row
+              label="מזהה דוח"
+              value={
+                <span className="inline-flex items-center gap-1 break-all">
+                  <Hash size={12} className="shrink-0" />
+                  <code className="text-[11px] break-all">{entry.reportId}</code>
+                </span>
+              }
+            />
           )}
           {!entry.reportId && !hasActor && (
             <Row label="ישות" value={<span className="text-sc-text-muted">ללא הפניה</span>} />
@@ -116,8 +145,17 @@ export function LogDetailDrawer({ entry, onClose }: { entry: LogEntry; onClose: 
 
         {/* What was sent */}
         {hasRequest && (
-          <Section title={<span className="inline-flex items-center gap-1.5"><ArrowUpRight size={13} className="text-sc-primary" /> מה נשלח</span>}>
-            <pre dir="ltr" className="m-0 overflow-x-auto rounded-sc-input bg-sc-bg border border-sc-border p-3 text-[11.5px] leading-relaxed text-sc-text-secondary sc-num">
+          <Section
+            title={
+              <span className="inline-flex items-center gap-1.5">
+                <ArrowUpRight size={13} className="text-sc-primary" /> מה נשלח
+              </span>
+            }
+          >
+            <pre
+              dir="ltr"
+              className="m-0 overflow-x-auto rounded-sc-input bg-sc-bg border border-sc-border p-3 text-[11.5px] leading-relaxed text-sc-text-secondary sc-num"
+            >
               {prettyJson(entry.request)}
             </pre>
           </Section>
@@ -125,12 +163,21 @@ export function LogDetailDrawer({ entry, onClose }: { entry: LogEntry; onClose: 
 
         {/* What came back */}
         {hasResponse && (
-          <Section title={
-            <span className="inline-flex items-center gap-1.5">
-              <ArrowDownLeft size={13} className={entry.severity === 'error' ? 'text-sc-danger' : 'text-sc-success'} /> מה חזר
-            </span>
-          }>
-            <pre dir="ltr" className="m-0 overflow-x-auto rounded-sc-input bg-sc-bg border border-sc-border p-3 text-[11.5px] leading-relaxed text-sc-text-secondary sc-num">
+          <Section
+            title={
+              <span className="inline-flex items-center gap-1.5">
+                <ArrowDownLeft
+                  size={13}
+                  className={entry.severity === 'error' ? 'text-sc-danger' : 'text-sc-success'}
+                />{' '}
+                מה חזר
+              </span>
+            }
+          >
+            <pre
+              dir="ltr"
+              className="m-0 overflow-x-auto rounded-sc-input bg-sc-bg border border-sc-border p-3 text-[11.5px] leading-relaxed text-sc-text-secondary sc-num"
+            >
               {prettyJson(entry.response)}
             </pre>
           </Section>
@@ -139,7 +186,10 @@ export function LogDetailDrawer({ entry, onClose }: { entry: LogEntry; onClose: 
         {/* Raw meta jsonb */}
         <Section title="נתונים גולמיים (meta)">
           {hasMeta ? (
-            <pre dir="ltr" className="m-0 overflow-x-auto rounded-sc-input bg-sc-bg border border-sc-border p-3 text-[11.5px] leading-relaxed text-sc-text-secondary sc-num">
+            <pre
+              dir="ltr"
+              className="m-0 overflow-x-auto rounded-sc-input bg-sc-bg border border-sc-border p-3 text-[11.5px] leading-relaxed text-sc-text-secondary sc-num"
+            >
               {prettyJson(entry.meta)}
             </pre>
           ) : (

@@ -7,26 +7,60 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-  Map, Building2, FileText, Landmark, Bot, Database, TrainFront, Building,
-  SlidersHorizontal, LayoutGrid, MapPinned, Coins, Construction, HardHat,
-  Link as LinkIcon, Cloud, Plug, Globe, Package, ChevronDown, MapPin,
+  Map,
+  Building2,
+  FileText,
+  Landmark,
+  Bot,
+  Database,
+  TrainFront,
+  Building,
+  SlidersHorizontal,
+  LayoutGrid,
+  MapPinned,
+  Coins,
+  Construction,
+  HardHat,
+  Link as LinkIcon,
+  Cloud,
+  Plug,
+  Globe,
+  Package,
+  ChevronDown,
+  MapPin,
   type LucideIcon,
 } from 'lucide-react'
 import type {
-  CatalogGroup, CatalogSource, SourceConnType, SourcesCatalogResponse,
+  CatalogGroup,
+  CatalogSource,
+  SourceConnType,
+  SourcesCatalogResponse,
 } from '@asset-rise/shared'
 import { timeAgo } from '@/lib/format'
 
 const ICONS: Record<string, LucideIcon> = {
-  Map, Building2, FileText, Landmark, Bot, Database, TrainFront, Building,
-  SlidersHorizontal, LayoutGrid, MapPinned, Coins, Construction, HardHat,
-  Link: LinkIcon, MapPin,
+  Map,
+  Building2,
+  FileText,
+  Landmark,
+  Bot,
+  Database,
+  TrainFront,
+  Building,
+  SlidersHorizontal,
+  LayoutGrid,
+  MapPinned,
+  Coins,
+  Construction,
+  HardHat,
+  Link: LinkIcon,
+  MapPin,
 }
 
 // Type chip: icon + Hebrew label + tint. api=connection, web=scrape, static=bundled.
 const TYPE_META: Record<SourceConnType, { label: string; icon: LucideIcon; cls: string }> = {
-  api:    { label: 'API', icon: Plug,   cls: 'bg-sc-light-blue text-sc-primary' },
-  web:    { label: 'קציר אתר', icon: Globe, cls: 'bg-sc-warning-bg text-sc-warning' },
+  api: { label: 'API', icon: Plug, cls: 'bg-sc-light-blue text-sc-primary' },
+  web: { label: 'קציר אתר', icon: Globe, cls: 'bg-sc-warning-bg text-sc-warning' },
   static: { label: 'נתון מובנה', icon: Package, cls: 'bg-sc-success-bg text-sc-success' },
 }
 
@@ -49,7 +83,8 @@ export function SourceCatalog({ data }: { data: SourcesCatalogResponse }) {
           <div className="min-w-0">
             <div className="text-[14px] font-bold text-sc-text">כל המקורות שאליהם אנו מתחברים</div>
             <div className="text-[11.5px] text-sc-text-muted">
-              הקטלוג המלא של מקורות המידע שמזינים את מנוע הניתוח — לפי קבוצות, סוג חיבור ומה כל אחד מזין
+              הקטלוג המלא של מקורות המידע שמזינים את מנוע הניתוח — לפי קבוצות, סוג חיבור ומה כל אחד
+              מזין
             </div>
           </div>
         </div>
@@ -66,7 +101,7 @@ export function SourceCatalog({ data }: { data: SourcesCatalogResponse }) {
           the cards tightly top-to-bottom so short groups (1 source) don't leave
           big vertical gaps under them the way a fixed grid row does. */}
       <div className="columns-1 md:columns-2 xl:columns-3 gap-4">
-        {data.groups.map((g) => (
+        {data.groups.map(g => (
           <div key={g.key} className="mb-4 break-inside-avoid">
             <CatalogGroupBlock group={g} live={data.live} />
           </div>
@@ -86,7 +121,8 @@ function Stat({ label, value }: { label: string; value: number }) {
 }
 
 function CatalogGroupBlock({
-  group, live,
+  group,
+  live,
 }: {
   group: CatalogGroup
   live: SourcesCatalogResponse['live']
@@ -98,7 +134,7 @@ function CatalogGroupBlock({
     <div className="sc-glass overflow-hidden">
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => setOpen(o => !o)}
         className="w-full flex items-center gap-3 p-4 text-right hover:bg-sc-bg-subtle/60 transition-colors"
       >
         <span className="grid place-items-center w-9 h-9 rounded-sc-input shrink-0 bg-sc-light-blue text-sc-primary">
@@ -108,8 +144,14 @@ function CatalogGroupBlock({
           <div className="text-[13.5px] font-bold text-sc-text">{group.title}</div>
           <div className="text-[11px] text-sc-text-muted truncate">{group.subtitle}</div>
         </div>
-        <span className="text-[11px] font-semibold text-sc-text-muted sc-num">{group.sources.length}</span>
-        <motion.span animate={{ rotate: open ? 0 : -90 }} transition={{ duration: 0.2 }} className="text-sc-text-muted">
+        <span className="text-[11px] font-semibold text-sc-text-muted sc-num">
+          {group.sources.length}
+        </span>
+        <motion.span
+          animate={{ rotate: open ? 0 : -90 }}
+          transition={{ duration: 0.2 }}
+          className="text-sc-text-muted"
+        >
           <ChevronDown size={16} />
         </motion.span>
       </button>
@@ -124,8 +166,12 @@ function CatalogGroupBlock({
             className="overflow-hidden"
           >
             <div className="px-4 pb-4 grid grid-cols-1 gap-3 items-stretch">
-              {group.sources.map((s) => (
-                <CatalogSourceCard key={s.key} source={s} live={s.healthId ? live[s.healthId] : undefined} />
+              {group.sources.map(s => (
+                <CatalogSourceCard
+                  key={s.key}
+                  source={s}
+                  live={s.healthId ? live[s.healthId] : undefined}
+                />
               ))}
             </div>
           </motion.div>
@@ -136,7 +182,8 @@ function CatalogGroupBlock({
 }
 
 function CatalogSourceCard({
-  source, live,
+  source,
+  live,
 }: {
   source: CatalogSource
   live: SourcesCatalogResponse['live'][keyof SourcesCatalogResponse['live']]
@@ -168,7 +215,9 @@ function CatalogSourceCard({
           <div className="text-[10.5px] text-sc-text-muted">{source.provider}</div>
         </div>
         {/* Type chip */}
-        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold shrink-0 ${type.cls}`}>
+        <span
+          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold shrink-0 ${type.cls}`}
+        >
           <TypeIcon size={11} />
           {type.label}
         </span>
@@ -183,9 +232,11 @@ function CatalogSourceCard({
       {/* Municipal-web: city sub-list + firecrawl note */}
       {source.municipalities.length > 0 && (
         <div className="flex flex-col gap-1.5 rounded-sc-input bg-sc-light-blue/50 px-2.5 py-2">
-          <div className="text-[10.5px] font-semibold text-sc-primary">רשויות עם נתוני קציר זמינים</div>
+          <div className="text-[10.5px] font-semibold text-sc-primary">
+            רשויות עם נתוני קציר זמינים
+          </div>
           <div className="flex flex-wrap gap-1.5">
-            {source.municipalities.map((c) => (
+            {source.municipalities.map(c => (
               <span
                 key={c}
                 className="inline-flex items-center gap-1 rounded-full bg-sc-surface px-2 py-0.5 text-[10.5px] font-medium text-sc-text border border-sc-border/60"

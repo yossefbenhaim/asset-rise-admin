@@ -19,8 +19,10 @@ export interface Context {
 
 export async function createContext({ req }: CreateExpressContextOptions): Promise<Context> {
   const db = adminClient()
-  const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim()
-    || req.socket.remoteAddress || null
+  const ip =
+    (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+    req.socket.remoteAddress ||
+    null
 
   const auth = req.headers.authorization
   if (!auth?.startsWith('Bearer ')) {
@@ -37,9 +39,9 @@ export async function createContext({ req }: CreateExpressContextOptions): Promi
     id: authResp.user.id,
     email: authResp.user.email ?? null,
     full_name:
-      (authResp.user.user_metadata?.full_name as string | undefined)
-      ?? (authResp.user.user_metadata?.name as string | undefined)
-      ?? null,
+      (authResp.user.user_metadata?.full_name as string | undefined) ??
+      (authResp.user.user_metadata?.name as string | undefined) ??
+      null,
   }
 
   const sess = await loadSessionUser(db, authResp.user.id)

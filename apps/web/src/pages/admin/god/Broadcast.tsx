@@ -16,7 +16,7 @@ import type {
   GodBroadcastBuilding,
   GodBroadcastSendResult,
   GodBroadcastRecent,
-} from '@asset-rise/shared/schemas/godNotifications'
+} from '@asset-rise/shared'
 
 // God-mode "System Broadcast" page (Wave 3 — content + comms). THE MARQUEE
 // FEATURE. Compose a 'system.announcement' notification, pick an audience
@@ -73,8 +73,14 @@ const god = trpc as unknown as {
           refetch: () => void
         }
       }
-      send: { useMutation: (o: MutOpts<GodBroadcastSendResult>) => Mut<SendInput, GodBroadcastSendResult> }
-      resend: { useMutation: (o: MutOpts<GodBroadcastSendResult>) => Mut<ResendInput, GodBroadcastSendResult> }
+      send: {
+        useMutation: (o: MutOpts<GodBroadcastSendResult>) => Mut<SendInput, GodBroadcastSendResult>
+      }
+      resend: {
+        useMutation: (
+          o: MutOpts<GodBroadcastSendResult>,
+        ) => Mut<ResendInput, GodBroadcastSendResult>
+      }
     }
   }
 }
@@ -109,7 +115,8 @@ export default function GodBroadcast() {
   const audience: GodBroadcastAudience | null = useMemo(() => {
     if (audienceType === 'all') return { type: 'all' }
     if (audienceType === 'role') return { type: 'role', role }
-    if (audienceType === 'building' && buildingId) return { type: 'building', building_id: buildingId }
+    if (audienceType === 'building' && buildingId)
+      return { type: 'building', building_id: buildingId }
     return null
   }, [audienceType, role, buildingId])
 
@@ -232,7 +239,7 @@ export default function GodBroadcast() {
                   <option value="">— בחר/י בניין —</option>
                   {(buildings.data ?? []).map(b => (
                     <option key={b.id} value={b.id}>
-                      {(b.address ?? b.id)} · {b.tenant_count} דיירים
+                      {b.address ?? b.id} · {b.tenant_count} דיירים
                     </option>
                   ))}
                 </select>
@@ -257,7 +264,9 @@ export default function GodBroadcast() {
           {/* Live blast-radius preview */}
           <div className="rounded-sc-input border border-sc-border bg-sc-surface-2 p-3">
             {!audience ? (
-              <div className="text-[12px] text-sc-text-secondary">בחר/י קהל יעד כדי לראות את מספר הנמענים.</div>
+              <div className="text-[12px] text-sc-text-secondary">
+                בחר/י קהל יעד כדי לראות את מספר הנמענים.
+              </div>
             ) : preview.isLoading || preview.isFetching ? (
               <div className="text-[12px] text-sc-text-secondary">מחשב נמענים…</div>
             ) : preview.isError ? (
@@ -448,7 +457,9 @@ function RecentSends({
         />
         <CardBody>
           {recent.isError ? (
-            <div className="text-center py-6 text-sc-danger text-[13px]">{recent.error?.message}</div>
+            <div className="text-center py-6 text-sc-danger text-[13px]">
+              {recent.error?.message}
+            </div>
           ) : (
             <DataTable<RecentRow>
               columns={recentColumns}
@@ -543,10 +554,7 @@ function ResendModal({
   const audience: GodBroadcastAudience =
     audienceType === 'all' ? { type: 'all' } : { type: 'role', role }
 
-  const preview = god.god.notifications.preview.useQuery(
-    { audience },
-    { keepPreviousData: true },
-  )
+  const preview = god.god.notifications.preview.useQuery({ audience }, { keepPreviousData: true })
   const count = preview.data?.count ?? 0
   const label = preview.data?.audience_label ?? ''
 

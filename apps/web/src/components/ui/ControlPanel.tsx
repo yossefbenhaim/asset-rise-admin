@@ -9,7 +9,7 @@ type Tone = 'danger' | 'navy'
 
 const toneCls: Record<Tone, { border: string; header: string }> = {
   danger: { border: 'border-s-4 border-sc-danger', header: 'text-sc-danger' },
-  navy:   { border: 'border-s-4 border-sc-navy',   header: 'text-sc-navy' },
+  navy: { border: 'border-s-4 border-sc-navy', header: 'text-sc-navy' },
 }
 
 export function ControlPanel({

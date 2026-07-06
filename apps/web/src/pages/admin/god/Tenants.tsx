@@ -17,12 +17,28 @@ type TenantRow = GodTenantListItem & Record<string, unknown>
 const inputCls = 'border border-sc-border rounded-sc-input p-2 w-full text-[14px]'
 const labelCls = 'text-sc-text-secondary mb-1 text-[12px]'
 
-function VaadPills({ t }: { t: Pick<GodTenantListItem, 'is_committee_chair' | 'is_committee_member' | 'is_organizer'> }) {
+function VaadPills({
+  t,
+}: {
+  t: Pick<GodTenantListItem, 'is_committee_chair' | 'is_committee_member' | 'is_organizer'>
+}) {
   return (
     <>
-      {t.is_committee_chair && <Pill kind="gold"><Crown size={11} /> יו"ר ועד</Pill>}
-      {t.is_committee_member && <Pill kind="navy"><ShieldCheck size={11} /> חבר ועד</Pill>}
-      {t.is_organizer && <Pill kind="info"><Flag size={11} /> מארגן</Pill>}
+      {t.is_committee_chair && (
+        <Pill kind="gold">
+          <Crown size={11} /> יו"ר ועד
+        </Pill>
+      )}
+      {t.is_committee_member && (
+        <Pill kind="navy">
+          <ShieldCheck size={11} /> חבר ועד
+        </Pill>
+      )}
+      {t.is_organizer && (
+        <Pill kind="info">
+          <Flag size={11} /> מארגן
+        </Pill>
+      )}
     </>
   )
 }
@@ -42,7 +58,9 @@ const columns: ColumnDef<TenantRow, unknown>[] = [
     accessorFn: r => r.email ?? '',
     cell: ({ row }) =>
       row.original.email ? (
-        <span className="text-sc-text-secondary" dir="ltr">{row.original.email}</span>
+        <span className="text-sc-text-secondary" dir="ltr">
+          {row.original.email}
+        </span>
       ) : (
         <span className="text-sc-text-muted">—</span>
       ),
@@ -53,7 +71,9 @@ const columns: ColumnDef<TenantRow, unknown>[] = [
     accessorFn: r => r.phone ?? '',
     cell: ({ row }) =>
       row.original.phone ? (
-        <span className="text-sc-text-secondary sc-num" dir="ltr">{row.original.phone}</span>
+        <span className="text-sc-text-secondary sc-num" dir="ltr">
+          {row.original.phone}
+        </span>
       ) : (
         <span className="text-sc-text-muted">—</span>
       ),
@@ -85,7 +105,11 @@ const columns: ColumnDef<TenantRow, unknown>[] = [
     header: 'ועד',
     enableSorting: false,
     accessorFn: r =>
-      [r.is_committee_chair && 'chair', r.is_committee_member && 'member', r.is_organizer && 'organizer']
+      [
+        r.is_committee_chair && 'chair',
+        r.is_committee_member && 'member',
+        r.is_organizer && 'organizer',
+      ]
         .filter(Boolean)
         .join(' '),
     cell: ({ row }) => {
@@ -141,15 +165,15 @@ export default function GodTenants() {
           >
             <option value="">כל הבניינים</option>
             {(buildings.data ?? []).map(b => (
-              <option key={b.id} value={b.id}>{b.label}</option>
+              <option key={b.id} value={b.id}>
+                {b.label}
+              </option>
             ))}
           </select>
         }
       />
 
-      {activeId && (
-        <TenantDetail id={activeId} onClose={() => setActiveId(null)} />
-      )}
+      {activeId && <TenantDetail id={activeId} onClose={() => setActiveId(null)} />}
     </div>
   )
 }
@@ -175,7 +199,9 @@ function TenantDetail({ id, onClose }: { id: string; onClose: () => void }) {
   if (detail.isError || !detail.data) {
     return (
       <Modal open onClose={onClose} title="פרטי דייר">
-        <div className="text-center py-6 text-sc-danger text-[13px]">{detail.error?.message ?? 'דייר לא נמצא'}</div>
+        <div className="text-center py-6 text-sc-danger text-[13px]">
+          {detail.error?.message ?? 'דייר לא נמצא'}
+        </div>
       </Modal>
     )
   }
@@ -194,7 +220,11 @@ function TenantDetail({ id, onClose }: { id: string; onClose: () => void }) {
 type Toast = ReturnType<typeof useToast>
 
 function TenantDetailBody({
-  t, buildings, onClose, onChanged, toast,
+  t,
+  buildings,
+  onClose,
+  onChanged,
+  toast,
 }: {
   t: GodTenantDetail
   buildings: { id: string; label: string }[]
@@ -227,19 +257,31 @@ function TenantDetailBody({
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const editM = trpc.god.tenants.editTenantProfile.useMutation({
-    onSuccess: () => { toast.show('פרופיל הדייר עודכן'); onChanged() },
+    onSuccess: () => {
+      toast.show('פרופיל הדייר עודכן')
+      onChanged()
+    },
     onError: e => toast.show(e.message),
   })
   const vaadM = trpc.god.tenants.setVaadRoles.useMutation({
-    onSuccess: () => { toast.show('הרכב הוועד עודכן'); onChanged() },
+    onSuccess: () => {
+      toast.show('הרכב הוועד עודכן')
+      onChanged()
+    },
     onError: e => toast.show(e.message),
   })
   const moveM = trpc.god.tenants.moveBuilding.useMutation({
-    onSuccess: () => { toast.show('הדייר הועבר לבניין החדש'); onChanged() },
+    onSuccess: () => {
+      toast.show('הדייר הועבר לבניין החדש')
+      onChanged()
+    },
     onError: e => toast.show(e.message),
   })
   const banM = trpc.god.tenants.setBanned.useMutation({
-    onSuccess: () => { toast.show('סטטוס ההשבתה עודכן'); onChanged() },
+    onSuccess: () => {
+      toast.show('סטטוס ההשבתה עודכן')
+      onChanged()
+    },
     onError: e => toast.show(e.message),
   })
   const delM = trpc.god.tenants.deleteTenant.useMutation({
@@ -249,7 +291,10 @@ function TenantDetailBody({
       onChanged()
       onClose()
     },
-    onError: e => { toast.show(e.message); setConfirmDelete(false) },
+    onError: e => {
+      toast.show(e.message)
+      setConfirmDelete(false)
+    },
   })
 
   const ownershipNum = ownership.trim() === '' ? null : Number(ownership)
@@ -271,7 +316,9 @@ function TenantDetailBody({
       title={`דייר: ${t.full_name || t.email || t.id}`}
       footer={
         <div className="flex gap-2 justify-end">
-          <Button variant="ghost" onClick={onClose}>סגור</Button>
+          <Button variant="ghost" onClick={onClose}>
+            סגור
+          </Button>
         </div>
       }
     >
@@ -282,12 +329,16 @@ function TenantDetailBody({
           {t.building_label && <Row label="בניין נוכחי" value={t.building_label} />}
           <Row
             label="סטטוס"
-            value={
-              t.banned ? <Pill kind="danger">מושבת</Pill> : <Pill kind="success">פעיל</Pill>
-            }
+            value={t.banned ? <Pill kind="danger">מושבת</Pill> : <Pill kind="success">פעיל</Pill>}
           />
           <div className="flex gap-2 flex-wrap pt-1">
-            <VaadPills t={{ is_committee_chair: !!tp.is_committee_chair, is_committee_member: !!tp.is_committee_member, is_organizer: !!tp.is_organizer }} />
+            <VaadPills
+              t={{
+                is_committee_chair: !!tp.is_committee_chair,
+                is_committee_member: !!tp.is_committee_member,
+                is_organizer: !!tp.is_organizer,
+              }}
+            />
           </div>
         </div>
 
@@ -306,7 +357,11 @@ function TenantDetailBody({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <div className={labelCls}>שם מלא</div>
-              <input className={inputCls} value={fullName} onChange={e => setFullName(e.target.value)} />
+              <input
+                className={inputCls}
+                value={fullName}
+                onChange={e => setFullName(e.target.value)}
+              />
             </div>
             <div>
               <div className={labelCls}>טלפון</div>
@@ -314,7 +369,11 @@ function TenantDetailBody({
             </div>
             <div>
               <div className={labelCls}>מספר דירה</div>
-              <input className={inputCls} value={apartment} onChange={e => setApartment(e.target.value)} />
+              <input
+                className={inputCls}
+                value={apartment}
+                onChange={e => setApartment(e.target.value)}
+              />
             </div>
             <div>
               <div className={labelCls}>אחוז בעלות (0–100)</div>
@@ -344,16 +403,33 @@ function TenantDetailBody({
                   ownership_percentage: ownershipNum,
                 })
               }
-            >שמור פרופיל</Button>
+            >
+              שמור פרופיל
+            </Button>
           </div>
         </Section>
 
         {/* Vaad roles — "change the vaad" */}
         <Section title="הרכב הוועד">
           <div className="space-y-2">
-            <Toggle label={'יו"ר ועד'} checked={chair} onChange={setChair} icon={<Crown size={14} />} />
-            <Toggle label="חבר ועד" checked={member} onChange={setMember} icon={<ShieldCheck size={14} />} />
-            <Toggle label="מארגן" checked={organizer} onChange={setOrganizer} icon={<Flag size={14} />} />
+            <Toggle
+              label={'יו"ר ועד'}
+              checked={chair}
+              onChange={setChair}
+              icon={<Crown size={14} />}
+            />
+            <Toggle
+              label="חבר ועד"
+              checked={member}
+              onChange={setMember}
+              icon={<ShieldCheck size={14} />}
+            />
+            <Toggle
+              label="מארגן"
+              checked={organizer}
+              onChange={setOrganizer}
+              icon={<Flag size={14} />}
+            />
           </div>
           <div className="flex justify-end mt-3">
             <Button
@@ -368,7 +444,9 @@ function TenantDetailBody({
                   is_organizer: organizer,
                 })
               }
-            >עדכן ועד</Button>
+            >
+              עדכן ועד
+            </Button>
           </div>
         </Section>
 
@@ -381,7 +459,9 @@ function TenantDetailBody({
           >
             <option value="">— בחר/י בניין —</option>
             {buildings.map(b => (
-              <option key={b.id} value={b.id}>{b.label}</option>
+              <option key={b.id} value={b.id}>
+                {b.label}
+              </option>
             ))}
           </select>
           <div className="flex justify-end mt-3">
@@ -391,7 +471,9 @@ function TenantDetailBody({
               loading={moveM.isLoading}
               disabled={!targetBuilding || !buildingChanged}
               onClick={() => moveM.mutate({ id: t.id, building_id: targetBuilding })}
-            >העבר בניין</Button>
+            >
+              העבר בניין
+            </Button>
           </div>
         </Section>
 
@@ -411,7 +493,9 @@ function TenantDetailBody({
                 loading={banM.isLoading}
                 disabled={anyBusy && !banM.isLoading}
                 onClick={() => banM.mutate({ id: t.id, banned: !t.banned })}
-              >{t.banned ? 'בטל השבתה' : 'השבת'}</Button>
+              >
+                {t.banned ? 'בטל השבתה' : 'השבת'}
+              </Button>
             </div>
             <div className="flex items-center justify-between gap-2 border-t border-sc-border pt-2">
               <div className="text-sc-text-secondary">
@@ -422,7 +506,9 @@ function TenantDetailBody({
                 variant="danger"
                 icon={<Trash2 size={14} />}
                 onClick={() => setConfirmDelete(true)}
-              >מחק לצמיתות</Button>
+              >
+                מחק לצמיתות
+              </Button>
             </div>
           </div>
         </Section>
@@ -439,8 +525,8 @@ function TenantDetailBody({
         body={
           <div className="space-y-2">
             <p className="m-0">
-              פעולה זו מוחקת את <b>{t.full_name || t.email}</b> וכל הנתונים הקשורים
-              (דירה, חתימות, הצבעות, מסמכים ועוד) באופן בלתי-הפיך.
+              פעולה זו מוחקת את <b>{t.full_name || t.email}</b> וכל הנתונים הקשורים (דירה, חתימות,
+              הצבעות, מסמכים ועוד) באופן בלתי-הפיך.
             </p>
             <p className="m-0 text-sc-danger">
               אם הדייר משמש כיו"ר ועד במשא ומתן פעיל — המחיקה תיחסם עד להחלפת היו"ר.
@@ -452,18 +538,38 @@ function TenantDetailBody({
   )
 }
 
-function Section({ title, children, danger }: { title: string; children: React.ReactNode; danger?: boolean }) {
+function Section({
+  title,
+  children,
+  danger,
+}: {
+  title: string
+  children: React.ReactNode
+  danger?: boolean
+}) {
   return (
-    <div className={`rounded-sc-input border p-3 ${danger ? 'border-sc-danger bg-sc-danger-bg/30' : 'border-sc-border'}`}>
-      <div className={`font-bold text-[13px] mb-2 ${danger ? 'text-sc-danger' : 'text-sc-text'}`}>{title}</div>
+    <div
+      className={`rounded-sc-input border p-3 ${danger ? 'border-sc-danger bg-sc-danger-bg/30' : 'border-sc-border'}`}
+    >
+      <div className={`font-bold text-[13px] mb-2 ${danger ? 'text-sc-danger' : 'text-sc-text'}`}>
+        {title}
+      </div>
       {children}
     </div>
   )
 }
 
 function Toggle({
-  label, checked, onChange, icon,
-}: { label: string; checked: boolean; onChange: (v: boolean) => void; icon?: React.ReactNode }) {
+  label,
+  checked,
+  onChange,
+  icon,
+}: {
+  label: string
+  checked: boolean
+  onChange: (v: boolean) => void
+  icon?: React.ReactNode
+}) {
   return (
     <label className="flex items-center gap-2 cursor-pointer select-none">
       <input

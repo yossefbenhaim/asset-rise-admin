@@ -35,14 +35,14 @@ export function LogsTable({
         columns={logColumns}
         data={rows}
         loading={loading}
-        onRowClick={(r) => setActive(r)}
+        onRowClick={r => setActive(r)}
         csvName="logs"
         searchPlaceholder="חיפוש בהודעה או באימייל/שם משתמש…"
         emptyTitle="אין רשומות יומן"
         emptyBody="פעולות ביקורת וכשלי עיבוד יופיעו כאן כשיתרחשו."
         toolbar={
           <div className="flex flex-wrap gap-1.5">
-            {SEVERITY_TABS.map((t) => (
+            {SEVERITY_TABS.map(t => (
               <button
                 key={t.key}
                 onClick={() => onSeverityChange(t.key)}

@@ -27,10 +27,12 @@ export const UpdateLeadInput = z.object({
 })
 export type UpdateLeadInput = z.infer<typeof UpdateLeadInput>
 
-export const ListLeadsInput = z.object({
-  status: LeadStatusSchema.optional(),
-  assigned_to: z.string().uuid().nullable().optional(),
-  q: z.string().max(80).optional(),
-  limit: z.number().int().min(1).max(500).default(200),
-}).optional()
+export const ListLeadsInput = z
+  .object({
+    status: LeadStatusSchema.optional(),
+    assigned_to: z.string().uuid().nullable().optional(),
+    q: z.string().max(80).optional(),
+    limit: z.number().int().min(1).max(500).default(200),
+  })
+  .optional()
 export type ListLeadsInput = z.infer<typeof ListLeadsInput>

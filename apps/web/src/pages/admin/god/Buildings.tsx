@@ -111,8 +111,8 @@ function BuildingList({ onSelect }: { onSelect: (id: string) => void }) {
         <div>
           <h1>בניינים ופרויקטים — מנהל-על</h1>
           <div className="sub">
-            שליטה תפעולית מלאה ופירוט עומק לכל בניין — בשונה מ«בניינים» (רשימת ה-CRM
-            לקריאה), כאן רואים את כל הדיירים, הבעלים, הוועד, השלב, ומבצעים את פעולות-העל
+            שליטה תפעולית מלאה ופירוט עומק לכל בניין — בשונה מ«בניינים» (רשימת ה-CRM לקריאה), כאן
+            רואים את כל הדיירים, הבעלים, הוועד, השלב, ומבצעים את פעולות-העל
           </div>
         </div>
       </div>
@@ -166,7 +166,9 @@ function BuildingDetail({ id, onBack }: { id: string; onBack: () => void }) {
   const stats = useMemo(() => {
     const tenants = d?.tenants ?? []
     const total = tenants.length
-    const declared = tenants.filter(t => t.apartment_number != null && String(t.apartment_number).trim() !== '').length
+    const declared = tenants.filter(
+      t => t.apartment_number != null && String(t.apartment_number).trim() !== '',
+    ).length
     const owners = tenants.filter(t => t.ownership_percentage != null).length
     const committee = tenants.filter(t => t.is_committee_member || t.is_committee_chair).length
     const ownershipSum = tenants.reduce((acc, t) => acc + (Number(t.ownership_percentage) || 0), 0)
@@ -202,14 +204,21 @@ function BuildingDetail({ id, onBack }: { id: string; onBack: () => void }) {
       </div>
 
       {/* Project progress across the 14 stages */}
-      <ControlPanel title="התקדמות הפרויקט" description="מיקום הבניין מתוך 14 השלבים, מחזיק/ת השרביט ומשימות תקועות." tone="navy">
-        <BuildingProgressPanel buildingId={id} onOpenChat={(uid, name) => setChatTarget({ id: uid, name })} />
+      <ControlPanel
+        title="התקדמות הפרויקט"
+        description="מיקום הבניין מתוך 14 השלבים, מחזיק/ת השרביט ומשימות תקועות."
+        tone="navy"
+      >
+        <BuildingProgressPanel
+          buildingId={id}
+          onOpenChat={(uid, name) => setChatTarget({ id: uid, name })}
+        />
       </ControlPanel>
 
       <Modal
         open={!!chatTarget}
         onClose={() => setChatTarget(null)}
-        title={chatTarget?.name ? `צ'אט עם ${chatTarget.name}` : 'צ\'אט מערכת'}
+        title={chatTarget?.name ? `צ'אט עם ${chatTarget.name}` : "צ'אט מערכת"}
         icon={<MessageSquare size={18} />}
         size="lg"
       >
@@ -237,7 +246,12 @@ function BuildingDetail({ id, onBack }: { id: string; onBack: () => void }) {
           </div>
         </div>
         <div className="mt-3">
-          <Button size="sm" variant="secondary" icon={<Pencil size={14} />} onClick={() => setEditOpen(true)}>
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={<Pencil size={14} />}
+            onClick={() => setEditOpen(true)}
+          >
             ערוך כתובת
           </Button>
         </div>
@@ -273,7 +287,11 @@ function BuildingDetail({ id, onBack }: { id: string; onBack: () => void }) {
             <Stat
               label="הצהירו (עם דירה)"
               value={`${stats.declared} / ${stats.total}`}
-              hint={stats.total ? `${Math.round((stats.declared / stats.total) * 100)}% השלימו הצהרה` : undefined}
+              hint={
+                stats.total
+                  ? `${Math.round((stats.declared / stats.total) * 100)}% השלימו הצהרה`
+                  : undefined
+              }
             />
             <Stat label="בעלים (עם % בעלות)" value={stats.owners} />
             <Stat label="חברי ועד" value={stats.committee} />
@@ -290,7 +308,9 @@ function BuildingDetail({ id, onBack }: { id: string; onBack: () => void }) {
         />
         <CardBody>
           {!d.linked_providers.length ? (
-            <div className="text-center py-4 text-sc-text-secondary text-[13px]">אין ספקים מקושרים</div>
+            <div className="text-center py-4 text-sc-text-secondary text-[13px]">
+              אין ספקים מקושרים
+            </div>
           ) : (
             <div className="sc-table-wrap">
               <table className="sc-table">
@@ -340,10 +360,7 @@ function BuildingDetail({ id, onBack }: { id: string; onBack: () => void }) {
 
       {/* Committee members */}
       <Card className="mt-4">
-        <CardHeader
-          title="חברי הוועד"
-          meta={<Pill kind="info">{stats.committee}</Pill>}
-        />
+        <CardHeader title="חברי הוועד" meta={<Pill kind="info">{stats.committee}</Pill>} />
         <CardBody>
           {!d.tenants.some(t => t.is_committee_member || t.is_committee_chair) ? (
             <div className="text-center py-4 text-sc-text-secondary text-[13px]">
@@ -388,10 +405,7 @@ function BuildingDetail({ id, onBack }: { id: string; onBack: () => void }) {
 
       {/* Owners */}
       <Card className="mt-4">
-        <CardHeader
-          title="בעלי דירות"
-          meta={<Pill kind="info">{stats.owners}</Pill>}
-        />
+        <CardHeader title="בעלי דירות" meta={<Pill kind="info">{stats.owners}</Pill>} />
         <CardBody>
           {!d.tenants.some(t => t.ownership_percentage != null) ? (
             <div className="text-center py-4 text-sc-text-secondary text-[13px]">
@@ -439,7 +453,11 @@ function BuildingDetail({ id, onBack }: { id: string; onBack: () => void }) {
         />
         <CardBody>
           {!d.tenants.length ? (
-            <EmptyState icon={<UsersIcon size={28} />} title="אין דיירים" body="לבניין זה לא רשומים דיירים." />
+            <EmptyState
+              icon={<UsersIcon size={28} />}
+              title="אין דיירים"
+              body="לבניין זה לא רשומים דיירים."
+            />
           ) : (
             <div className="sc-table-wrap">
               <table className="sc-table">
@@ -463,7 +481,9 @@ function BuildingDetail({ id, onBack }: { id: string; onBack: () => void }) {
                       <td className="text-[12px]">{t.phone ?? '—'}</td>
                       <td className="space-x-1 space-x-reverse">
                         {t.is_committee_chair && <Pill kind="navy">יו״ר</Pill>}
-                        {t.is_committee_member && !t.is_committee_chair && <Pill kind="info">ועד</Pill>}
+                        {t.is_committee_member && !t.is_committee_chair && (
+                          <Pill kind="info">ועד</Pill>
+                        )}
                         {t.is_organizer && <Pill kind="gold">מארגן</Pill>}
                         {!t.is_committee_member && !t.is_committee_chair && !t.is_organizer && (
                           <span className="text-sc-text-muted">—</span>
@@ -485,7 +505,12 @@ function BuildingDetail({ id, onBack }: { id: string; onBack: () => void }) {
           description="מחיקה לצמיתות. פעולה בלתי הפיכה — תמחק בשרשור את הפרויקט, השלבים, המשימות וכל הנתונים המקושרים."
           tone="danger"
         >
-          <Button size="sm" variant="danger" icon={<Trash2 size={14} />} onClick={() => setDeleteOpen(true)}>
+          <Button
+            size="sm"
+            variant="danger"
+            icon={<Trash2 size={14} />}
+            onClick={() => setDeleteOpen(true)}
+          >
             מחק בניין לצמיתות
           </Button>
         </ControlPanel>
@@ -533,7 +558,12 @@ function ProjectSection({
   onChanged,
 }: {
   project: GodProject
-  providers: { id: string; full_name: string | null; email: string | null; provider_type: string | null }[]
+  providers: {
+    id: string
+    full_name: string | null
+    email: string | null
+    provider_type: string | null
+  }[]
   onChanged: () => void
 }) {
   const toast = useToast()
@@ -547,7 +577,10 @@ function ProjectSection({
     onError: e => toast.show(e.message),
   })
 
-  const slotRefs: Record<ProjectRoleSlot, { id: string; full_name: string | null; email: string | null } | null> = {
+  const slotRefs: Record<
+    ProjectRoleSlot,
+    { id: string; full_name: string | null; email: string | null } | null
+  > = {
     coordinator: project.active_coordinator,
     lawyer: project.active_lawyer,
     developer: project.active_developer,
@@ -567,7 +600,11 @@ function ProjectSection({
         <div className="flex flex-wrap items-end gap-2">
           <label className="block">
             <span className="text-[12px] text-sc-text-secondary mb-1 block">בחר/י שלב</span>
-            <select className={`${inputCls} min-w-[220px]`} value={stage} onChange={e => setStage(e.target.value)}>
+            <select
+              className={`${inputCls} min-w-[220px]`}
+              value={stage}
+              onChange={e => setStage(e.target.value)}
+            >
               {PROJECT_STAGE_IDS.map(s => (
                 <option key={s} value={s}>
                   {PROJECT_STAGE_LABEL[s]}
@@ -623,7 +660,12 @@ function RoleSlotEditor({
   projectId: string
   slot: ProjectRoleSlot
   current: { id: string; full_name: string | null; email: string | null } | null
-  providers: { id: string; full_name: string | null; email: string | null; provider_type: string | null }[]
+  providers: {
+    id: string
+    full_name: string | null
+    email: string | null
+    provider_type: string | null
+  }[]
   onChanged: () => void
 }) {
   const toast = useToast()
@@ -683,7 +725,12 @@ function EditBuildingModal({
 }: {
   open: boolean
   onClose: () => void
-  building: { id: string; city: string | null; street: string | null; building_number: string | null }
+  building: {
+    id: string
+    city: string | null
+    street: string | null
+    building_number: string | null
+  }
   onSaved: () => void
 }) {
   const toast = useToast()
@@ -701,11 +748,18 @@ function EditBuildingModal({
   })
 
   function submit() {
-    const patch: { id: string; city?: string; street?: string; building_number?: string } = { id: building.id }
+    const patch: { id: string; city?: string; street?: string; building_number?: string } = {
+      id: building.id,
+    }
     if (city.trim() && city.trim() !== (building.city ?? '')) patch.city = city.trim()
     if (street.trim() && street.trim() !== (building.street ?? '')) patch.street = street.trim()
-    if (number.trim() && number.trim() !== (building.building_number ?? '')) patch.building_number = number.trim()
-    if (patch.city === undefined && patch.street === undefined && patch.building_number === undefined) {
+    if (number.trim() && number.trim() !== (building.building_number ?? ''))
+      patch.building_number = number.trim()
+    if (
+      patch.city === undefined &&
+      patch.street === undefined &&
+      patch.building_number === undefined
+    ) {
       toast.show('לא בוצעו שינויים')
       return
     }
@@ -719,8 +773,12 @@ function EditBuildingModal({
       title="עריכת כתובת בניין"
       footer={
         <div className="flex gap-2 justify-end">
-          <Button variant="ghost" onClick={onClose}>ביטול</Button>
-          <Button loading={edit.isLoading} onClick={submit}>שמור</Button>
+          <Button variant="ghost" onClick={onClose}>
+            ביטול
+          </Button>
+          <Button loading={edit.isLoading} onClick={submit}>
+            שמור
+          </Button>
         </div>
       }
     >
@@ -777,11 +835,12 @@ function DeleteBuildingDialog({
         <div className="space-y-2">
           <p className="text-sc-danger font-semibold m-0">פעולה בלתי הפיכה!</p>
           <p className="m-0">
-            מחיקת הבניין תמחק בשרשור את הפרויקט שלו, כל השלבים והמשימות, וכן {tenantCount} דיירים מקושרים
-            ונתונים נוספים. לא ניתן לשחזר.
+            מחיקת הבניין תמחק בשרשור את הפרויקט שלו, כל השלבים והמשימות, וכן {tenantCount} דיירים
+            מקושרים ונתונים נוספים. לא ניתן לשחזר.
           </p>
           <p className="m-0 text-sc-text-secondary">
-            אם קיימות רשומות עם הגנת מחיקה (למשל מו״מ עם יו״ר משויך) — המחיקה תיחסם ותידרש הסרה ידנית קודם.
+            אם קיימות רשומות עם הגנת מחיקה (למשל מו״מ עם יו״ר משויך) — המחיקה תיחסם ותידרש הסרה
+            ידנית קודם.
           </p>
         </div>
       }

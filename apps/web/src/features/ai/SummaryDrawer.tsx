@@ -5,7 +5,15 @@
 import { useState, type ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import {
-  RefreshCw, AlertTriangle, Users, Lightbulb, Link2, ChevronDown, Sparkles, Hash, Cpu,
+  RefreshCw,
+  AlertTriangle,
+  Users,
+  Lightbulb,
+  Link2,
+  ChevronDown,
+  Sparkles,
+  Hash,
+  Cpu,
 } from 'lucide-react'
 import { trpc } from '@/lib/api/trpc'
 import { Drawer } from '@/components/ui/Drawer'
@@ -40,7 +48,10 @@ export function SummaryDrawer({
   const roleKeys = useRoleKeys()
   const canRegen = can(roleKeys, 'admin.ai.regenerate')
   const utils = trpc.useContext()
-  const detail = trpc.ai.get.useQuery({ research_key: researchKey }, { refetchOnWindowFocus: false })
+  const detail = trpc.ai.get.useQuery(
+    { research_key: researchKey },
+    { refetchOnWindowFocus: false },
+  )
   const d = detail.data
 
   const regenerate = trpc.ai.regenerate.useMutation({
@@ -147,7 +158,9 @@ export function SummaryDrawer({
                         </p>
                       )}
                       {p.key_point_he && (
-                        <p className="text-[11px] text-sc-text-muted m-0 mt-1">• {p.key_point_he}</p>
+                        <p className="text-[11px] text-sc-text-muted m-0 mt-1">
+                          • {p.key_point_he}
+                        </p>
                       )}
                     </div>
                   )
@@ -161,7 +174,10 @@ export function SummaryDrawer({
             <Section title="המלצות">
               <ul className="m-0 pr-4 space-y-1">
                 {d.recommendations.slice(0, 8).map((rec, i) => (
-                  <li key={i} className="text-[12px] text-sc-text-secondary leading-snug inline-flex gap-1.5">
+                  <li
+                    key={i}
+                    className="text-[12px] text-sc-text-secondary leading-snug inline-flex gap-1.5"
+                  >
                     <Lightbulb size={12} className="text-sc-gold shrink-0 mt-0.5" />
                     <span>{rec}</span>
                   </li>
@@ -200,7 +216,9 @@ export function SummaryDrawer({
 
           {/* Meta */}
           <Section title="פרטי עבודה">
-            {d.attempts != null && <Row label="ניסיונות" value={<span className="sc-num">{d.attempts}</span>} />}
+            {d.attempts != null && (
+              <Row label="ניסיונות" value={<span className="sc-num">{d.attempts}</span>} />
+            )}
             <Row label="נוצר" value={dateTime(d.created_at)} />
             {d.updated_at && <Row label="עודכן" value={dateTime(d.updated_at)} />}
             {d.completed_at && <Row label="הושלם" value={dateTime(d.completed_at)} />}

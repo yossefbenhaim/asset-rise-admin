@@ -19,20 +19,23 @@ function sanitizeTerm(q: string): string {
   return q.replace(/[(),%_*\\]/g, ' ').trim()
 }
 
-function buildingLabel(b: {
-  city?: string | null
-  street?: string | null
-  building_number?: string | null
-} | null | undefined): string | null {
+function buildingLabel(
+  b:
+    | {
+        city?: string | null
+        street?: string | null
+        building_number?: string | null
+      }
+    | null
+    | undefined,
+): string | null {
   if (!b) return null
   const addr = [b.street, b.building_number].filter(Boolean).join(' ')
   return [addr, b.city].filter(Boolean).join(', ') || null
 }
 
 // ── List buildings (for the move-building picker + building filter) ───────────
-export async function listBuildingOptions(
-  db: SupabaseClient,
-): Promise<GodBuildingOption[]> {
+export async function listBuildingOptions(db: SupabaseClient): Promise<GodBuildingOption[]> {
   const { data, error } = await db
     .from('sc_buildings')
     .select('id, city, street, building_number')
@@ -71,7 +74,7 @@ export async function listTenants(
 
   const { data, error } = await q
   if (error) throw new Error(error.message)
-  let rows = (data ?? []) as any[]
+  const rows = (data ?? []) as any[]
 
   // Normalize the embed: PostgREST returns the related row as object or array.
   const norm = rows.map(r => {
@@ -86,11 +89,7 @@ export async function listTenants(
 
   // Batch-resolve building addresses.
   const buildingIds = Array.from(
-    new Set(
-      filtered
-        .map(r => r.tp?.building_id)
-        .filter((x): x is string => !!x),
-    ),
+    new Set(filtered.map(r => r.tp?.building_id).filter((x): x is string => !!x)),
   )
   const labelById = new Map<string, string | null>()
   if (buildingIds.length) {
@@ -108,7 +107,7 @@ export async function listTenants(
     phone: r.phone ?? null,
     role: r.role ?? null,
     building_id: r.tp?.building_id ?? null,
-    building_label: r.tp?.building_id ? labelById.get(r.tp.building_id) ?? null : null,
+    building_label: r.tp?.building_id ? (labelById.get(r.tp.building_id) ?? null) : null,
     apartment_number: r.tp?.apartment_number ?? null,
     is_committee_chair: !!r.tp?.is_committee_chair,
     is_committee_member: !!r.tp?.is_committee_member,
@@ -117,10 +116,7 @@ export async function listTenants(
 }
 
 // ── Tenant detail (full sc_profiles + full sc_tenant_profiles) ────────────────
-export async function getTenant(
-  db: SupabaseClient,
-  id: string,
-): Promise<GodTenantDetail | null> {
+export async function getTenant(db: SupabaseClient, id: string): Promise<GodTenantDetail | null> {
   const { data: p, error } = await db
     .from('sc_profiles')
     .select('id, email, full_name, phone, role, provider_type, created_at')
@@ -129,11 +125,7 @@ export async function getTenant(
   if (error) throw new Error(error.message)
   if (!p) return null
 
-  const { data: tp } = await db
-    .from('sc_tenant_profiles')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle()
+  const { data: tp } = await db.from('sc_tenant_profiles').select('*').eq('id', id).maybeSingle()
 
   let building_label: string | null = null
   const buildingId = (tp as any)?.building_id ?? null
@@ -191,11 +183,7 @@ export async function loadTenantTarget(
 // columns. Tenants generally have one, but a profile created without onboarding
 // may not — upsert keeps the vaad/apartment writes idempotent and safe.
 async function ensureTenantProfile(db: SupabaseClient, id: string): Promise<void> {
-  const { data } = await db
-    .from('sc_tenant_profiles')
-    .select('id')
-    .eq('id', id)
-    .maybeSingle()
+  const { data } = await db.from('sc_tenant_profiles').select('id').eq('id', id).maybeSingle()
   if (!data) {
     const { error } = await db.from('sc_tenant_profiles').insert({ id })
     if (error) throw new Error(error.message)
@@ -223,10 +211,7 @@ export async function editTenantProfile(
     tenantPatch.ownership_percentage = input.ownership_percentage
   if (Object.keys(tenantPatch).length) {
     await ensureTenantProfile(db, input.id)
-    const { error } = await db
-      .from('sc_tenant_profiles')
-      .update(tenantPatch)
-      .eq('id', input.id)
+    const { error } = await db.from('sc_tenant_profiles').update(tenantPatch).eq('id', input.id)
     if (error) throw new Error(error.message)
   }
   return { ok: true }
@@ -266,10 +251,7 @@ export async function moveBuilding(
   if (!b) throw new Error('BUILDING_NOT_FOUND')
 
   await ensureTenantProfile(db, id)
-  const { error } = await db
-    .from('sc_tenant_profiles')
-    .update({ building_id })
-    .eq('id', id)
+  const { error } = await db.from('sc_tenant_profiles').update({ building_id }).eq('id', id)
   if (error) throw new Error(error.message)
   return { ok: true }
 }

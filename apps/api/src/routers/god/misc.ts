@@ -9,7 +9,7 @@ import {
   GodSetRatingVerifiedInput,
   GodRemoveRatingInput,
   GodCalendarListInput,
-} from '@asset-rise/shared/schemas/godMisc'
+} from '@asset-rise/shared'
 import { router, requireLevel } from '../../trpc.js'
 import { godProcedure, godMutation } from '../../lib/god.js'
 import {
@@ -115,41 +115,39 @@ export const godMiscRouter = router({
   // (severs the member's inherited building access). The interlock (non-empty
   // confirm token + already-removed/not-found resolution) runs INSIDE godMutation
   // so a rejected/probing attempt is also audited.
-  removeFamilyMember: godProcedure
-    .input(GodRemoveFamilyMemberInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.misc.remove_family_member',
-          target_type: 'family_link',
-          target_id: input.id,
-          meta: { confirm: input.confirm },
-        },
-        async () => {
-          if (!input.confirm.trim()) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'נדרש אישור להסרת בן/בת המשפחה' })
+  removeFamilyMember: godProcedure.input(GodRemoveFamilyMemberInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.misc.remove_family_member',
+        target_type: 'family_link',
+        target_id: input.id,
+        meta: { confirm: input.confirm },
+      },
+      async () => {
+        if (!input.confirm.trim()) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'נדרש אישור להסרת בן/בת המשפחה' })
+        }
+        try {
+          const link = await getFamilyLinkLabels(ctx.db, input.id)
+          if (!link.exists) {
+            throw new TRPCError({ code: 'NOT_FOUND', message: 'הקישור המשפחתי לא נמצא' })
           }
-          try {
-            const link = await getFamilyLinkLabels(ctx.db, input.id)
-            if (!link.exists) {
-              throw new TRPCError({ code: 'NOT_FOUND', message: 'הקישור המשפחתי לא נמצא' })
-            }
-            if (link.removed) {
-              throw new TRPCError({ code: 'BAD_REQUEST', message: 'הקישור המשפחתי כבר הוסר' })
-            }
-            const removed = await removeFamilyMember(ctx.db, input.id)
-            if (!removed) {
-              // Lost the race to another remover.
-              throw new TRPCError({ code: 'BAD_REQUEST', message: 'הקישור המשפחתי כבר הוסר' })
-            }
-            return removed
-          } catch (e) {
-            rethrow(e)
+          if (link.removed) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'הקישור המשפחתי כבר הוסר' })
           }
-        },
-      ),
+          const removed = await removeFamilyMember(ctx.db, input.id)
+          if (!removed) {
+            // Lost the race to another remover.
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'הקישור המשפחתי כבר הוסר' })
+          }
+          return removed
+        } catch (e) {
+          rethrow(e)
+        }
+      },
     ),
+  ),
 
   // ── INSPECTIONS ────────────────────────────────────────────────────────────────
   inspections: requireLevel('admin.super')
@@ -164,33 +162,31 @@ export const godMiscRouter = router({
 
   // cancelInspection — DELETE the inspection row (no 'cancelled' status exists in
   // the CHECK; this removes the report entirely, files cascade). DESTRUCTIVE.
-  cancelInspection: godProcedure
-    .input(GodCancelInspectionInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.misc.cancel_inspection',
-          target_type: 'inspection',
-          target_id: input.id,
-          meta: { confirm: input.confirm },
-        },
-        async () => {
-          if (!input.confirm.trim()) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'נדרש אישור לביטול הבדיקה' })
+  cancelInspection: godProcedure.input(GodCancelInspectionInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.misc.cancel_inspection',
+        target_type: 'inspection',
+        target_id: input.id,
+        meta: { confirm: input.confirm },
+      },
+      async () => {
+        if (!input.confirm.trim()) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'נדרש אישור לביטול הבדיקה' })
+        }
+        try {
+          const deleted = await cancelInspection(ctx.db, input.id)
+          if (!deleted) {
+            throw new TRPCError({ code: 'NOT_FOUND', message: 'הבדיקה לא נמצאה' })
           }
-          try {
-            const deleted = await cancelInspection(ctx.db, input.id)
-            if (!deleted) {
-              throw new TRPCError({ code: 'NOT_FOUND', message: 'הבדיקה לא נמצאה' })
-            }
-            return deleted
-          } catch (e) {
-            rethrow(e)
-          }
-        },
-      ),
+          return deleted
+        } catch (e) {
+          rethrow(e)
+        }
+      },
     ),
+  ),
 
   // ── RATINGS ──────────────────────────────────────────────────────────────────
   ratings: requireLevel('admin.super')
@@ -205,62 +201,58 @@ export const godMiscRouter = router({
 
   // setRatingVerified — flip the verified flag (reversible moderation, no
   // DangerConfirm). Audited.
-  setRatingVerified: godProcedure
-    .input(GodSetRatingVerifiedInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.misc.set_rating_verified',
-          target_type: 'provider_rating',
-          target_id: input.id,
-          meta: { verified: input.verified },
-        },
-        async () => {
-          try {
-            const updated = await setRatingVerified(ctx.db, input.id, input.verified)
-            if (!updated) {
-              throw new TRPCError({ code: 'NOT_FOUND', message: 'הדירוג לא נמצא' })
-            }
-            return updated
-          } catch (e) {
-            rethrow(e)
+  setRatingVerified: godProcedure.input(GodSetRatingVerifiedInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.misc.set_rating_verified',
+        target_type: 'provider_rating',
+        target_id: input.id,
+        meta: { verified: input.verified },
+      },
+      async () => {
+        try {
+          const updated = await setRatingVerified(ctx.db, input.id, input.verified)
+          if (!updated) {
+            throw new TRPCError({ code: 'NOT_FOUND', message: 'הדירוג לא נמצא' })
           }
-        },
-      ),
+          return updated
+        } catch (e) {
+          rethrow(e)
+        }
+      },
     ),
+  ),
 
   // removeRating — DELETE the rating row (DESTRUCTIVE). The AFTER trigger
   // recomputes the cached aggregate. DangerConfirm in the UI; non-empty token
   // guard inside the write fn so a probing attempt is also audited.
-  removeRating: godProcedure
-    .input(GodRemoveRatingInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.misc.remove_rating',
-          target_type: 'provider_rating',
-          target_id: input.id,
-          meta: { confirm: input.confirm },
-        },
-        async () => {
-          if (!input.confirm.trim()) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'נדרש אישור להסרת הדירוג' })
+  removeRating: godProcedure.input(GodRemoveRatingInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.misc.remove_rating',
+        target_type: 'provider_rating',
+        target_id: input.id,
+        meta: { confirm: input.confirm },
+      },
+      async () => {
+        if (!input.confirm.trim()) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'נדרש אישור להסרת הדירוג' })
+        }
+        try {
+          const label = await getRatingLabel(ctx.db, input.id)
+          const deleted = await removeRating(ctx.db, input.id)
+          if (!deleted) {
+            throw new TRPCError({ code: 'NOT_FOUND', message: 'הדירוג לא נמצא' })
           }
-          try {
-            const label = await getRatingLabel(ctx.db, input.id)
-            const deleted = await removeRating(ctx.db, input.id)
-            if (!deleted) {
-              throw new TRPCError({ code: 'NOT_FOUND', message: 'הדירוג לא נמצא' })
-            }
-            return { ...deleted, label }
-          } catch (e) {
-            rethrow(e)
-          }
-        },
-      ),
+          return { ...deleted, label }
+        } catch (e) {
+          rethrow(e)
+        }
+      },
     ),
+  ),
 
   // ── CALENDAR / MEETINGS (read-only) ──────────────────────────────────────────
   calendarEvents: requireLevel('admin.super')

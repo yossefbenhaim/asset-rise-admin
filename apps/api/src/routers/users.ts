@@ -38,14 +38,18 @@ export const usersRouter = router({
       if (p.role === 'tenant') {
         const { data: tp } = await ctx.db
           .from('sc_tenant_profiles')
-          .select('building_id, apartment_number, is_organizer, is_committee_member, is_committee_chair')
-          .eq('id', input).maybeSingle()
+          .select(
+            'building_id, apartment_number, is_organizer, is_committee_member, is_committee_chair',
+          )
+          .eq('id', input)
+          .maybeSingle()
         out.tenant_profile = tp ?? null
       } else if (p.role === 'admin') {
         const { data: ap } = await ctx.db
           .from('sc_admin_profiles')
           .select('is_admin, is_admin_support, is_admin_sales')
-          .eq('id', input).maybeSingle()
+          .eq('id', input)
+          .maybeSingle()
         out.admin_profile = ap ?? null
       }
       return out
@@ -55,7 +59,10 @@ export const usersRouter = router({
     .input(UpdateUserLevelsInput)
     .mutation(async ({ ctx, input }) => {
       const { data: target } = await ctx.db
-        .from('sc_profiles').select('role').eq('id', input.user_id).maybeSingle()
+        .from('sc_profiles')
+        .select('role')
+        .eq('id', input.user_id)
+        .maybeSingle()
       if (!target) throw new TRPCError({ code: 'NOT_FOUND' })
 
       if (input.tenant_levels && target.role === 'tenant') {

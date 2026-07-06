@@ -20,11 +20,17 @@ export function QueuePanel({ jobs, index = 0 }: { jobs: ProcessingJob[]; index?:
           <Hourglass size={15} className="text-sc-navy" />
           תור המתנה
         </h3>
-        <span className="text-[12px] font-semibold text-sc-text-secondary sc-num">{jobs.length}</span>
+        <span className="text-[12px] font-semibold text-sc-text-secondary sc-num">
+          {jobs.length}
+        </span>
       </div>
 
       {jobs.length === 0 ? (
-        <EmptyState icon={<ListChecks size={26} />} title="התור ריק" body="אין עבודות שממתינות לעיבוד כרגע." />
+        <EmptyState
+          icon={<ListChecks size={26} />}
+          title="התור ריק"
+          body="אין עבודות שממתינות לעיבוד כרגע."
+        />
       ) : (
         <ul className="flex flex-col divide-y divide-sc-border/60 -mb-1">
           {jobs.map((j, i) => (

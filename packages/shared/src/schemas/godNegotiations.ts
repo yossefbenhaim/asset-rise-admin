@@ -100,11 +100,7 @@ export const NEGOTIATION_PROVIDER_TYPE_LABEL: Record<NegotiationProviderType, st
 
 // The provider_type column is free text in the DB; the picker offers the known
 // types but the schema accepts any short non-empty string for forward-compat.
-export const NegotiationProviderTypeInput = z
-  .string()
-  .trim()
-  .min(1)
-  .max(40)
+export const NegotiationProviderTypeInput = z.string().trim().min(1).max(40)
 
 // ── List / filter ─────────────────────────────────────────────────────────────
 export const GodNegotiationListInput = z.object({

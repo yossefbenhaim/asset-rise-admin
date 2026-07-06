@@ -37,7 +37,8 @@ export const aiColumns: ColumnDef<AiSummaryRow, unknown>[] = [
             <span className="block truncate min-w-0">{head}</span>
           </div>
           <div className="text-[11px] text-sc-text-muted truncate sc-num">
-            {loc ? `${loc} · ` : ''}{r.research_key}
+            {loc ? `${loc} · ` : ''}
+            {r.research_key}
           </div>
         </div>
       )

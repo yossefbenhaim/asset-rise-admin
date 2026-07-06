@@ -28,15 +28,41 @@ export default function AdminAiAnalyst() {
       <div className="sc-page__head">
         <div>
           <h1>בקרת אנלייזר AI</h1>
-          <div className="sub">ניתוחי ה-AI של מנוע ההיתכנות · חוות דעת, פאנל 3 הכובעים וגרסאות הפרומפט</div>
+          <div className="sub">
+            ניתוחי ה-AI של מנוע ההיתכנות · חוות דעת, פאנל 3 הכובעים וגרסאות הפרומפט
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-        <KpiCard label="סך הכל ניתוחים" value={kpis.total} icon={<Sparkles size={18} />} tone="primary" index={0} />
-        <KpiCard label="הושלמו" value={kpis.done} icon={<CheckCircle2 size={18} />} tone="success" index={1} />
-        <KpiCard label="רצים / ממתינים" value={kpis.running} icon={<Loader2 size={18} />} tone="gold" index={2} />
-        <KpiCard label="נכשלו" value={kpis.failed} icon={<AlertTriangle size={18} />} tone="danger" index={3} />
+        <KpiCard
+          label="סך הכל ניתוחים"
+          value={kpis.total}
+          icon={<Sparkles size={18} />}
+          tone="primary"
+          index={0}
+        />
+        <KpiCard
+          label="הושלמו"
+          value={kpis.done}
+          icon={<CheckCircle2 size={18} />}
+          tone="success"
+          index={1}
+        />
+        <KpiCard
+          label="רצים / ממתינים"
+          value={kpis.running}
+          icon={<Loader2 size={18} />}
+          tone="gold"
+          index={2}
+        />
+        <KpiCard
+          label="נכשלו"
+          value={kpis.failed}
+          icon={<AlertTriangle size={18} />}
+          tone="danger"
+          index={3}
+        />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">

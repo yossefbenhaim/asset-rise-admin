@@ -11,7 +11,7 @@ import {
   BUILDING_TASK_STATUSES,
   type ProjectTaskStatus,
   type BuildingTaskStatus,
-} from '@asset-rise/shared/schemas/godWorkflow'
+} from '@asset-rise/shared'
 import { router, requireLevel } from '../../trpc.js'
 import { godProcedure, godMutation } from '../../lib/god.js'
 import {
@@ -115,129 +115,121 @@ export const godWorkflowRouter = router({
   // done/skipped (project) or done/cancelled (building) overrides the normal
   // dependency gates; the UI surfaces a DangerConfirm for those. Status validity
   // is checked per family INSIDE the write fn so a rejected attempt is audited.
-  setTaskStatus: godProcedure
-    .input(GodSetTaskStatusInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.workflow.set_task_status',
-          target_type: input.kind === 'project' ? 'project_task' : 'building_task',
-          target_id: input.task_id,
-          meta: { kind: input.kind, status: input.status, bypass_gates: true },
-        },
-        async () => {
-          assertTaskStatusValid(input.kind, input.status)
-          // Existence check (audited as a failed attempt if missing).
-          await loadTaskTarget(ctx.db, input.kind, input.task_id)
-          try {
-            return await setTaskStatus(ctx.db, input)
-          } catch (e) {
-            rethrow(e)
-          }
-        },
-      ),
+  setTaskStatus: godProcedure.input(GodSetTaskStatusInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.workflow.set_task_status',
+        target_type: input.kind === 'project' ? 'project_task' : 'building_task',
+        target_id: input.task_id,
+        meta: { kind: input.kind, status: input.status, bypass_gates: true },
+      },
+      async () => {
+        assertTaskStatusValid(input.kind, input.status)
+        // Existence check (audited as a failed attempt if missing).
+        await loadTaskTarget(ctx.db, input.kind, input.task_id)
+        try {
+          return await setTaskStatus(ctx.db, input)
+        } catch (e) {
+          rethrow(e)
+        }
+      },
     ),
+  ),
 
   // reassignTask — set the owner (project: owner_user_id, building: assigned_to).
   // A null user clears the owner; a bad id trips an FK violation → Hebrew 400.
-  reassignTask: godProcedure
-    .input(GodReassignTaskInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.workflow.reassign_task',
-          target_type: input.kind === 'project' ? 'project_task' : 'building_task',
-          target_id: input.task_id,
-          meta: { kind: input.kind, user_id: input.user_id },
-        },
-        async () => {
-          await loadTaskTarget(ctx.db, input.kind, input.task_id)
-          try {
-            return await reassignTask(ctx.db, input)
-          } catch (e) {
-            if (isFkViolation(e)) {
-              throw new TRPCError({
-                code: 'BAD_REQUEST',
-                message: 'המשתמש שנבחר אינו קיים במערכת',
-              })
-            }
-            rethrow(e)
+  reassignTask: godProcedure.input(GodReassignTaskInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.workflow.reassign_task',
+        target_type: input.kind === 'project' ? 'project_task' : 'building_task',
+        target_id: input.task_id,
+        meta: { kind: input.kind, user_id: input.user_id },
+      },
+      async () => {
+        await loadTaskTarget(ctx.db, input.kind, input.task_id)
+        try {
+          return await reassignTask(ctx.db, input)
+        } catch (e) {
+          if (isFkViolation(e)) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: 'המשתמש שנבחר אינו קיים במערכת',
+            })
           }
-        },
-      ),
+          rethrow(e)
+        }
+      },
     ),
+  ),
 
   // setBaton — set sc_projects.active_<slot>_id (or null to clear). A bad id
   // trips an FK violation → Hebrew 400.
-  setBaton: godProcedure
-    .input(GodSetBatonInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.workflow.set_baton',
-          target_type: 'project',
-          target_id: input.project_id,
-          meta: { slot: input.slot, user_id: input.user_id },
-        },
-        async () => {
-          try {
-            return await setBaton(ctx.db, input)
-          } catch (e) {
-            if (isFkViolation(e)) {
-              throw new TRPCError({
-                code: 'BAD_REQUEST',
-                message: 'המשתמש שנבחר אינו קיים במערכת',
-              })
-            }
-            rethrow(e)
+  setBaton: godProcedure.input(GodSetBatonInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.workflow.set_baton',
+        target_type: 'project',
+        target_id: input.project_id,
+        meta: { slot: input.slot, user_id: input.user_id },
+      },
+      async () => {
+        try {
+          return await setBaton(ctx.db, input)
+        } catch (e) {
+          if (isFkViolation(e)) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: 'המשתמש שנבחר אינו קיים במערכת',
+            })
           }
-        },
-      ),
+          rethrow(e)
+        }
+      },
     ),
+  ),
 
   // resolveDualApproval — force a stuck approval to approved/rejected, BYPASSING
   // the two-party sign. The interlock (existence + non-empty confirm token) runs
   // INSIDE godMutation so a rejected/probing attempt is also audited.
-  resolveDualApproval: godProcedure
-    .input(GodResolveDualApprovalInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.workflow.resolve_dual_approval',
-          target_type: 'dual_approval',
-          target_id: input.id,
-          meta: { resolution: input.resolution, reason: input.reason, bypass_dual_sign: true },
-        },
-        async () => {
-          if (!input.confirm.trim()) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'נדרש אישור לפעולה' })
+  resolveDualApproval: godProcedure.input(GodResolveDualApprovalInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.workflow.resolve_dual_approval',
+        target_type: 'dual_approval',
+        target_id: input.id,
+        meta: { resolution: input.resolution, reason: input.reason, bypass_dual_sign: true },
+      },
+      async () => {
+        if (!input.confirm.trim()) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'נדרש אישור לפעולה' })
+        }
+        const target = await loadDualApprovalTarget(ctx.db, input.id).catch(e => {
+          if (e instanceof Error && e.message === 'NOT_FOUND') {
+            notFound('בקשת האישור הכפול לא נמצאה')
           }
-          const target = await loadDualApprovalTarget(ctx.db, input.id).catch(e => {
-            if (e instanceof Error && e.message === 'NOT_FOUND') {
-              notFound('בקשת האישור הכפול לא נמצאה')
-            }
-            throw e
+          throw e
+        })
+        // Don't re-resolve an approval that's already terminal — surface a
+        // clear Hebrew message instead of silently re-stamping it.
+        if (target.status === 'approved' || target.status === 'rejected') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'בקשת האישור כבר הוכרעה',
           })
-          // Don't re-resolve an approval that's already terminal — surface a
-          // clear Hebrew message instead of silently re-stamping it.
-          if (target.status === 'approved' || target.status === 'rejected') {
-            throw new TRPCError({
-              code: 'BAD_REQUEST',
-              message: 'בקשת האישור כבר הוכרעה',
-            })
-          }
-          try {
-            return await resolveDualApproval(ctx.db, input)
-          } catch (e) {
-            rethrow(e)
-          }
-        },
-      ),
+        }
+        try {
+          return await resolveDualApproval(ctx.db, input)
+        } catch (e) {
+          rethrow(e)
+        }
+      },
     ),
+  ),
 })
 
 // Re-exported so an integration step / future code can reference the validated

@@ -9,7 +9,10 @@ export const summaryRouter = router({
       { count: buildingsTotal },
     ] = await Promise.all([
       ctx.db.from('sc_leads').select('id', { count: 'exact', head: true }).eq('status', 'new'),
-      ctx.db.from('sc_submissions').select('id', { count: 'exact', head: true }).eq('status', 'open'),
+      ctx.db
+        .from('sc_submissions')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'open'),
       ctx.db.from('sc_profiles').select('id', { count: 'exact', head: true }),
       ctx.db.from('sc_buildings').select('id', { count: 'exact', head: true }),
     ])

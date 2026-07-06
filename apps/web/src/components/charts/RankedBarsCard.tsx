@@ -6,12 +6,25 @@ import { ChartCard, PALETTE } from './chartTheme'
 // lone floating bar reads as broken). Each row: name · value + a track with a
 // gradient fill proportional to the max.
 export function RankedBarsCard({
-  title, sub, data, nameKey = 'name', valueKey = 'value', index = 0, valueFmt,
+  title,
+  sub,
+  data,
+  nameKey = 'name',
+  valueKey = 'value',
+  index = 0,
+  valueFmt,
 }: {
-  title: string; sub?: string; data: any[]
-  nameKey?: string; valueKey?: string; index?: number; valueFmt?: (n: number) => string
+  title: string
+  sub?: string
+  data: any[]
+  nameKey?: string
+  valueKey?: string
+  index?: number
+  valueFmt?: (n: number) => string
 }) {
-  const rows = [...(data ?? [])].sort((a, b) => (Number(b[valueKey]) || 0) - (Number(a[valueKey]) || 0))
+  const rows = [...(data ?? [])].sort(
+    (a, b) => (Number(b[valueKey]) || 0) - (Number(a[valueKey]) || 0),
+  )
   const max = rows.reduce((m, d) => Math.max(m, Number(d[valueKey]) || 0), 0) || 1
 
   return (

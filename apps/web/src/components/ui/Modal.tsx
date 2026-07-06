@@ -28,13 +28,22 @@ type ModalProps = {
 }
 
 export function Modal({
-  open, title, subtitle, icon, size = 'md', children, footer, onClose,
+  open,
+  title,
+  subtitle,
+  icon,
+  size = 'md',
+  children,
+  footer,
+  onClose,
 }: ModalProps) {
   // Esc closes + lock the background scroll so the only scroll surface is the
   // modal body (this is what keeps the popup centered and the scroll "inside").
   useEffect(() => {
     if (!open) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
     window.addEventListener('keydown', onKey)
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -71,8 +80,12 @@ export function Modal({
               </span>
             )}
             <div className="min-w-0">
-              <h3 className="m-0 text-[17px] font-bold text-sc-text leading-tight truncate">{title}</h3>
-              {subtitle && <div className="text-[12.5px] text-sc-text-muted mt-0.5 truncate">{subtitle}</div>}
+              <h3 className="m-0 text-[17px] font-bold text-sc-text leading-tight truncate">
+                {title}
+              </h3>
+              {subtitle && (
+                <div className="text-[12.5px] text-sc-text-muted mt-0.5 truncate">{subtitle}</div>
+              )}
             </div>
           </div>
           <button
@@ -85,9 +98,7 @@ export function Modal({
         </div>
 
         {/* Scrolling body — the only scroll surface */}
-        <div className="flex-1 overflow-y-auto overscroll-contain px-6 py-5">
-          {children}
-        </div>
+        <div className="flex-1 overflow-y-auto overscroll-contain px-6 py-5">{children}</div>
 
         {/* Fixed footer */}
         {footer && (

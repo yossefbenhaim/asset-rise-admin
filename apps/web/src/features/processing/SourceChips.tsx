@@ -31,11 +31,9 @@ export function SourceChips({ sources }: { sources: ProcessingSourceHealth[] }) 
   }
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      {sources.map((s) => {
+      {sources.map(s => {
         const ok = s.status === 'active'
-        const cls = ok
-          ? 'bg-sc-success-bg text-sc-success'
-          : 'bg-sc-danger-bg text-sc-danger'
+        const cls = ok ? 'bg-sc-success-bg text-sc-success' : 'bg-sc-danger-bg text-sc-danger'
         const tip = [
           ok ? 'תקין' : 'תקול',
           s.latencyMs != null ? `~${Math.round(s.latencyMs)} מ״ש` : null,

@@ -39,12 +39,20 @@ function monthlyIls(i: Pick<CostItem, 'amount' | 'currency' | 'billing'>, usdRat
 
 export const costsRouter = router({
   list: requireAction('admin.costs.view')
-    .input(z.object({
-      status: z.enum(STATUSES).optional(),
-      category: z.enum(CATEGORIES).optional(),
-    }).optional())
+    .input(
+      z
+        .object({
+          status: z.enum(STATUSES).optional(),
+          category: z.enum(CATEGORIES).optional(),
+        })
+        .optional(),
+    )
     .query(async ({ ctx, input }) => {
-      let q = ctx.db.from('sc_cost_items').select(SELECT).order('category').order('amount', { ascending: false })
+      let q = ctx.db
+        .from('sc_cost_items')
+        .select(SELECT)
+        .order('category')
+        .order('amount', { ascending: false })
       if (input?.status) q = q.eq('status', input.status)
       if (input?.category) q = q.eq('category', input.category)
       const { data, error } = await q
@@ -65,11 +73,18 @@ export const costsRouter = router({
       const plannedMonthly = planned.reduce((s, i) => s + monthlyIls(i, usdRate), 0)
       const oneTimePlanned = planned
         .filter(i => i.billing === 'one_time')
-        .reduce((s, i) => s + (i.currency === 'USD' ? Number(i.amount) * usdRate : Number(i.amount)), 0)
+        .reduce(
+          (s, i) => s + (i.currency === 'USD' ? Number(i.amount) * usdRate : Number(i.amount)),
+          0,
+        )
       const byCategory = CATEGORIES.map(c => ({
         category: c,
-        active: active.filter(i => i.category === c).reduce((s, i) => s + monthlyIls(i, usdRate), 0),
-        planned: planned.filter(i => i.category === c).reduce((s, i) => s + monthlyIls(i, usdRate), 0),
+        active: active
+          .filter(i => i.category === c)
+          .reduce((s, i) => s + monthlyIls(i, usdRate), 0),
+        planned: planned
+          .filter(i => i.category === c)
+          .reduce((s, i) => s + monthlyIls(i, usdRate), 0),
       })).filter(r => r.active > 0 || r.planned > 0)
       return {
         usdRate,
@@ -84,44 +99,52 @@ export const costsRouter = router({
     }),
 
   create: requireAction('admin.costs.manage')
-    .input(z.object({
-      name: z.string().trim().min(2).max(120),
-      provider: z.string().max(120).optional(),
-      category: z.enum(CATEGORIES).default('other'),
-      status: z.enum(STATUSES).default('active'),
-      amount: z.number().min(0).max(1_000_000),
-      currency: z.enum(['ILS', 'USD']).default('ILS'),
-      billing: z.enum(BILLINGS).default('monthly'),
-      usage_note: z.string().max(400).optional(),
-      is_estimate: z.boolean().default(false),
-      expected_from: z.string().nullable().optional(),
-      url: z.string().max(400).optional(),
-      notes: z.string().max(2000).optional(),
-    }))
+    .input(
+      z.object({
+        name: z.string().trim().min(2).max(120),
+        provider: z.string().max(120).optional(),
+        category: z.enum(CATEGORIES).default('other'),
+        status: z.enum(STATUSES).default('active'),
+        amount: z.number().min(0).max(1_000_000),
+        currency: z.enum(['ILS', 'USD']).default('ILS'),
+        billing: z.enum(BILLINGS).default('monthly'),
+        usage_note: z.string().max(400).optional(),
+        is_estimate: z.boolean().default(false),
+        expected_from: z.string().nullable().optional(),
+        url: z.string().max(400).optional(),
+        notes: z.string().max(2000).optional(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
-      const { data, error } = await ctx.db.from('sc_cost_items').insert({ ...input }).select(SELECT).single()
+      const { data, error } = await ctx.db
+        .from('sc_cost_items')
+        .insert({ ...input })
+        .select(SELECT)
+        .single()
       if (error) throw error
       return data as unknown as CostItem
     }),
 
   update: requireAction('admin.costs.manage')
-    .input(z.object({
-      id: z.string().uuid(),
-      patch: z.object({
-        name: z.string().trim().min(2).max(120).optional(),
-        provider: z.string().max(120).nullable().optional(),
-        category: z.enum(CATEGORIES).optional(),
-        status: z.enum(STATUSES).optional(),
-        amount: z.number().min(0).max(1_000_000).optional(),
-        currency: z.enum(['ILS', 'USD']).optional(),
-        billing: z.enum(BILLINGS).optional(),
-        usage_note: z.string().max(400).nullable().optional(),
-        is_estimate: z.boolean().optional(),
-        expected_from: z.string().nullable().optional(),
-        url: z.string().max(400).nullable().optional(),
-        notes: z.string().max(2000).nullable().optional(),
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        patch: z.object({
+          name: z.string().trim().min(2).max(120).optional(),
+          provider: z.string().max(120).nullable().optional(),
+          category: z.enum(CATEGORIES).optional(),
+          status: z.enum(STATUSES).optional(),
+          amount: z.number().min(0).max(1_000_000).optional(),
+          currency: z.enum(['ILS', 'USD']).optional(),
+          billing: z.enum(BILLINGS).optional(),
+          usage_note: z.string().max(400).nullable().optional(),
+          is_estimate: z.boolean().optional(),
+          expected_from: z.string().nullable().optional(),
+          url: z.string().max(400).nullable().optional(),
+          notes: z.string().max(2000).nullable().optional(),
+        }),
       }),
-    }))
+    )
     .mutation(async ({ ctx, input }) => {
       const { data, error } = await ctx.db
         .from('sc_cost_items')

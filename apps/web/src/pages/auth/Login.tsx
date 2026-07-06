@@ -14,7 +14,8 @@ export default function Login() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (busy) return
-    setErr(null); setBusy(true)
+    setErr(null)
+    setBusy(true)
     const { error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
@@ -34,12 +35,20 @@ export default function Login() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div
             style={{
-              width: 48, height: 48, borderRadius: 12,
+              width: 48,
+              height: 48,
+              borderRadius: 12,
               background: 'linear-gradient(135deg,#8b6f47,#a6895f)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontWeight: 800, fontSize: 20, color: '#1e3a5f',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 800,
+              fontSize: 20,
+              color: '#1e3a5f',
             }}
-          >AR</div>
+          >
+            AR
+          </div>
           <div>
             <div style={{ fontSize: 18, fontWeight: 700 }}>Asset Rise Admin</div>
             <div style={{ fontSize: 12, opacity: 0.7 }}>לוח בקרה</div>
@@ -57,7 +66,9 @@ export default function Login() {
 
         <form onSubmit={onSubmit} style={{ display: 'grid', gap: 12, marginTop: 12 }}>
           <label style={{ display: 'block' }}>
-            <div style={{ fontSize: 12, color: 'var(--sc-text-secondary)', marginBottom: 4 }}>אימייל</div>
+            <div style={{ fontSize: 12, color: 'var(--sc-text-secondary)', marginBottom: 4 }}>
+              אימייל
+            </div>
             <input
               type="email"
               autoComplete="username"
@@ -65,14 +76,21 @@ export default function Login() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               style={{
-                width: '100%', padding: '10px 12px', font: 'inherit',
-                color: 'var(--sc-text)', background: 'var(--sc-bg)',
-                border: '1px solid var(--sc-border)', borderRadius: 10, boxSizing: 'border-box',
+                width: '100%',
+                padding: '10px 12px',
+                font: 'inherit',
+                color: 'var(--sc-text)',
+                background: 'var(--sc-bg)',
+                border: '1px solid var(--sc-border)',
+                borderRadius: 10,
+                boxSizing: 'border-box',
               }}
             />
           </label>
           <label style={{ display: 'block' }}>
-            <div style={{ fontSize: 12, color: 'var(--sc-text-secondary)', marginBottom: 4 }}>סיסמה</div>
+            <div style={{ fontSize: 12, color: 'var(--sc-text-secondary)', marginBottom: 4 }}>
+              סיסמה
+            </div>
             <input
               type="password"
               autoComplete="current-password"
@@ -80,27 +98,40 @@ export default function Login() {
               value={password}
               onChange={e => setPassword(e.target.value)}
               style={{
-                width: '100%', padding: '10px 12px', font: 'inherit',
-                color: 'var(--sc-text)', background: 'var(--sc-bg)',
-                border: '1px solid var(--sc-border)', borderRadius: 10, boxSizing: 'border-box',
+                width: '100%',
+                padding: '10px 12px',
+                font: 'inherit',
+                color: 'var(--sc-text)',
+                background: 'var(--sc-bg)',
+                border: '1px solid var(--sc-border)',
+                borderRadius: 10,
+                boxSizing: 'border-box',
               }}
             />
           </label>
 
           {err && (
-            <div style={{ fontSize: 13, color: 'var(--sc-danger)', textAlign: 'center' }}>{err}</div>
+            <div style={{ fontSize: 13, color: 'var(--sc-danger)', textAlign: 'center' }}>
+              {err}
+            </div>
           )}
 
           <button
             type="submit"
             disabled={busy}
             style={{
-              padding: '10px 16px', fontWeight: 700, borderRadius: 10,
-              background: 'var(--sc-primary)', color: '#fff', border: 'none',
+              padding: '10px 16px',
+              fontWeight: 700,
+              borderRadius: 10,
+              background: 'var(--sc-primary)',
+              color: '#fff',
+              border: 'none',
               cursor: busy ? 'progress' : 'pointer',
               opacity: busy ? 0.7 : 1,
             }}
-          >{busy ? 'מתחבר…' : 'כניסה'}</button>
+          >
+            {busy ? 'מתחבר…' : 'כניסה'}
+          </button>
         </form>
 
         <div className="sc-login__help" style={{ marginTop: 20 }}>

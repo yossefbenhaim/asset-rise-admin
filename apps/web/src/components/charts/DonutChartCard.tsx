@@ -4,9 +4,21 @@ import { ChartCard, ChartTooltip, PALETTE } from './chartTheme'
 // Polished donut: rounded, gradient-filled segments with a big total in the
 // center and a clean custom legend (name · value · %) below.
 export function DonutChartCard({
-  title, sub, data, nameKey = 'name', valueKey = 'value', height = 220, index = 0,
+  title,
+  sub,
+  data,
+  nameKey = 'name',
+  valueKey = 'value',
+  height = 220,
+  index = 0,
 }: {
-  title: string; sub?: string; data: any[]; nameKey?: string; valueKey?: string; height?: number; index?: number
+  title: string
+  sub?: string
+  data: any[]
+  nameKey?: string
+  valueKey?: string
+  height?: number
+  index?: number
 }) {
   const total = data.reduce((s, d) => s + (Number(d[valueKey]) || 0), 0)
   const gid = (i: number) => `donut-${index}-${i}`
@@ -39,7 +51,9 @@ export function DonutChartCard({
               strokeWidth={2}
               animationDuration={750}
             >
-              {data.map((_, i) => <Cell key={i} fill={`url(#${gid(i)})`} />)}
+              {data.map((_, i) => (
+                <Cell key={i} fill={`url(#${gid(i)})`} />
+              ))}
               <Label
                 position="center"
                 content={(props: any) => {
@@ -47,10 +61,24 @@ export function DonutChartCard({
                   if (cx == null) return null
                   return (
                     <g>
-                      <text x={cx} y={cy - 5} textAnchor="middle" className="sc-num" fill="var(--sc-text)" fontSize={24} fontWeight={800}>
+                      <text
+                        x={cx}
+                        y={cy - 5}
+                        textAnchor="middle"
+                        className="sc-num"
+                        fill="var(--sc-text)"
+                        fontSize={24}
+                        fontWeight={800}
+                      >
                         {total.toLocaleString('he-IL')}
                       </text>
-                      <text x={cx} y={cy + 16} textAnchor="middle" fill="var(--sc-text-muted)" fontSize={11}>
+                      <text
+                        x={cx}
+                        y={cy + 16}
+                        textAnchor="middle"
+                        fill="var(--sc-text-muted)"
+                        fontSize={11}
+                      >
                         סה״כ
                       </text>
                     </g>
@@ -69,7 +97,10 @@ export function DonutChartCard({
             const pct = total > 0 ? Math.round((v / total) * 100) : 0
             return (
               <li key={i} className="flex items-center gap-2 text-[12px]">
-                <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: PALETTE[i % PALETTE.length] }} />
+                <span
+                  className="w-2.5 h-2.5 rounded-sm shrink-0"
+                  style={{ background: PALETTE[i % PALETTE.length] }}
+                />
                 <span className="text-sc-text-secondary truncate flex-1">{d[nameKey]}</span>
                 <span className="text-sc-text font-bold sc-num">{v.toLocaleString('he-IL')}</span>
                 <span className="text-sc-text-muted sc-num w-9 text-left">{pct}%</span>

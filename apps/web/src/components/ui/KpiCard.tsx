@@ -8,18 +8,24 @@ import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
 type Tone = 'primary' | 'gold' | 'teal' | 'navy' | 'success' | 'danger'
 const TONE: Record<Tone, string> = {
   primary: 'bg-sc-primary/12 text-sc-primary',
-  gold:    'bg-sc-gold/12 text-sc-gold',
-  teal:    'bg-sc-teal/15 text-sc-teal',
-  navy:    'bg-sc-navy/10 text-sc-navy',
+  gold: 'bg-sc-gold/12 text-sc-gold',
+  teal: 'bg-sc-teal/15 text-sc-teal',
+  navy: 'bg-sc-navy/10 text-sc-navy',
   success: 'bg-sc-success-bg text-sc-success',
-  danger:  'bg-sc-danger-bg text-sc-danger',
+  danger: 'bg-sc-danger-bg text-sc-danger',
 }
 
 function useCountUp(target: number, ms = 700): number {
   const [v, setV] = useState(0)
   const ref = useRef<number>()
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { setV(target); return }
+    if (
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    ) {
+      setV(target)
+      return
+    }
     const t0 = performance.now()
     const tick = (t: number) => {
       const p = Math.min(1, (t - t0) / ms)
@@ -27,18 +33,27 @@ function useCountUp(target: number, ms = 700): number {
       if (p < 1) ref.current = requestAnimationFrame(tick)
     }
     ref.current = requestAnimationFrame(tick)
-    return () => { if (ref.current) cancelAnimationFrame(ref.current) }
+    return () => {
+      if (ref.current) cancelAnimationFrame(ref.current)
+    }
   }, [target, ms])
   return v
 }
 
 export function KpiCard({
-  label, value, format, delta, icon, tone = 'primary', sparkline, index = 0,
+  label,
+  value,
+  format,
+  delta,
+  icon,
+  tone = 'primary',
+  sparkline,
+  index = 0,
 }: {
   label: string
   value: number | string
   format?: (n: number) => string
-  delta?: number | null            // % change vs previous period
+  delta?: number | null // % change vs previous period
   icon?: ReactNode
   tone?: Tone
   sparkline?: ReactNode
@@ -58,15 +73,24 @@ export function KpiCard({
     >
       <div className="flex items-start justify-between">
         <span className="text-[12px] font-semibold text-sc-text-secondary">{label}</span>
-        {icon && <span className={`grid place-items-center w-9 h-9 rounded-sc-input ${TONE[tone]}`}>{icon}</span>}
+        {icon && (
+          <span className={`grid place-items-center w-9 h-9 rounded-sc-input ${TONE[tone]}`}>
+            {icon}
+          </span>
+        )}
       </div>
       <div className="text-[26px] font-extrabold text-sc-text leading-none sc-num">{display}</div>
       <div className="flex items-center justify-between min-h-[18px]">
         {delta != null ? (
-          <span className={`inline-flex items-center gap-0.5 text-[11px] font-bold ${up ? 'text-sc-success' : 'text-sc-danger'}`}>
-            {up ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}{Math.abs(delta).toFixed(0)}%
+          <span
+            className={`inline-flex items-center gap-0.5 text-[11px] font-bold ${up ? 'text-sc-success' : 'text-sc-danger'}`}
+          >
+            {up ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
+            {Math.abs(delta).toFixed(0)}%
           </span>
-        ) : <span />}
+        ) : (
+          <span />
+        )}
         {sparkline && <div className="h-7 w-24">{sparkline}</div>}
       </div>
     </motion.div>

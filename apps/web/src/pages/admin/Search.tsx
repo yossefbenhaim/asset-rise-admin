@@ -56,13 +56,19 @@ export default function AdminSearch() {
       <Card className="mt-4">
         <CardBody>
           {trimmed.length < 2 ? (
-            <div className="text-center py-6 text-sc-text-secondary text-[13px]">הקלד/י לפחות 2 תווים כדי לחפש.</div>
+            <div className="text-center py-6 text-sc-text-secondary text-[13px]">
+              הקלד/י לפחות 2 תווים כדי לחפש.
+            </div>
           ) : list.isLoading ? (
             <div className="text-center py-6 text-sc-text-secondary text-[13px]">טוען…</div>
           ) : list.isError ? (
             <div className="text-center py-6 text-sc-danger text-[13px]">{list.error.message}</div>
           ) : !list.data?.length ? (
-            <EmptyState icon={<SearchIcon size={28} />} title="אין תוצאות" body={`לא נמצאו רשומות עבור «${trimmed}».`} />
+            <EmptyState
+              icon={<SearchIcon size={28} />}
+              title="אין תוצאות"
+              body={`לא נמצאו רשומות עבור «${trimmed}».`}
+            />
           ) : (
             <div className="space-y-2">
               {list.data.map(hit => (
@@ -75,7 +81,9 @@ export default function AdminSearch() {
                   <div className="min-w-0">
                     <div className="font-semibold text-[14px] truncate">{hit.label}</div>
                     {hit.sublabel && (
-                      <div className="text-[12px] text-sc-text-secondary truncate">{hit.sublabel}</div>
+                      <div className="text-[12px] text-sc-text-secondary truncate">
+                        {hit.sublabel}
+                      </div>
                     )}
                   </div>
                 </Link>

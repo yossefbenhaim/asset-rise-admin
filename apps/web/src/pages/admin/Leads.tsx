@@ -92,11 +92,15 @@ export default function AdminLeads() {
                     <div className="font-semibold text-[14px]">{l.name}</div>
                     <div className="text-[12px] text-sc-text-secondary">{l.phone}</div>
                     <div className="flex-1" />
-                    <Pill kind={SOURCE_PILL[l.source] ?? 'neutral'}>{SOURCE_LABEL[l.source] ?? l.source}</Pill>
+                    <Pill kind={SOURCE_PILL[l.source] ?? 'neutral'}>
+                      {SOURCE_LABEL[l.source] ?? l.source}
+                    </Pill>
                     <Pill kind={STATUS_PILL[l.status]}>{STATUS_LABEL[l.status]}</Pill>
                   </div>
                   {l.message && (
-                    <div className="text-[12px] text-sc-text-secondary mt-1 line-clamp-2">{l.message}</div>
+                    <div className="text-[12px] text-sc-text-secondary mt-1 line-clamp-2">
+                      {l.message}
+                    </div>
                   )}
                   <div className="text-[11px] text-sc-text-muted mt-1 flex flex-wrap gap-2">
                     <span>{new Date(l.created_at).toLocaleString('he-IL')}</span>
@@ -138,22 +142,37 @@ function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () => void }) {
       title={`פנייה: ${lead.name}`}
       footer={
         <div className="flex gap-2 justify-end">
-          <Button variant="ghost" onClick={onClose}>סגור</Button>
+          <Button variant="ghost" onClick={onClose}>
+            סגור
+          </Button>
           <Button
             loading={update.isLoading}
             onClick={() => update.mutate({ id: lead.id, status: status as any, notes })}
-          >שמור</Button>
+          >
+            שמור
+          </Button>
         </div>
       }
     >
       <div className="space-y-3 text-[13px]">
         <Row label="שם" value={lead.name} />
         <Row label="טלפון" value={<a href={`tel:${lead.phone}`}>{lead.phone}</a>} />
-        {lead.email && <Row label="אימייל" value={<a href={`mailto:${lead.email}`}>{lead.email}</a>} />}
+        {lead.email && (
+          <Row label="אימייל" value={<a href={`mailto:${lead.email}`}>{lead.email}</a>} />
+        )}
         {lead.city && <Row label="עיר" value={lead.city} />}
         {lead.building_address && <Row label="כתובת בניין" value={lead.building_address} />}
-        {lead.message && <Row label="הודעה" value={<div className="whitespace-pre-wrap">{lead.message}</div>} />}
-        <Row label="מקור" value={<Pill kind={SOURCE_PILL[lead.source] ?? 'neutral'}>{SOURCE_LABEL[lead.source] ?? lead.source}</Pill>} />
+        {lead.message && (
+          <Row label="הודעה" value={<div className="whitespace-pre-wrap">{lead.message}</div>} />
+        )}
+        <Row
+          label="מקור"
+          value={
+            <Pill kind={SOURCE_PILL[lead.source] ?? 'neutral'}>
+              {SOURCE_LABEL[lead.source] ?? lead.source}
+            </Pill>
+          }
+        />
         <Row label="נוצר" value={new Date(lead.created_at).toLocaleString('he-IL')} />
 
         <div>

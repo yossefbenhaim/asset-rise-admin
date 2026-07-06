@@ -6,7 +6,7 @@ import {
   GodNegForceStatusInput,
   GodNegLinkProviderInput,
   GodNegUnlinkProviderInput,
-} from '@asset-rise/shared/schemas/godNegotiations'
+} from '@asset-rise/shared'
 import { router, requireLevel } from '../../trpc.js'
 import { godProcedure, godMutation } from '../../lib/god.js'
 import {
@@ -128,158 +128,148 @@ export const godNegotiationsRouter = router({
   // ── Writes (all audited via godMutation) ─────────────────────────────────────
   // forceStage — set the stage to any of the 9. Pure override; does not touch
   // sc_project_providers or the poll.
-  forceStage: godProcedure
-    .input(GodNegForceStageInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.negotiations.force_stage',
-          target_type: 'negotiation',
-          target_id: input.id,
-          meta: { stage: input.stage },
-        },
-        async () => {
-          try {
-            return await forceStage(ctx.db, input)
-          } catch (e) {
-            rethrow(e)
-          }
-        },
-      ),
+  forceStage: godProcedure.input(GodNegForceStageInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.negotiations.force_stage',
+        target_type: 'negotiation',
+        target_id: input.id,
+        meta: { stage: input.stage },
+      },
+      async () => {
+        try {
+          return await forceStage(ctx.db, input)
+        } catch (e) {
+          rethrow(e)
+        }
+      },
     ),
+  ),
 
   // forceStatus — set the status to any of the 6. Forcing
   // confirmed/rejected/cancelled BYPASSES the tenant poll (no openMutualPoll, no
   // vote, no finalize). The override is recorded with bypass_poll:true in the
   // audit meta. Linking the provider record is a SEPARATE explicit op
   // (linkProvider) so this never silently mutates sc_project_providers.
-  forceStatus: godProcedure
-    .input(GodNegForceStatusInput)
-    .mutation(({ ctx, input }) => {
-      const overriding =
-        input.status === 'confirmed' ||
-        input.status === 'rejected' ||
-        input.status === 'cancelled'
-      return godMutation(
-        ctx,
-        {
-          action: 'god.negotiations.force_status',
-          target_type: 'negotiation',
-          target_id: input.id,
-          meta: { status: input.status, bypass_poll: overriding },
-        },
-        async () => {
-          try {
-            return await forceStatus(ctx.db, input)
-          } catch (e) {
-            rethrow(e)
-          }
-        },
-      )
-    }),
+  forceStatus: godProcedure.input(GodNegForceStatusInput).mutation(({ ctx, input }) => {
+    const overriding =
+      input.status === 'confirmed' || input.status === 'rejected' || input.status === 'cancelled'
+    return godMutation(
+      ctx,
+      {
+        action: 'god.negotiations.force_status',
+        target_type: 'negotiation',
+        target_id: input.id,
+        meta: { status: input.status, bypass_poll: overriding },
+      },
+      async () => {
+        try {
+          return await forceStatus(ctx.db, input)
+        } catch (e) {
+          rethrow(e)
+        }
+      },
+    )
+  }),
 
   // linkProvider — INSERT sc_project_providers(project_id, provider_id,
   // provider_type) directly, bypassing openMutualPoll/finalize. Defaults the
   // fields from the negotiation when omitted. A duplicate link → friendly 409;
   // a bad provider/project id → friendly 400.
-  linkProvider: godProcedure
-    .input(GodNegLinkProviderInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.negotiations.link_provider',
-          target_type: 'negotiation',
-          target_id: input.id,
-          meta: {
-            project_id: input.project_id,
-            provider_id: input.provider_id,
-            provider_type: input.provider_type,
-            bypass_poll: true,
-          },
+  linkProvider: godProcedure.input(GodNegLinkProviderInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.negotiations.link_provider',
+        target_type: 'negotiation',
+        target_id: input.id,
+        meta: {
+          project_id: input.project_id,
+          provider_id: input.provider_id,
+          provider_type: input.provider_type,
+          bypass_poll: true,
         },
-        async () => {
-          const args = await resolveLinkArgs(ctx.db, input)
-          if (await providerIsLinked(ctx.db, args.project_id, args.provider_id)) {
+      },
+      async () => {
+        const args = await resolveLinkArgs(ctx.db, input)
+        if (await providerIsLinked(ctx.db, args.project_id, args.provider_id)) {
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message: 'הספק כבר מקושר לפרויקט',
+          })
+        }
+        try {
+          const linked = await linkProvider(ctx.db, args)
+          // linkProvider upserts with ignoreDuplicates, so a row that already
+          // existed (a race past the precheck above) returns null instead of
+          // a 23505. Surface that as the same friendly CONFLICT.
+          if (!linked) {
+            throw new TRPCError({ code: 'CONFLICT', message: 'הספק כבר מקושר לפרויקט' })
+          }
+          return linked
+        } catch (e) {
+          if (isUniqueViolation(e)) {
+            throw new TRPCError({ code: 'CONFLICT', message: 'הספק כבר מקושר לפרויקט' })
+          }
+          if (isFkViolation(e)) {
             throw new TRPCError({
-              code: 'CONFLICT',
-              message: 'הספק כבר מקושר לפרויקט',
+              code: 'BAD_REQUEST',
+              message: 'הספק או הפרויקט שנבחרו אינם קיימים במערכת',
             })
           }
-          try {
-            const linked = await linkProvider(ctx.db, args)
-            // linkProvider upserts with ignoreDuplicates, so a row that already
-            // existed (a race past the precheck above) returns null instead of
-            // a 23505. Surface that as the same friendly CONFLICT.
-            if (!linked) {
-              throw new TRPCError({ code: 'CONFLICT', message: 'הספק כבר מקושר לפרויקט' })
-            }
-            return linked
-          } catch (e) {
-            if (isUniqueViolation(e)) {
-              throw new TRPCError({ code: 'CONFLICT', message: 'הספק כבר מקושר לפרויקט' })
-            }
-            if (isFkViolation(e)) {
-              throw new TRPCError({
-                code: 'BAD_REQUEST',
-                message: 'הספק או הפרויקט שנבחרו אינם קיימים במערכת',
-              })
-            }
-            rethrow(e)
-          }
-        },
-      ),
+          rethrow(e)
+        }
+      },
     ),
+  ),
 
   // unlinkProvider — DELETE the sc_project_providers row (DESTRUCTIVE). The
   // interlock (resolve + non-empty confirm token) runs INSIDE godMutation so a
   // rejected/probing attempt is also audited.
-  unlinkProvider: godProcedure
-    .input(GodNegUnlinkProviderInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.negotiations.unlink_provider',
-          target_type: 'negotiation',
-          target_id: input.id,
-          meta: {
-            project_id: input.project_id,
-            provider_id: input.provider_id,
-            confirm: input.confirm,
-            bypass_poll: true,
-          },
+  unlinkProvider: godProcedure.input(GodNegUnlinkProviderInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.negotiations.unlink_provider',
+        target_type: 'negotiation',
+        target_id: input.id,
+        meta: {
+          project_id: input.project_id,
+          provider_id: input.provider_id,
+          confirm: input.confirm,
+          bypass_poll: true,
         },
-        async () => {
-          if (!input.confirm.trim()) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'נדרש אישור להסרת השיוך' })
+      },
+      async () => {
+        if (!input.confirm.trim()) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'נדרש אישור להסרת השיוך' })
+        }
+        // Resolve project+provider for the delete (provider_type is irrelevant
+        // here — the row is matched by project_id + provider_id). Prefer the
+        // explicit input, fall back to the negotiation's own columns.
+        const neg = await loadNegotiationTarget(ctx.db, input.id)
+        const project_id = input.project_id ?? neg.project_id ?? undefined
+        const provider_id = input.provider_id ?? neg.provider_id ?? undefined
+        if (!project_id) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'למשא ומתן אין פרויקט משויך' })
+        }
+        if (!provider_id) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'למשא ומתן אין ספק משויך' })
+        }
+        try {
+          const deleted = await unlinkProvider(ctx.db, { project_id, provider_id })
+          if (!deleted) {
+            throw new TRPCError({
+              code: 'NOT_FOUND',
+              message: 'לא נמצא שיוך ספק להסרה',
+            })
           }
-          // Resolve project+provider for the delete (provider_type is irrelevant
-          // here — the row is matched by project_id + provider_id). Prefer the
-          // explicit input, fall back to the negotiation's own columns.
-          const neg = await loadNegotiationTarget(ctx.db, input.id)
-          const project_id = input.project_id ?? neg.project_id ?? undefined
-          const provider_id = input.provider_id ?? neg.provider_id ?? undefined
-          if (!project_id) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'למשא ומתן אין פרויקט משויך' })
-          }
-          if (!provider_id) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'למשא ומתן אין ספק משויך' })
-          }
-          try {
-            const deleted = await unlinkProvider(ctx.db, { project_id, provider_id })
-            if (!deleted) {
-              throw new TRPCError({
-                code: 'NOT_FOUND',
-                message: 'לא נמצא שיוך ספק להסרה',
-              })
-            }
-            return deleted
-          } catch (e) {
-            rethrow(e)
-          }
-        },
-      ),
+          return deleted
+        } catch (e) {
+          rethrow(e)
+        }
+      },
     ),
+  ),
 })

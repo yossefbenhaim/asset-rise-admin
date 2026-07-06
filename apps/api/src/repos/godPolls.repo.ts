@@ -8,7 +8,7 @@ import type {
   GodPollBuildingOption,
   PollKind,
   PollStatus,
-} from '@asset-rise/shared/schemas/godPolls'
+} from '@asset-rise/shared'
 
 // God-mode "Polls / Elections" repo (Wave 2 — Workflow). Runs as service-role
 // (adminClient bypasses RLS) so it reads/writes any sc_* row. Routers gate
@@ -31,11 +31,16 @@ export const PG_CHECK_VIOLATION = '23514'
 // Hebrew BAD_REQUEST.
 export class PollPreconditionError extends Error {}
 
-function addressOf(b: {
-  street?: string | null
-  building_number?: string | null
-  city?: string | null
-} | null | undefined): string | null {
+function addressOf(
+  b:
+    | {
+        street?: string | null
+        building_number?: string | null
+        city?: string | null
+      }
+    | null
+    | undefined,
+): string | null {
   if (!b) return null
   const line = [b.street, b.building_number].filter(Boolean).join(' ')
   const full = [line, b.city].filter(Boolean).join(', ').trim()
@@ -65,10 +70,7 @@ async function namesFor(
   const out = new Map<string, { full_name: string | null; email: string | null }>()
   const clean = Array.from(new Set(ids.filter(Boolean)))
   if (!clean.length) return out
-  const { data } = await db
-    .from('sc_profiles')
-    .select('id, full_name, email')
-    .in('id', clean)
+  const { data } = await db.from('sc_profiles').select('id, full_name, email').in('id', clean)
   for (const p of (data ?? []) as any[]) {
     out.set(p.id, { full_name: p.full_name ?? null, email: p.email ?? null })
   }
@@ -76,9 +78,7 @@ async function namesFor(
 }
 
 // ── Building picker for createPoll ─────────────────────────────────────────────
-export async function listBuildingOptions(
-  db: SupabaseClient,
-): Promise<GodPollBuildingOption[]> {
+export async function listBuildingOptions(db: SupabaseClient): Promise<GodPollBuildingOption[]> {
   const { data, error } = await db
     .from('sc_buildings')
     .select('id, city, street, building_number')
@@ -123,10 +123,7 @@ export async function listPolls(
   // Option counts (one batched query over all poll ids).
   const optionCount = new Map<string, number>()
   {
-    const { data: opts } = await db
-      .from('sc_poll_options')
-      .select('poll_id')
-      .in('poll_id', pollIds)
+    const { data: opts } = await db.from('sc_poll_options').select('poll_id').in('poll_id', pollIds)
     for (const o of (opts ?? []) as any[]) {
       const k = o.poll_id as string
       if (k) optionCount.set(k, (optionCount.get(k) ?? 0) + 1)
@@ -136,38 +133,27 @@ export async function listPolls(
   // Vote counts (one batched query over all poll ids).
   const voteCount = new Map<string, number>()
   {
-    const { data: votes } = await db
-      .from('sc_poll_votes')
-      .select('poll_id')
-      .in('poll_id', pollIds)
+    const { data: votes } = await db.from('sc_poll_votes').select('poll_id').in('poll_id', pollIds)
     for (const v of (votes ?? []) as any[]) {
       const k = v.poll_id as string
       if (k) voteCount.set(k, (voteCount.get(k) ?? 0) + 1)
     }
   }
 
-  const addrById = await addressesFor(
-    db,
-    rows.map(r => r.building_id).filter(Boolean),
-  )
-  const nameById = await namesFor(
-    db,
-    rows.map(r => r.result_user_id).filter(Boolean),
-  )
+  const addrById = await addressesFor(db, rows.map(r => r.building_id).filter(Boolean))
+  const nameById = await namesFor(db, rows.map(r => r.result_user_id).filter(Boolean))
 
   return rows.map(r => ({
     id: r.id,
     building_id: r.building_id ?? null,
-    building_address: r.building_id ? addrById.get(r.building_id) ?? null : null,
+    building_address: r.building_id ? (addrById.get(r.building_id) ?? null) : null,
     kind: (r.kind ?? null) as PollKind | null,
     question: r.question ?? null,
     threshold_pct: r.threshold_pct ?? null,
     deadline_at: r.deadline_at ?? null,
     status: (r.status ?? null) as PollStatus | null,
     result_user_id: r.result_user_id ?? null,
-    result_user_name: r.result_user_id
-      ? nameById.get(r.result_user_id)?.full_name ?? null
-      : null,
+    result_user_name: r.result_user_id ? (nameById.get(r.result_user_id)?.full_name ?? null) : null,
     option_count: optionCount.get(r.id) ?? 0,
     vote_count: voteCount.get(r.id) ?? 0,
     created_at: r.created_at ?? null,
@@ -176,10 +162,7 @@ export async function listPolls(
 
 // ── Detail ───────────────────────────────────────────────────────────────────
 // One poll + all its options with the live per-option vote tally (read-only).
-export async function getPollDetail(
-  db: SupabaseClient,
-  id: string,
-): Promise<GodPollDetail | null> {
+export async function getPollDetail(db: SupabaseClient, id: string): Promise<GodPollDetail | null> {
   const { data: p, error } = await db
     .from('sc_polls')
     .select(
@@ -191,7 +174,7 @@ export async function getPollDetail(
   if (!p) return null
 
   const buildingAddress = p.building_id
-    ? (await addressesFor(db, [p.building_id])).get(p.building_id) ?? null
+    ? ((await addressesFor(db, [p.building_id])).get(p.building_id) ?? null)
     : null
 
   // Options.
@@ -202,10 +185,7 @@ export async function getPollDetail(
   const rawOpts = (optRows ?? []) as any[]
 
   // Votes — tally by option_id.
-  const { data: voteRows } = await db
-    .from('sc_poll_votes')
-    .select('option_id')
-    .eq('poll_id', id)
+  const { data: voteRows } = await db.from('sc_poll_votes').select('option_id').eq('poll_id', id)
   const tally = new Map<string, number>()
   for (const v of (voteRows ?? []) as any[]) {
     const k = v.option_id as string
@@ -225,14 +205,16 @@ export async function getPollDetail(
       return {
         id: o.id,
         user_id: o.user_id ?? null,
-        user_name: o.user_id ? nameById.get(o.user_id)?.full_name ?? null : null,
+        user_name: o.user_id ? (nameById.get(o.user_id)?.full_name ?? null) : null,
         label: o.label ?? null,
         vote_count: count,
         vote_pct: totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0,
       }
     })
     // Highest vote count first, then by label for stable ordering.
-    .sort((a, b) => b.vote_count - a.vote_count || (a.label ?? '').localeCompare(b.label ?? '', 'he'))
+    .sort(
+      (a, b) => b.vote_count - a.vote_count || (a.label ?? '').localeCompare(b.label ?? '', 'he'),
+    )
 
   return {
     id: p.id,
@@ -245,9 +227,7 @@ export async function getPollDetail(
     deadline_at: p.deadline_at ?? null,
     status: (p.status ?? null) as PollStatus | null,
     result_user_id: p.result_user_id ?? null,
-    result_user_name: p.result_user_id
-      ? nameById.get(p.result_user_id)?.full_name ?? null
-      : null,
+    result_user_name: p.result_user_id ? (nameById.get(p.result_user_id)?.full_name ?? null) : null,
     created_by: p.created_by ?? null,
     created_at: p.created_at ?? null,
     total_votes: totalVotes,
@@ -292,11 +272,7 @@ export async function createPoll(
   if (input.threshold_pct !== undefined) pollRow.threshold_pct = input.threshold_pct
   if (input.deadline_at !== undefined) pollRow.deadline_at = input.deadline_at
 
-  const { data: poll, error } = await db
-    .from('sc_polls')
-    .insert(pollRow)
-    .select('id')
-    .maybeSingle()
+  const { data: poll, error } = await db.from('sc_polls').insert(pollRow).select('id').maybeSingle()
   if (error) throw error
   if (!poll) throw new Error('NOT_FOUND')
   const pollId = poll.id as string

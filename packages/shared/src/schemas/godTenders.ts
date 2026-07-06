@@ -16,13 +16,7 @@ import { z } from 'zod'
 
 // Canonical tender lifecycle. MUST stay in lockstep with the
 // sc_tenders_status_check CHECK constraint in silver-castle.
-export const TENDER_STATUSES = [
-  'draft',
-  'open',
-  'closed',
-  'awarded',
-  'cancelled',
-] as const
+export const TENDER_STATUSES = ['draft', 'open', 'closed', 'awarded', 'cancelled'] as const
 export type TenderStatus = (typeof TENDER_STATUSES)[number]
 
 export const TENDER_STATUS_LABEL: Record<TenderStatus, string> = {
@@ -36,12 +30,7 @@ export const TENDER_STATUS_LABEL: Record<TenderStatus, string> = {
 export const TenderStatusEnum = z.enum(TENDER_STATUSES)
 
 // Bid lifecycle (sc_tender_bids.status).
-export const TENDER_BID_STATUSES = [
-  'submitted',
-  'withdrawn',
-  'rejected',
-  'accepted',
-] as const
+export const TENDER_BID_STATUSES = ['submitted', 'withdrawn', 'rejected', 'accepted'] as const
 export type TenderBidStatus = (typeof TENDER_BID_STATUSES)[number]
 
 export const TENDER_BID_STATUS_LABEL: Record<TenderBidStatus, string> = {

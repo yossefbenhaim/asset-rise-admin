@@ -13,7 +13,11 @@ export function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
 
   return (
     <header className="sc-top">
-      <button className="sc-top__icon-btn sc-top__menu" onClick={onMenuClick} aria-label="פתח תפריט">
+      <button
+        className="sc-top__icon-btn sc-top__menu"
+        onClick={onMenuClick}
+        aria-label="פתח תפריט"
+      >
         <Menu size={20} />
       </button>
       <div className="sc-top__brand">
@@ -32,7 +36,9 @@ export function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
       >
         <Search size={16} />
         <span className="text-[13px]">חיפוש כתובת, משתמש, דוח…</span>
-        <kbd className="ms-auto text-[10px] font-bold bg-sc-card border border-sc-border rounded px-1.5 py-0.5">⌘K</kbd>
+        <kbd className="ms-auto text-[10px] font-bold bg-sc-card border border-sc-border rounded px-1.5 py-0.5">
+          ⌘K
+        </kbd>
       </button>
 
       <div className="sc-top__spacer" />
@@ -53,7 +59,10 @@ export function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
       <button
         className="sc-top__icon-btn"
         aria-label="התנתק"
-        onClick={async () => { await signOut(); nav('/login', { replace: true }) }}
+        onClick={async () => {
+          await signOut()
+          nav('/login', { replace: true })
+        }}
       >
         <LogOut size={18} />
       </button>

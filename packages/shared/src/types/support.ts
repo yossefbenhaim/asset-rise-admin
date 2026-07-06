@@ -28,7 +28,7 @@ export interface GodSupportThreadListItem {
   last_message_at: string | null
   last_message_preview: string | null
   last_sender_kind: 'admin' | 'user' | null
-  awaiting_reply: boolean   // the last message was from the user → needs a reply
+  awaiting_reply: boolean // the last message was from the user → needs a reply
   message_count: number
 }
 

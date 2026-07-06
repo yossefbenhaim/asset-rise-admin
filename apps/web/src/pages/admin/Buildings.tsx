@@ -31,7 +31,9 @@ export default function AdminBuildings() {
       id: 'city',
       header: 'עיר',
       accessorFn: r => (r.city as string) ?? '',
-      cell: ({ row }) => <span className="font-semibold">{(row.original.city as string) ?? '—'}</span>,
+      cell: ({ row }) => (
+        <span className="font-semibold">{(row.original.city as string) ?? '—'}</span>
+      ),
     },
     {
       id: 'address',
@@ -43,7 +45,9 @@ export default function AdminBuildings() {
       id: 'tenant_count',
       header: 'דיירים',
       accessorFn: r => (r.tenant_count as number) ?? 0,
-      cell: ({ row }) => <span className="sc-num">{(row.original.tenant_count as number) ?? 0}</span>,
+      cell: ({ row }) => (
+        <span className="sc-num">{(row.original.tenant_count as number) ?? 0}</span>
+      ),
     },
     {
       id: 'project',
@@ -66,7 +70,9 @@ export default function AdminBuildings() {
       enableSorting: false,
       accessorFn: r => (r.invite_code as string) ?? '',
       cell: ({ row }) => (
-        <code className="text-[11px] bg-sc-bg px-1 rounded">{(row.original.invite_code as string) ?? '—'}</code>
+        <code className="text-[11px] bg-sc-bg px-1 rounded">
+          {(row.original.invite_code as string) ?? '—'}
+        </code>
       ),
     },
     {
@@ -74,7 +80,9 @@ export default function AdminBuildings() {
       header: 'נוצר',
       accessorFn: r => (r.created_at as string) ?? '',
       cell: ({ row }) => (
-        <span className="text-sc-text-secondary sc-num">{dateShort(row.original.created_at as string)}</span>
+        <span className="text-sc-text-secondary sc-num">
+          {dateShort(row.original.created_at as string)}
+        </span>
       ),
     },
   ]

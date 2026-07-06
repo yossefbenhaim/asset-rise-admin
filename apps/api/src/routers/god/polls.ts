@@ -6,7 +6,7 @@ import {
   GodForceFinalizePollInput,
   GodReopenPollInput,
   GodOverrideResultInput,
-} from '@asset-rise/shared/schemas/godPolls'
+} from '@asset-rise/shared'
 import { router, requireLevel } from '../../trpc.js'
 import { godProcedure, godMutation } from '../../lib/god.js'
 import {
@@ -56,8 +56,7 @@ function rethrow(e: unknown): never {
   if (code === PG_FK_VIOLATION) {
     throw new TRPCError({
       code: 'BAD_REQUEST',
-      message:
-        'הפעולה נחסמה — הבניין או המשתמש שנבחרו אינם קיימים במערכת (מפתח זר).',
+      message: 'הפעולה נחסמה — הבניין או המשתמש שנבחרו אינם קיימים במערכת (מפתח זר).',
     })
   }
   if (code === PG_CHECK_VIOLATION) {
@@ -124,110 +123,102 @@ export const godPollsRouter = router({
 
   // ── Writes (all audited via godMutation) ─────────────────────────────────────
   // createPoll — author a new poll (+ options) on a building, always 'open'.
-  createPoll: godProcedure
-    .input(GodCreatePollInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.polls.create',
-          target_type: 'building',
-          target_id: input.building_id,
-          meta: {
-            kind: input.kind,
-            question: input.question,
-            threshold_pct: input.threshold_pct,
-            option_count: input.options?.length ?? 0,
-          },
+  createPoll: godProcedure.input(GodCreatePollInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.polls.create',
+        target_type: 'building',
+        target_id: input.building_id,
+        meta: {
+          kind: input.kind,
+          question: input.question,
+          threshold_pct: input.threshold_pct,
+          option_count: input.options?.length ?? 0,
         },
-        async () => {
-          try {
-            return await createPoll(ctx.db, input, ctx.user?.id ?? null)
-          } catch (e) {
-            rethrow(e)
-          }
-        },
-      ),
+      },
+      async () => {
+        try {
+          return await createPoll(ctx.db, input, ctx.user?.id ?? null)
+        } catch (e) {
+          rethrow(e)
+        }
+      },
     ),
+  ),
 
   // forceFinalize — set status='finalized' (pure flip; no winner computed). The
   // no-op interlock runs inside the repo write fn so a rejected attempt is audited.
-  forceFinalize: godProcedure
-    .input(GodForceFinalizePollInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.polls.force_finalize',
-          target_type: 'poll',
-          target_id: input.id,
-          meta: { bypass: 'tally_threshold' },
-        },
-        async () => {
-          try {
-            return await forceFinalizePoll(ctx.db, input.id)
-          } catch (e) {
-            rethrow(e)
-          }
-        },
-      ),
+  forceFinalize: godProcedure.input(GodForceFinalizePollInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.polls.force_finalize',
+        target_type: 'poll',
+        target_id: input.id,
+        meta: { bypass: 'tally_threshold' },
+      },
+      async () => {
+        try {
+          return await forceFinalizePoll(ctx.db, input.id)
+        } catch (e) {
+          rethrow(e)
+        }
+      },
     ),
+  ),
 
   // reopen — set status='open'. The no-op interlock runs inside the repo.
-  reopen: godProcedure
-    .input(GodReopenPollInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.polls.reopen',
-          target_type: 'poll',
-          target_id: input.id,
-          meta: {},
-        },
-        async () => {
-          try {
-            return await reopenPoll(ctx.db, input.id)
-          } catch (e) {
-            rethrow(e)
-          }
-        },
-      ),
+  reopen: godProcedure.input(GodReopenPollInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.polls.reopen',
+        target_type: 'poll',
+        target_id: input.id,
+        meta: {},
+      },
+      async () => {
+        try {
+          return await reopenPoll(ctx.db, input.id)
+        } catch (e) {
+          rethrow(e)
+        }
+      },
     ),
+  ),
 
   // overrideResult — VERY dangerous result-override. DangerConfirm types the
   // poll question; the backend re-verifies it before mutating. BYPASSES the
   // tally + threshold entirely.
-  overrideResult: godProcedure
-    .input(GodOverrideResultInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.polls.override_result',
-          target_type: 'poll',
-          target_id: input.id,
-          meta: {
-            set_result: input.set_result,
-            result_user_id: input.set_result ? input.result_user_id ?? null : undefined,
+  overrideResult: godProcedure.input(GodOverrideResultInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.polls.override_result',
+        target_type: 'poll',
+        target_id: input.id,
+        meta: {
+          set_result: input.set_result,
+          result_user_id: input.set_result ? (input.result_user_id ?? null) : undefined,
+          status: input.status,
+          confirm: input.confirm,
+          bypass: 'tally_threshold',
+        },
+      },
+      async () => {
+        await assertConfirmMatches(ctx.db, input.id, input.confirm)
+        try {
+          return await overrideResult(ctx.db, {
+            id: input.id,
+            setResult: input.set_result,
+            resultUserId: input.result_user_id ?? null,
             status: input.status,
-            confirm: input.confirm,
-            bypass: 'tally_threshold',
-          },
-        },
-        async () => {
-          await assertConfirmMatches(ctx.db, input.id, input.confirm)
-          try {
-            return await overrideResult(ctx.db, {
-              id: input.id,
-              setResult: input.set_result,
-              resultUserId: input.result_user_id ?? null,
-              status: input.status,
-            })
-          } catch (e) {
-            rethrow(e)
-          }
-        },
-      ),
+          })
+        } catch (e) {
+          rethrow(e)
+        }
+      },
     ),
+  ),
 })

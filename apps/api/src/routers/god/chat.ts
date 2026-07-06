@@ -3,7 +3,7 @@ import {
   GodChatThreadInput,
   GodChatDeleteMessageInput,
   GodChatRestoreMessageInput,
-} from '@asset-rise/shared/schemas/godChat'
+} from '@asset-rise/shared'
 import { router, requireLevel } from '../../trpc.js'
 import { godProcedure, godMutation } from '../../lib/god.js'
 import {
@@ -98,50 +98,46 @@ export const godChatRouter = router({
   // tenants (the message disappears for everyone), so the UI gates it behind a
   // DangerConfirm; the non-empty `confirm` token guard runs INSIDE the write fn
   // so a rejected/probing attempt is also audited.
-  deleteMessage: godProcedure
-    .input(GodChatDeleteMessageInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.chat.delete_message',
-          target_type: 'chat_message',
-          target_id: input.id,
-          meta: { soft: true, confirm: input.confirm },
-        },
-        async () => {
-          if (!input.confirm.trim()) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'נדרש אישור למחיקת ההודעה' })
-          }
-          try {
-            return await softDeleteMessage(ctx.db, input.id)
-          } catch (e) {
-            rethrow(e)
-          }
-        },
-      ),
+  deleteMessage: godProcedure.input(GodChatDeleteMessageInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.chat.delete_message',
+        target_type: 'chat_message',
+        target_id: input.id,
+        meta: { soft: true, confirm: input.confirm },
+      },
+      async () => {
+        if (!input.confirm.trim()) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'נדרש אישור למחיקת ההודעה' })
+        }
+        try {
+          return await softDeleteMessage(ctx.db, input.id)
+        } catch (e) {
+          rethrow(e)
+        }
+      },
     ),
+  ),
 
   // restoreMessage — un-soft-delete (set deleted_at = null). Not destructive (it
   // re-exposes a hidden message), so no DangerConfirm — but still audited.
-  restoreMessage: godProcedure
-    .input(GodChatRestoreMessageInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.chat.restore_message',
-          target_type: 'chat_message',
-          target_id: input.id,
-          meta: { soft: true },
-        },
-        async () => {
-          try {
-            return await restoreMessage(ctx.db, input.id)
-          } catch (e) {
-            rethrow(e)
-          }
-        },
-      ),
+  restoreMessage: godProcedure.input(GodChatRestoreMessageInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.chat.restore_message',
+        target_type: 'chat_message',
+        target_id: input.id,
+        meta: { soft: true },
+      },
+      async () => {
+        try {
+          return await restoreMessage(ctx.db, input.id)
+        } catch (e) {
+          rethrow(e)
+        }
+      },
     ),
+  ),
 })

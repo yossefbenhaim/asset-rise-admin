@@ -1,0 +1,11 @@
+{
+  "//": "Resolution-only tsconfig for dependency-cruiser (check:boundaries).",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@asset-rise/shared": ["packages/shared/src/index.ts"],
+      "@/*": ["apps/web/src/*"]
+    }
+  }
+}

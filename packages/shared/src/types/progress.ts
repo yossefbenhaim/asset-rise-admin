@@ -23,7 +23,7 @@ export interface ProgressTask {
   due_at: string | null
   completed_at: string | null
   created_at: string | null
-  stuck: boolean       // open + (older than STUCK_DAYS or past due)
+  stuck: boolean // open + (older than STUCK_DAYS or past due)
   days_open: number | null
 }
 
@@ -41,7 +41,7 @@ export interface ProgressRoleRef {
   id: string
   full_name: string | null
   email: string | null
-  role: string          // human role label, e.g. 'יזם' / 'יו״ר נציגות'
+  role: string // human role label, e.g. 'יזם' / 'יו״ר נציגות'
 }
 
 // A single user's standing: their building's stage map + THEIR tasks.
@@ -51,8 +51,8 @@ export interface UserProgress {
     full_name: string | null
     email: string | null
     phone: string | null
-    role: string | null            // tenant | provider
-    role_label: string | null      // resolved Hebrew (יו״ר / יזם / עו״ד …)
+    role: string | null // tenant | provider
+    role_label: string | null // resolved Hebrew (יו״ר / יזם / עו״ד …)
     provider_type: string | null
   }
   has_project: boolean
@@ -62,8 +62,8 @@ export interface UserProgress {
   current_stage: ProjectStageId | null
   current_stage_label: string | null
   days_at_stage: number | null
-  stages: ProgressStage[]          // 14, building-level status
-  tasks: ProgressTask[]            // THIS user's tasks (across all stages)
+  stages: ProgressStage[] // 14, building-level status
+  tasks: ProgressTask[] // THIS user's tasks (across all stages)
   totals: { done: number; total: number; stuck: number; open: number }
 }
 
@@ -104,7 +104,13 @@ export interface StuckOverview {
   days: number
   count: number
   items: StuckItem[]
-  byUser: { user_id: string; name: string | null; role_label: string | null; count: number; max_days: number }[]
+  byUser: {
+    user_id: string
+    name: string | null
+    role_label: string | null
+    count: number
+    max_days: number
+  }[]
   byBuilding: { building_id: string; address: string | null; count: number; max_days: number }[]
 }
 

@@ -49,11 +49,16 @@ function researchKeyOf(report: unknown): string | null {
 // Map a sc_analyzer_jobs.status to the admin ReportStatus vocabulary.
 function jobStatusToReport(status: string | null | undefined): ReportStatus {
   switch (status) {
-    case 'running': return 'processing'
-    case 'failed': return 'failed'
-    case 'pending': return 'queued'
-    case 'done': return 'completed'
-    default: return 'queued'
+    case 'running':
+      return 'processing'
+    case 'failed':
+      return 'failed'
+    case 'pending':
+      return 'queued'
+    case 'done':
+      return 'completed'
+    default:
+      return 'queued'
   }
 }
 
@@ -92,9 +97,10 @@ async function enqueueResearch(
     .maybeSingle()
 
   if (existing?.id) {
-    const req = (existing.request && typeof existing.request === 'object')
-      ? { ...(existing.request as Record<string, unknown>) }
-      : {}
+    const req =
+      existing.request && typeof existing.request === 'object'
+        ? { ...(existing.request as Record<string, unknown>) }
+        : {}
     req._admin_rerun = { ai_only: aiOnly, at: new Date().toISOString() }
     const { error } = await db
       .from('sc_analyzer_jobs')
@@ -104,13 +110,11 @@ async function enqueueResearch(
     return
   }
 
-  const { error } = await db
-    .from('sc_analyzer_jobs')
-    .insert({
-      research_key: researchKey,
-      status: 'pending',
-      request: { _admin_rerun: { ai_only: aiOnly, at: new Date().toISOString() } },
-    })
+  const { error } = await db.from('sc_analyzer_jobs').insert({
+    research_key: researchKey,
+    status: 'pending',
+    request: { _admin_rerun: { ai_only: aiOnly, at: new Date().toISOString() } },
+  })
   if (error && !/duplicate|unique|conflict/i.test(error.message)) throw error
 }
 
@@ -142,7 +146,11 @@ export const reportsRouter = router({
         .limit(50)
       if (error) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message })
 
-      const rows = (flags ?? []) as { report_token: string; note: string | null; updated_at: string | null }[]
+      const rows = (flags ?? []) as {
+        report_token: string
+        note: string | null
+        updated_at: string | null
+      }[]
       if (rows.length === 0) return []
 
       const tokens = rows.map(f => f.report_token)
@@ -153,28 +161,32 @@ export const reportsRouter = router({
       if (repErr) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: repErr.message })
 
       const byToken = new Map(
-        ((reports ?? []) as {
-          token: string
-          address_display: string | null
-          score: number | null
-          lead_name: string | null
-          created_at: string | null
-        }[]).map(r => [r.token, r]),
+        (
+          (reports ?? []) as {
+            token: string
+            address_display: string | null
+            score: number | null
+            lead_name: string | null
+            created_at: string | null
+          }[]
+        ).map(r => [r.token, r]),
       )
 
       // Preserve the pin order, drop flags whose report was deleted.
       return rows.flatMap((f): PinnedReportRow[] => {
         const r = byToken.get(f.report_token)
         if (!r) return []
-        return [{
-          token: r.token,
-          address_display: r.address_display ?? null,
-          score: typeof r.score === 'number' ? r.score : null,
-          lead_name: r.lead_name ?? null,
-          created_at: r.created_at ?? null,
-          note: f.note ?? null,
-          updated_at: f.updated_at ?? null,
-        }]
+        return [
+          {
+            token: r.token,
+            address_display: r.address_display ?? null,
+            score: typeof r.score === 'number' ? r.score : null,
+            lead_name: r.lead_name ?? null,
+            created_at: r.created_at ?? null,
+            note: f.note ?? null,
+            updated_at: f.updated_at ?? null,
+          },
+        ]
       })
     },
   ),
@@ -183,7 +195,9 @@ export const reportsRouter = router({
   list: requireAction('admin.reports.list').query(async ({ ctx }): Promise<ReportRow[]> => {
     const { data: reports, error } = await ctx.db
       .from('sc_analyzer_reports')
-      .select('token,address_key,address_display,score,report,created_at,accessed_at,lead_name,lead_email')
+      .select(
+        'token,address_key,address_display,score,report,created_at,accessed_at,lead_name,lead_email',
+      )
       .order('created_at', { ascending: false })
       .limit(1000)
     if (error) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message })
@@ -192,7 +206,9 @@ export const reportsRouter = router({
     // Bulk side-loads: which lead emails paid, which tokens are pinned, and the
     // running/failed jobs (to derive status for rows without a persisted report).
     const emails = Array.from(
-      new Set(rows.map(r => (r.lead_email as string | null)?.toLowerCase()).filter(Boolean) as string[]),
+      new Set(
+        rows.map(r => (r.lead_email as string | null)?.toLowerCase()).filter(Boolean) as string[],
+      ),
     )
     const tokens = rows.map(r => r.token as string)
     const researchKeys = Array.from(
@@ -201,13 +217,20 @@ export const reportsRouter = router({
 
     const [paidRes, flagRes, jobRes] = await Promise.all([
       emails.length
-        ? ctx.db.from('sc_payments').select('lead_email').eq('status', 'paid').in('lead_email', emails)
+        ? ctx.db
+            .from('sc_payments')
+            .select('lead_email')
+            .eq('status', 'paid')
+            .in('lead_email', emails)
         : Promise.resolve({ data: [] as { lead_email: string | null }[] }),
       tokens.length
         ? ctx.db.from('sc_report_flags').select('report_token,pinned').in('report_token', tokens)
         : Promise.resolve({ data: [] as { report_token: string; pinned: boolean }[] }),
       researchKeys.length
-        ? ctx.db.from('sc_analyzer_jobs').select('research_key,status').in('research_key', researchKeys)
+        ? ctx.db
+            .from('sc_analyzer_jobs')
+            .select('research_key,status')
+            .in('research_key', researchKeys)
         : Promise.resolve({ data: [] as { research_key: string; status: string }[] }),
     ])
 
@@ -257,7 +280,9 @@ export const reportsRouter = router({
     .query(async ({ ctx, input }): Promise<ReportDetail> => {
       const { data: row, error } = await ctx.db
         .from('sc_analyzer_reports')
-        .select('token,address_key,address_display,score,report,created_at,accessed_at,lead_name,lead_phone,lead_email')
+        .select(
+          'token,address_key,address_display,score,report,created_at,accessed_at,lead_name,lead_phone,lead_email',
+        )
         .eq('token', input.token)
         .maybeSingle()
       if (error) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message })

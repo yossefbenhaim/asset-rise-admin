@@ -1,0 +1,14 @@
+# build output
+dist/
+coverage/
+node_modules/
+package-lock.json
+
+# static assets
+apps/web/public/
+
+# docs stay hand-formatted (Hebrew RTL content)
+*.md
+
+# SQL migrations are hand-tuned
+apps/api/db/migrations/

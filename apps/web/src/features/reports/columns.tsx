@@ -99,10 +99,6 @@ export const reportColumns: ColumnDef<ReportRow, unknown>[] = [
     header: 'תשלום',
     accessorFn: r => (r.paid ? 1 : 0),
     cell: ({ row }) =>
-      row.original.paid ? (
-        <Pill kind="success">שולם</Pill>
-      ) : (
-        <Pill kind="neutral">לא שולם</Pill>
-      ),
+      row.original.paid ? <Pill kind="success">שולם</Pill> : <Pill kind="neutral">לא שולם</Pill>,
   },
 ]

@@ -60,17 +60,16 @@ export default function AdminSubmissions() {
           ) : (
             <div className="space-y-2">
               {list.data.map((r: any) => (
-                <div
-                  key={r.id}
-                  className="p-3 rounded-sc-input border border-sc-border bg-white"
-                >
+                <div key={r.id} className="p-3 rounded-sc-input border border-sc-border bg-white">
                   <div className="flex items-baseline gap-2">
                     <div className="font-semibold text-[14px]">{r.title}</div>
                     <div className="flex-1" />
                     <Pill kind={STATUS_PILL[r.status]}>{STATUS_LABEL[r.status]}</Pill>
                   </div>
                   {r.body && (
-                    <div className="text-[12px] text-sc-text-secondary mt-1 line-clamp-2">{r.body}</div>
+                    <div className="text-[12px] text-sc-text-secondary mt-1 line-clamp-2">
+                      {r.body}
+                    </div>
                   )}
                   <div className="text-[11px] text-sc-text-muted mt-1">
                     {r.submitter?.full_name ?? '—'}

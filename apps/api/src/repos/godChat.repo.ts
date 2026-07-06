@@ -4,7 +4,7 @@ import type {
   GodChatThread,
   GodChatMessage,
   GodChatThreadInput,
-} from '@asset-rise/shared/schemas/godChat'
+} from '@asset-rise/shared'
 
 // God-mode "Chat Moderation" repo (Wave 3 — content + comms). Runs as
 // service-role (adminClient) so it reads/writes any sc_* row, bypassing RLS.
@@ -24,11 +24,16 @@ import type {
 // write ever trips it (defensive; the deleted_at flip itself can't FK-fault).
 export const PG_FK_VIOLATION = '23503'
 
-function addressOf(b: {
-  street?: string | null
-  building_number?: string | null
-  city?: string | null
-} | null | undefined): string | null {
+function addressOf(
+  b:
+    | {
+        street?: string | null
+        building_number?: string | null
+        city?: string | null
+      }
+    | null
+    | undefined,
+): string | null {
   if (!b) return null
   const line = [b.street, b.building_number].filter(Boolean).join(' ')
   const full = [line, b.city].filter(Boolean).join(', ').trim()
@@ -103,9 +108,7 @@ export async function getChatThread(
 
   const { data: msgRows, error: msgErr } = await db
     .from('sc_chat_messages')
-    .select(
-      'id, sender_id, body, created_at, edited_at, deleted_at, reply_to_id, acted_by_user_id',
-    )
+    .select('id, sender_id, body, created_at, edited_at, deleted_at, reply_to_id, acted_by_user_id')
     .eq('thread_id', thread.id)
     .order('created_at', { ascending: true })
     .limit(input.limit ?? 1000)
@@ -199,7 +202,12 @@ export async function restoreMessage(
 export async function loadMessageTarget(
   db: SupabaseClient,
   id: string,
-): Promise<{ id: string; thread_id: string | null; deleted_at: string | null; building_id: string | null }> {
+): Promise<{
+  id: string
+  thread_id: string | null
+  deleted_at: string | null
+  building_id: string | null
+}> {
   const { data, error } = await db
     .from('sc_chat_messages')
     .select('id, thread_id, deleted_at')
@@ -229,7 +237,9 @@ export async function loadMessageTarget(
 async function resolveBuildings(
   db: SupabaseClient,
   ids: string[],
-): Promise<Map<string, { city: string | null; street: string | null; building_number: string | null }>> {
+): Promise<
+  Map<string, { city: string | null; street: string | null; building_number: string | null }>
+> {
   const map = new Map<string, any>()
   if (!ids.length) return map
   const { data } = await db

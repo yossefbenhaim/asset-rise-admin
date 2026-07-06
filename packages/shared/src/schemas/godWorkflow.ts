@@ -57,12 +57,7 @@ export const PROJECT_TASK_DANGER_STATUSES: ProjectTaskStatus[] = ['done', 'skipp
 
 // ── Building-task status (sc_building_tasks.status CHECK) ────────────────────
 // MUST stay in lockstep with the sc_building_tasks status CHECK (migration 019).
-export const BUILDING_TASK_STATUSES = [
-  'open',
-  'in_progress',
-  'done',
-  'cancelled',
-] as const
+export const BUILDING_TASK_STATUSES = ['open', 'in_progress', 'done', 'cancelled'] as const
 export type BuildingTaskStatus = (typeof BUILDING_TASK_STATUSES)[number]
 
 export const BUILDING_TASK_STATUS_LABEL: Record<BuildingTaskStatus, string> = {
@@ -77,12 +72,7 @@ export const BuildingTaskStatusEnum = z.enum(BUILDING_TASK_STATUSES)
 export const BUILDING_TASK_DANGER_STATUSES: BuildingTaskStatus[] = ['done', 'cancelled']
 
 // ── Dual-approval status (sc_dual_approvals.status CHECK) ────────────────────
-export const DUAL_APPROVAL_STATUSES = [
-  'pending',
-  'approved',
-  'rejected',
-  'expired',
-] as const
+export const DUAL_APPROVAL_STATUSES = ['pending', 'approved', 'rejected', 'expired'] as const
 export type DualApprovalStatus = (typeof DUAL_APPROVAL_STATUSES)[number]
 
 export const DUAL_APPROVAL_STATUS_LABEL: Record<DualApprovalStatus, string> = {

@@ -18,7 +18,7 @@ import {
   type NegotiationStatus,
   type GodNegotiationListItem,
   type GodNegotiationDetail,
-} from '@asset-rise/shared/schemas/godNegotiations'
+} from '@asset-rise/shared'
 
 // God-mode "Provider Negotiations" page (Wave 2 — "deals"). Lists all
 // sc_provider_negotiations with parties/status/stage/project/building, drills
@@ -67,9 +67,7 @@ const god = trpc as unknown as {
       forceStage: { useMutation: (o: MutOpts) => Mut<{ id: string; stage: NegotiationStage }> }
       forceStatus: { useMutation: (o: MutOpts) => Mut<{ id: string; status: NegotiationStatus }> }
       linkProvider: {
-        useMutation: (
-          o: MutOpts,
-        ) => Mut<{
+        useMutation: (o: MutOpts) => Mut<{
           id: string
           project_id?: string
           provider_id?: string
@@ -123,7 +121,9 @@ const columns: ColumnDef<NegRow, unknown>[] = [
     id: 'building',
     header: 'בניין',
     accessorFn: r => r.building_address ?? '',
-    cell: ({ row }) => <span className="font-semibold">{row.original.building_address ?? '—'}</span>,
+    cell: ({ row }) => (
+      <span className="font-semibold">{row.original.building_address ?? '—'}</span>
+    ),
   },
   {
     id: 'project',
@@ -155,7 +155,9 @@ const columns: ColumnDef<NegRow, unknown>[] = [
     header: 'סטטוס',
     accessorFn: r => statusLabel(r.status),
     cell: ({ row }) => (
-      <Pill kind={statusPillKind(row.original.status) as any}>{statusLabel(row.original.status)}</Pill>
+      <Pill kind={statusPillKind(row.original.status) as any}>
+        {statusLabel(row.original.status)}
+      </Pill>
     ),
   },
   {
@@ -198,24 +200,34 @@ export default function GodNegotiations() {
         tone="danger"
       >
         <div className="flex flex-col sm:flex-row gap-2">
-          <select className={`${inputCls} sm:w-48`} value={status} onChange={e => setStatus(e.target.value)}>
+          <select
+            className={`${inputCls} sm:w-48`}
+            value={status}
+            onChange={e => setStatus(e.target.value)}
+          >
             <option value="">כל הסטטוסים</option>
             {NEGOTIATION_STATUSES.map(s => (
-              <option key={s} value={s}>{NEGOTIATION_STATUS_LABEL[s]}</option>
+              <option key={s} value={s}>
+                {NEGOTIATION_STATUS_LABEL[s]}
+              </option>
             ))}
           </select>
-          <select className={`${inputCls} sm:w-48`} value={stage} onChange={e => setStage(e.target.value)}>
+          <select
+            className={`${inputCls} sm:w-48`}
+            value={stage}
+            onChange={e => setStage(e.target.value)}
+          >
             <option value="">כל השלבים</option>
             {NEGOTIATION_STAGES.map(s => (
-              <option key={s} value={s}>{NEGOTIATION_STAGE_LABEL[s]}</option>
+              <option key={s} value={s}>
+                {NEGOTIATION_STAGE_LABEL[s]}
+              </option>
             ))}
           </select>
         </div>
       </ControlPanel>
 
-      {list.isError && (
-        <p className="text-sc-danger text-[13px] mb-2">{list.error?.message}</p>
-      )}
+      {list.isError && <p className="text-sc-danger text-[13px] mb-2">{list.error?.message}</p>}
 
       <div className="mt-4">
         <DataTable<NegRow>
@@ -248,7 +260,9 @@ function NegotiationDetail({ id, onClose }: { id: string; onClose: () => void })
   if (detail.isError || !detail.data) {
     return (
       <Modal open onClose={onClose} title="פרטי משא ומתן">
-        <div className="text-center py-6 text-sc-danger text-[13px]">{detail.error?.message ?? 'לא נמצא'}</div>
+        <div className="text-center py-6 text-sc-danger text-[13px]">
+          {detail.error?.message ?? 'לא נמצא'}
+        </div>
       </Modal>
     )
   }
@@ -266,19 +280,33 @@ function NegotiationDetailBody({ n, onClose }: { n: GodNegotiationDetail; onClos
   }
 
   const forceStageM = god.god.negotiations.forceStage.useMutation({
-    onSuccess: () => { toast.show('שלב המשא ומתן עודכן'); refresh() },
+    onSuccess: () => {
+      toast.show('שלב המשא ומתן עודכן')
+      refresh()
+    },
     onError: e => toast.show(e.message),
   })
   const forceStatusM = god.god.negotiations.forceStatus.useMutation({
-    onSuccess: () => { toast.show('סטטוס המשא ומתן עודכן'); setStatusConfirmOpen(false); refresh() },
+    onSuccess: () => {
+      toast.show('סטטוס המשא ומתן עודכן')
+      setStatusConfirmOpen(false)
+      refresh()
+    },
     onError: e => toast.show(e.message),
   })
   const linkM = god.god.negotiations.linkProvider.useMutation({
-    onSuccess: () => { toast.show('הספק שויך לפרויקט'); refresh() },
+    onSuccess: () => {
+      toast.show('הספק שויך לפרויקט')
+      refresh()
+    },
     onError: e => toast.show(e.message),
   })
   const unlinkM = god.god.negotiations.unlinkProvider.useMutation({
-    onSuccess: () => { toast.show('שיוך הספק הוסר'); setUnlinkOpen(false); refresh() },
+    onSuccess: () => {
+      toast.show('שיוך הספק הוסר')
+      setUnlinkOpen(false)
+      refresh()
+    },
     onError: e => toast.show(e.message),
   })
 
@@ -297,7 +325,9 @@ function NegotiationDetailBody({ n, onClose }: { n: GodNegotiationDetail; onClos
         title={`משא ומתן: ${n.provider_name || n.provider_email || n.id}`}
         footer={
           <div className="flex gap-2 justify-end">
-            <Button variant="ghost" onClick={onClose}>סגור</Button>
+            <Button variant="ghost" onClick={onClose}>
+              סגור
+            </Button>
           </div>
         }
       >
@@ -306,12 +336,39 @@ function NegotiationDetailBody({ n, onClose }: { n: GodNegotiationDetail; onClos
           <div className="space-y-1">
             <Row label="בניין" value={n.building_address || '—'} />
             <Row label="פרויקט" value={n.project_name || '—'} />
-            <Row label="יו״ר" value={n.chair_name ? `${n.chair_name}${n.chair_email ? ` · ${n.chair_email}` : ''}` : '—'} />
-            <Row label="ספק" value={n.provider_name ? `${n.provider_name}${n.provider_email ? ` · ${n.provider_email}` : ''}` : '—'} />
-            <Row label="סוג ספק" value={n.provider_type ? <Pill kind="gold">{n.provider_type}</Pill> : '—'} />
-            <Row label="סטטוס נוכחי" value={<Pill kind={statusPillKind(n.status) as any}>{statusLabel(n.status)}</Pill>} />
+            <Row
+              label="יו״ר"
+              value={
+                n.chair_name ? `${n.chair_name}${n.chair_email ? ` · ${n.chair_email}` : ''}` : '—'
+              }
+            />
+            <Row
+              label="ספק"
+              value={
+                n.provider_name
+                  ? `${n.provider_name}${n.provider_email ? ` · ${n.provider_email}` : ''}`
+                  : '—'
+              }
+            />
+            <Row
+              label="סוג ספק"
+              value={n.provider_type ? <Pill kind="gold">{n.provider_type}</Pill> : '—'}
+            />
+            <Row
+              label="סטטוס נוכחי"
+              value={<Pill kind={statusPillKind(n.status) as any}>{statusLabel(n.status)}</Pill>}
+            />
             <Row label="שלב נוכחי" value={<Pill kind="neutral">{stageLabel(n.stage)}</Pill>} />
-            <Row label="שיוך לפרויקט" value={n.is_linked ? <Pill kind="success">מקושר</Pill> : <Pill kind="neutral">לא מקושר</Pill>} />
+            <Row
+              label="שיוך לפרויקט"
+              value={
+                n.is_linked ? (
+                  <Pill kind="success">מקושר</Pill>
+                ) : (
+                  <Pill kind="neutral">לא מקושר</Pill>
+                )
+              }
+            />
             {n.result_summary && <Row label="סיכום תוצאה" value={n.result_summary} />}
           </div>
 
@@ -320,9 +377,15 @@ function NegotiationDetailBody({ n, onClose }: { n: GodNegotiationDetail; onClos
             <div className="flex flex-wrap items-end gap-2">
               <label className="block">
                 <span className={labelCls}>בחר/י שלב</span>
-                <select className={`${inputCls} min-w-[200px]`} value={stage} onChange={e => setStage(e.target.value)}>
+                <select
+                  className={`${inputCls} min-w-[200px]`}
+                  value={stage}
+                  onChange={e => setStage(e.target.value)}
+                >
                   {NEGOTIATION_STAGES.map(s => (
-                    <option key={s} value={s}>{NEGOTIATION_STAGE_LABEL[s]}</option>
+                    <option key={s} value={s}>
+                      {NEGOTIATION_STAGE_LABEL[s]}
+                    </option>
                   ))}
                 </select>
               </label>
@@ -331,7 +394,9 @@ function NegotiationDetailBody({ n, onClose }: { n: GodNegotiationDetail; onClos
                 loading={forceStageM.isLoading}
                 disabled={stage === n.stage}
                 onClick={() => forceStageM.mutate({ id: n.id, stage: stage as NegotiationStage })}
-              >עדכן שלב</Button>
+              >
+                עדכן שלב
+              </Button>
             </div>
           </Section>
 
@@ -340,9 +405,15 @@ function NegotiationDetailBody({ n, onClose }: { n: GodNegotiationDetail; onClos
             <div className="flex flex-wrap items-end gap-2">
               <label className="block">
                 <span className={labelCls}>בחר/י סטטוס</span>
-                <select className={`${inputCls} min-w-[200px]`} value={status} onChange={e => setStatus(e.target.value)}>
+                <select
+                  className={`${inputCls} min-w-[200px]`}
+                  value={status}
+                  onChange={e => setStatus(e.target.value)}
+                >
                   {NEGOTIATION_STATUSES.map(s => (
-                    <option key={s} value={s}>{NEGOTIATION_STATUS_LABEL[s]}</option>
+                    <option key={s} value={s}>
+                      {NEGOTIATION_STATUS_LABEL[s]}
+                    </option>
                   ))}
                 </select>
               </label>
@@ -356,11 +427,14 @@ function NegotiationDetailBody({ n, onClose }: { n: GodNegotiationDetail; onClos
                     ? setStatusConfirmOpen(true)
                     : forceStatusM.mutate({ id: n.id, status: status as NegotiationStatus })
                 }
-              >עדכן סטטוס</Button>
+              >
+                עדכן סטטוס
+              </Button>
             </div>
             {statusOverrides && (
               <p className="text-sc-danger text-[12px] mt-2 m-0">
-                שים/י לב: כפיית סטטוס «{statusLabel(status)}» עוקפת את הצבעת הדיירים ואת תהליך הסגירה הרגיל. השיוך בפועל של הספק לפרויקט נעשה בנפרד (שיוך ספק).
+                שים/י לב: כפיית סטטוס «{statusLabel(status)}» עוקפת את הצבעת הדיירים ואת תהליך
+                הסגירה הרגיל. השיוך בפועל של הספק לפרויקט נעשה בנפרד (שיוך ספק).
               </p>
             )}
           </Section>
@@ -368,7 +442,8 @@ function NegotiationDetailBody({ n, onClose }: { n: GodNegotiationDetail; onClos
           {/* Link / unlink provider record */}
           <Section title="שיוך ספק לפרויקט" icon={<Link2 size={15} />} danger>
             <p className="text-sc-text-secondary text-[12px] m-0 mb-2">
-              יצירת/הסרת רשומת השיוך (sc_project_providers) ישירות — עוקף את תהליך ההצבעה והסגירה הרגיל.
+              יצירת/הסרת רשומת השיוך (sc_project_providers) ישירות — עוקף את תהליך ההצבעה והסגירה
+              הרגיל.
             </p>
             <div className="flex flex-wrap gap-2">
               <Button
@@ -377,14 +452,18 @@ function NegotiationDetailBody({ n, onClose }: { n: GodNegotiationDetail; onClos
                 loading={linkM.isLoading}
                 disabled={!canLink || n.is_linked}
                 onClick={() => linkM.mutate({ id: n.id })}
-              >{n.is_linked ? 'כבר מקושר' : 'שייך ספק לפרויקט'}</Button>
+              >
+                {n.is_linked ? 'כבר מקושר' : 'שייך ספק לפרויקט'}
+              </Button>
               <Button
                 size="sm"
                 variant="danger"
                 icon={<Link2Off size={14} />}
                 disabled={!canLink || !n.is_linked}
                 onClick={() => setUnlinkOpen(true)}
-              >הסר שיוך</Button>
+              >
+                הסר שיוך
+              </Button>
             </div>
             {!canLink && (
               <p className="text-sc-text-muted text-[12px] mt-2 m-0">
@@ -402,14 +481,18 @@ function NegotiationDetailBody({ n, onClose }: { n: GodNegotiationDetail; onClos
                 {n.messages.map(m => (
                   <div key={m.id} className="border border-sc-border rounded-sc-input p-2">
                     <div className="flex items-baseline gap-2">
-                      <span className="font-semibold text-[12px]">{m.sender_name || '(לא ידוע)'}</span>
+                      <span className="font-semibold text-[12px]">
+                        {m.sender_name || '(לא ידוע)'}
+                      </span>
                       {m.created_at && (
                         <span className="text-[11px] text-sc-text-muted">
                           {new Date(m.created_at).toLocaleString('he-IL')}
                         </span>
                       )}
                     </div>
-                    <div className="text-[13px] whitespace-pre-wrap break-words mt-1">{m.body || '—'}</div>
+                    <div className="text-[13px] whitespace-pre-wrap break-words mt-1">
+                      {m.body || '—'}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -430,7 +513,8 @@ function NegotiationDetailBody({ n, onClose }: { n: GodNegotiationDetail; onClos
           <div className="space-y-2">
             <p className="text-sc-danger font-semibold m-0">פעולה הרסנית!</p>
             <p className="m-0">
-              כפיית סטטוס «{statusLabel(status)}» תקבע את תוצאת המשא ומתן ותעקוף את הצבעת הדיירים ואת תהליך הסגירה הרגיל. השיוך בפועל של הספק לפרויקט נעשה בנפרד (שיוך ספק).
+              כפיית סטטוס «{statusLabel(status)}» תקבע את תוצאת המשא ומתן ותעקוף את הצבעת הדיירים
+              ואת תהליך הסגירה הרגיל. השיוך בפועל של הספק לפרויקט נעשה בנפרד (שיוך ספק).
             </p>
           </div>
         }
@@ -448,7 +532,8 @@ function NegotiationDetailBody({ n, onClose }: { n: GodNegotiationDetail; onClos
           <div className="space-y-2">
             <p className="text-sc-danger font-semibold m-0">פעולה הרסנית!</p>
             <p className="m-0">
-              הסרת השיוך תמחק את רשומת sc_project_providers שמקשרת את הספק לפרויקט. הפעולה עוקפת את תהליך הסגירה הרגיל ואינה משנה את סטטוס/שלב המשא ומתן.
+              הסרת השיוך תמחק את רשומת sc_project_providers שמקשרת את הספק לפרויקט. הפעולה עוקפת את
+              תהליך הסגירה הרגיל ואינה משנה את סטטוס/שלב המשא ומתן.
             </p>
           </div>
         }
@@ -458,7 +543,10 @@ function NegotiationDetailBody({ n, onClose }: { n: GodNegotiationDetail; onClos
 }
 
 function Section({
-  title, icon, children, danger,
+  title,
+  icon,
+  children,
+  danger,
 }: {
   title: string
   icon?: React.ReactNode
@@ -466,9 +554,14 @@ function Section({
   danger?: boolean
 }) {
   return (
-    <div className={`rounded-sc-input border p-3 ${danger ? 'border-sc-danger bg-sc-danger-bg/30' : 'border-sc-border'}`}>
-      <div className={`font-bold text-[13px] mb-2 flex items-center gap-2 ${danger ? 'text-sc-danger' : 'text-sc-text'}`}>
-        {icon}{title}
+    <div
+      className={`rounded-sc-input border p-3 ${danger ? 'border-sc-danger bg-sc-danger-bg/30' : 'border-sc-border'}`}
+    >
+      <div
+        className={`font-bold text-[13px] mb-2 flex items-center gap-2 ${danger ? 'text-sc-danger' : 'text-sc-text'}`}
+      >
+        {icon}
+        {title}
       </div>
       {children}
     </div>

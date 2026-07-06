@@ -17,7 +17,8 @@ const variantCls: Record<Variant, string> = {
   primary: 'bg-sc-primary text-white shadow-[0_2px_8px_rgba(59,107,156,0.20)] hover:opacity-90',
   gold: 'bg-sc-gold text-white shadow-[0_2px_8px_rgba(139,111,71,0.20)] hover:opacity-90',
   secondary: 'bg-transparent text-sc-primary border border-sc-primary hover:bg-sc-light-blue',
-  ghost: 'bg-transparent text-sc-text-secondary border border-transparent hover:bg-sc-bg hover:text-sc-text',
+  ghost:
+    'bg-transparent text-sc-text-secondary border border-transparent hover:bg-sc-bg hover:text-sc-text',
   danger: 'bg-white text-sc-danger border border-sc-danger hover:bg-sc-danger-bg',
 }
 

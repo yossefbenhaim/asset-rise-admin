@@ -1,8 +1,13 @@
 import { Check } from 'lucide-react'
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 
-interface ToastState { msg: string; id: number }
-interface ToastApi { show: (msg: string) => void }
+interface ToastState {
+  msg: string
+  id: number
+}
+interface ToastApi {
+  show: (msg: string) => void
+}
 const Ctx = createContext<ToastApi | null>(null)
 
 export function ToastProvider({ children }: { children: ReactNode }) {

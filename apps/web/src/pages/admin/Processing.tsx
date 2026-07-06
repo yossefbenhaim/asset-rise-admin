@@ -41,7 +41,10 @@ export default function AdminProcessing() {
       {q.isLoading ? (
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <SkeletonCard /><SkeletonCard /><SkeletonCard /><SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
           </div>
           <SkeletonCard />
         </div>
@@ -110,13 +113,13 @@ export default function AdminProcessing() {
               yKey="count"
               color={BRAND.primary}
               height={200}
-              valueFmt={(n) => `${n} ריצות`}
+              valueFmt={n => `${n} ריצות`}
             />
             <BarChartCard
               index={1}
               title="משך ריצה ממוצע"
               sub={`${d.timelineGranularity === 'hour' ? 'לפי שעה' : 'לפי יום'} · שניות`}
-              data={d.timeline.map((p) => ({
+              data={d.timeline.map(p => ({
                 label: p.label,
                 avgSec: p.avgDurationMs != null ? Number((p.avgDurationMs / 1000).toFixed(1)) : 0,
               }))}
@@ -124,7 +127,7 @@ export default function AdminProcessing() {
               yKey="avgSec"
               color={BRAND.gold}
               height={200}
-              valueFmt={(n) => `${n} ש׳`}
+              valueFmt={n => `${n} ש׳`}
             />
           </div>
 
@@ -174,4 +177,3 @@ export default function AdminProcessing() {
     </div>
   )
 }
-

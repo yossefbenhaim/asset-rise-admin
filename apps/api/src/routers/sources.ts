@@ -31,12 +31,17 @@ const SOURCE_DEFS: Array<{
   description: string
   icon: string
 }> = [
-  { id: 'govmap',    name: 'GovMap / GIS',   description: 'שכבות מיפוי וקרקע ממשלתיות', icon: 'Map' },
-  { id: 'renewal',   name: 'מתחמי התחדשות',  description: 'מתחמי פינוי-בינוי ועיבוי',  icon: 'Building2' },
-  { id: 'mavat',     name: 'MAVAT / תב״ע',   description: 'נתוני תכנון וזכויות בנייה',  icon: 'FileText' },
-  { id: 'municipal', name: 'נתוני עירייה',    description: 'מידע עירוני ומקומי',        icon: 'Landmark' },
-  { id: 'geocode',   name: 'Geocoding',      description: 'איתור כתובות וקואורדינטות',  icon: 'MapPin' },
-  { id: 'ai',        name: 'ספק AI',          description: 'יצירת סיכומי ניתוח ומחקר',   icon: 'Bot' },
+  { id: 'govmap', name: 'GovMap / GIS', description: 'שכבות מיפוי וקרקע ממשלתיות', icon: 'Map' },
+  {
+    id: 'renewal',
+    name: 'מתחמי התחדשות',
+    description: 'מתחמי פינוי-בינוי ועיבוי',
+    icon: 'Building2',
+  },
+  { id: 'mavat', name: 'MAVAT / תב״ע', description: 'נתוני תכנון וזכויות בנייה', icon: 'FileText' },
+  { id: 'municipal', name: 'נתוני עירייה', description: 'מידע עירוני ומקומי', icon: 'Landmark' },
+  { id: 'geocode', name: 'Geocoding', description: 'איתור כתובות וקואורדינטות', icon: 'MapPin' },
+  { id: 'ai', name: 'ספק AI', description: 'יצירת סיכומי ניתוח ומחקר', icon: 'Bot' },
 ]
 
 // One row of sc_source_health as we read it.
@@ -60,7 +65,11 @@ function coerceStatus(s: string | null): SourceStatus {
 }
 
 // Build a SourceHealth from a persisted sc_source_health row.
-function fromHealthRow(def: (typeof SOURCE_DEFS)[number], row: HealthRow, nowMs: number): SourceHealth {
+function fromHealthRow(
+  def: (typeof SOURCE_DEFS)[number],
+  row: HealthRow,
+  nowMs: number,
+): SourceHealth {
   const status = coerceStatus(row.status)
   const checkedMs = row.checked_at ? Date.parse(row.checked_at) : NaN
   const stale = Number.isNaN(checkedMs) ? false : nowMs - checkedMs > STALE_CHECK_MS
@@ -132,8 +141,8 @@ interface AiSignal {
 
 function deriveAiSignal(rows: AiJobRow[], lastDone: string | null, nowMs: number): AiSignal {
   const recent = rows ?? []
-  const done = recent.filter((r) => r.status === 'done').length
-  const failed = recent.filter((r) => r.status === 'failed').length
+  const done = recent.filter(r => r.status === 'done').length
+  const failed = recent.filter(r => r.status === 'failed').length
   const total = done + failed
   const failRate = total > 0 ? failed / total : 0
 
@@ -468,7 +477,7 @@ export const sourcesRouter = router({
 
       // Assemble in catalog order from real rows, with the AI cross-derivation
       // merged in (or used standalone when the AI has no persisted row yet).
-      const sources: SourceHealth[] = SOURCE_DEFS.map((def) => {
+      const sources: SourceHealth[] = SOURCE_DEFS.map(def => {
         const row = healthBySource.get(def.id)
         if (def.id === 'ai') {
           return row
@@ -480,10 +489,10 @@ export const sourcesRouter = router({
 
       const summary = {
         total: sources.length,
-        active: sources.filter((s) => s.status === 'active').length,
-        degraded: sources.filter((s) => s.status === 'degraded').length,
-        down: sources.filter((s) => s.status === 'down').length,
-        instrumented: sources.filter((s) => s.instrumented).length,
+        active: sources.filter(s => s.status === 'active').length,
+        degraded: sources.filter(s => s.status === 'degraded').length,
+        down: sources.filter(s => s.status === 'down').length,
+        instrumented: sources.filter(s => s.instrumented).length,
       }
 
       return { sources, summary, now: new Date(nowMs).toISOString() }
@@ -501,12 +510,17 @@ export const sourcesRouter = router({
       .from('sc_source_health')
       .select('source,status,latency_ms,last_ok_at,checked_at')
 
-    const live: Partial<Record<SourceId, {
-      status: SourceStatus
-      instrumented: boolean
-      latencyMs: number | null
-      lastUpdated: string | null
-    }>> = {}
+    const live: Partial<
+      Record<
+        SourceId,
+        {
+          status: SourceStatus
+          instrumented: boolean
+          latencyMs: number | null
+          lastUpdated: string | null
+        }
+      >
+    > = {}
     for (const r of (healthRes.data ?? []) as Array<{
       source: string | null
       status: string | null
@@ -523,15 +537,15 @@ export const sourcesRouter = router({
     }
 
     // Flatten to count types + municipalities.
-    const all: CatalogSource[] = CATALOG_GROUPS.flatMap((g) => g.sources)
+    const all: CatalogSource[] = CATALOG_GROUPS.flatMap(g => g.sources)
     const municipalities = new Set<string>()
     for (const s of all) for (const c of s.municipalities) municipalities.add(c)
 
     const summary = {
       total: all.length,
-      api: all.filter((s) => s.type === 'api').length,
-      web: all.filter((s) => s.type === 'web').length,
-      static: all.filter((s) => s.type === 'static').length,
+      api: all.filter(s => s.type === 'api').length,
+      web: all.filter(s => s.type === 'web').length,
+      static: all.filter(s => s.type === 'static').length,
       municipalities: municipalities.size,
     }
 

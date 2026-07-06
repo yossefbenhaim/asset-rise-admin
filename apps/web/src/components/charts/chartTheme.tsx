@@ -5,8 +5,13 @@ import type { ReactNode } from 'react'
 import { motion } from 'framer-motion'
 
 export const BRAND = {
-  navy: '#1e3a5f', primary: '#3b6b9c', primaryLight: '#5a8db8',
-  gold: '#a6895f', teal: '#4db6c4', danger: '#b94a48', success: '#4a8c5c',
+  navy: '#1e3a5f',
+  primary: '#3b6b9c',
+  primaryLight: '#5a8db8',
+  gold: '#a6895f',
+  teal: '#4db6c4',
+  danger: '#b94a48',
+  success: '#4a8c5c',
 }
 // Donut / category palette (brand-coherent).
 export const PALETTE = ['#1e3a5f', '#3b6b9c', '#5a8db8', '#4db6c4', '#a6895f', '#8fb3d4']
@@ -27,20 +32,33 @@ export function ChartTooltip({ active, payload, label, valueFmt }: any) {
         <div key={i} className="flex items-center gap-2 text-sc-text-secondary">
           <span className="w-2 h-2 rounded-full" style={{ background: p.color || p.fill }} />
           <span>{p.name}:</span>
-          <span className="font-bold text-sc-text sc-num">{valueFmt ? valueFmt(p.value) : p.value?.toLocaleString('he-IL')}</span>
+          <span className="font-bold text-sc-text sc-num">
+            {valueFmt ? valueFmt(p.value) : p.value?.toLocaleString('he-IL')}
+          </span>
         </div>
       ))}
     </div>
   )
 }
 
-export function ChartCard({ title, sub, action, children, index = 0 }: {
-  title: string; sub?: string; action?: ReactNode; children: ReactNode; index?: number
+export function ChartCard({
+  title,
+  sub,
+  action,
+  children,
+  index = 0,
+}: {
+  title: string
+  sub?: string
+  action?: ReactNode
+  children: ReactNode
+  index?: number
 }) {
   return (
     <motion.div
       className="sc-glass p-4 flex flex-col"
-      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
     >
       <div className="flex items-start justify-between mb-3">

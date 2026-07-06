@@ -33,10 +33,9 @@ export default function AdminPayments() {
 
   // Totals are computed server-side over ALL payments and stay stable while
   // the status filter narrows the rows, so the KPI cards don't jump.
-  const list = trpc.payments.list.useQuery(
-    status ? { status } : undefined,
-    { refetchOnWindowFocus: false },
-  )
+  const list = trpc.payments.list.useQuery(status ? { status } : undefined, {
+    refetchOnWindowFocus: false,
+  })
 
   const rows: PaymentRow[] = list.data?.rows ?? []
   const totals = list.data?.totals
@@ -115,22 +114,30 @@ export default function AdminPayments() {
         {selected && (
           <div className="flex flex-col">
             <div className="flex items-center justify-between pb-3 mb-1">
-              <span className="sc-num text-[22px] font-bold text-sc-text">{nis(selected.amount)}</span>
+              <span className="sc-num text-[22px] font-bold text-sc-text">
+                {nis(selected.amount)}
+              </span>
               <StatusBadge status={selected.status} />
             </div>
             <Field label="סטטוס">{STATUS_LABEL[selected.status] ?? selected.status}</Field>
             <Field label="לקוח (אימייל)">{selected.lead_email ?? '—'}</Field>
             <Field label="מזהה משתמש">
-              <span className="font-mono" dir="ltr">{selected.user_id ?? '—'}</span>
+              <span className="font-mono" dir="ltr">
+                {selected.user_id ?? '—'}
+              </span>
             </Field>
             <Field label="טוקן דוח">
-              <span className="font-mono" dir="ltr">{selected.report_token ?? '—'}</span>
+              <span className="font-mono" dir="ltr">
+                {selected.report_token ?? '—'}
+              </span>
             </Field>
             <Field label="ספק סליקה">
               <span className="capitalize">{selected.provider ?? '—'}</span>
             </Field>
             <Field label="מזהה עסקה">
-              <span className="font-mono" dir="ltr">{selected.txn_id ?? '—'}</span>
+              <span className="font-mono" dir="ltr">
+                {selected.txn_id ?? '—'}
+              </span>
             </Field>
             <Field label="נוצר">{dateTime(selected.created_at)}</Field>
             <Field label="שולם בתאריך">{selected.paid_at ? dateTime(selected.paid_at) : '—'}</Field>
@@ -142,5 +149,8 @@ export default function AdminPayments() {
 }
 
 const STATUS_LABEL: Record<PaymentStatus, string> = {
-  paid: 'שולם', pending: 'ממתין', failed: 'נכשל', refunded: 'הוחזר',
+  paid: 'שולם',
+  pending: 'ממתין',
+  failed: 'נכשל',
+  refunded: 'הוחזר',
 }

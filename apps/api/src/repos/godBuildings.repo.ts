@@ -27,7 +27,11 @@ const SLOT_COLUMN: Record<GodReassignRoleInput['slot'], string> = {
   developer: 'active_developer_id',
 }
 
-function addressOf(b: { street?: string | null; building_number?: string | null; city?: string | null }): string {
+function addressOf(b: {
+  street?: string | null
+  building_number?: string | null
+  city?: string | null
+}): string {
   const line = [b.street, b.building_number].filter(Boolean).join(' ')
   return [line, b.city].filter(Boolean).join(', ').trim()
 }

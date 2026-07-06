@@ -11,9 +11,22 @@
     "dev:web": "npm --workspace apps/web run dev",
     "build:api": "npm --workspace apps/api run build",
     "build:web": "npm --workspace apps/web run build",
-    "build": "npm run build:web && npm run build:api",
+    "build": "npm run check && npm run build:web && npm run build:api",
     "migrate": "npm --workspace apps/api run migrate",
     "typecheck:api": "npm --workspace apps/api run typecheck",
-    "typecheck:web": "npm --workspace apps/web run typecheck"
+    "typecheck:web": "npm --workspace apps/web run typecheck",
+    "check:boundaries": "depcruise apps/api/src apps/web/src packages/shared/src --config .dependency-cruiser.cjs",
+    "lint": "eslint apps packages",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run check:boundaries && npm run lint && npm run format:check"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.0",
+    "dependency-cruiser": "17.4.2",
+    "eslint": "10.4.1",
+    "eslint-plugin-react-hooks": "7.0.1",
+    "prettier": "3.9.2",
+    "typescript-eslint": "8.61.1"
   }
 }

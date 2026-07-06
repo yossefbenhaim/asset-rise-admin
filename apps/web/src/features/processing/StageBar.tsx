@@ -23,17 +23,17 @@ function stateOf(i: number, current: number, status: string): State {
 }
 
 const DOT: Record<State, string> = {
-  done:    'bg-sc-success text-white border-sc-success',
+  done: 'bg-sc-success text-white border-sc-success',
   current: 'bg-sc-primary text-white border-sc-primary',
-  failed:  'bg-sc-danger text-white border-sc-danger',
-  idle:    'bg-white text-sc-text-muted border-sc-border',
+  failed: 'bg-sc-danger text-white border-sc-danger',
+  idle: 'bg-white text-sc-text-muted border-sc-border',
 }
 
 const CONNECTOR: Record<State, string> = {
-  done:    'bg-sc-success',
+  done: 'bg-sc-success',
   current: 'bg-sc-primary/40',
-  failed:  'bg-sc-danger',
-  idle:    'bg-sc-border',
+  failed: 'bg-sc-danger',
+  idle: 'bg-sc-border',
 }
 
 export function StageBar({
@@ -43,7 +43,7 @@ export function StageBar({
 }: {
   stages: readonly string[]
   current: number // 0-based; -1 when not started
-  status: string  // 'pending' | 'running' | 'done' | 'failed'
+  status: string // 'pending' | 'running' | 'done' | 'failed'
 }) {
   return (
     <div className="w-full">
@@ -58,14 +58,21 @@ export function StageBar({
                   className={`grid place-items-center w-6 h-6 rounded-full border text-[11px] font-bold ${DOT[st]}`}
                   initial={false}
                   animate={st === 'current' ? { scale: [1, 1.12, 1] } : { scale: 1 }}
-                  transition={st === 'current'
-                    ? { duration: 1.4, repeat: Infinity, ease: 'easeInOut' }
-                    : { duration: 0.25 }}
+                  transition={
+                    st === 'current'
+                      ? { duration: 1.4, repeat: Infinity, ease: 'easeInOut' }
+                      : { duration: 0.25 }
+                  }
                 >
-                  {st === 'done' ? <Check size={13} />
-                    : st === 'failed' ? <X size={13} />
-                    : st === 'current' ? <Loader2 size={12} className="animate-spin" />
-                    : i + 1}
+                  {st === 'done' ? (
+                    <Check size={13} />
+                  ) : st === 'failed' ? (
+                    <X size={13} />
+                  ) : st === 'current' ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    i + 1
+                  )}
                 </motion.span>
                 <span
                   className={`text-[9.5px] leading-tight text-center max-w-[64px] truncate ${
@@ -76,9 +83,7 @@ export function StageBar({
                   {label}
                 </span>
               </div>
-              {!last && (
-                <div className={`h-0.5 flex-1 mx-1 rounded-full -mt-4 ${CONNECTOR[st]}`} />
-              )}
+              {!last && <div className={`h-0.5 flex-1 mx-1 rounded-full -mt-4 ${CONNECTOR[st]}`} />}
             </div>
           )
         })}

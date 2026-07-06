@@ -19,7 +19,8 @@ function delta(cur: number, prev: number): number | null {
 export const analyticsRouter = router({
   dashboard: requireAction('admin.dashboard').query(async ({ ctx }): Promise<DashboardData> => {
     const now = Date.now()
-    const startToday = new Date(); startToday.setHours(0, 0, 0, 0)
+    const startToday = new Date()
+    startToday.setHours(0, 0, 0, 0)
     const iso = (ms: number) => new Date(ms).toISOString()
     const t30 = iso(now - 30 * DAY)
     const t14 = now - 14 * DAY
@@ -30,41 +31,81 @@ export const analyticsRouter = router({
       reportsTodayRes,
       reportsWeekRes,
       reportsPrevWeekRes,
-      reportsMonthRowsRes,        // rows w/ created_at + score for last 30d series + dist
-      scoreAllRes,                // all scores for avg + full distribution
+      reportsMonthRowsRes, // rows w/ created_at + score for last 30d series + dist
+      scoreAllRes, // all scores for avg + full distribution
       usersTotalRes,
       usersNewMonthRes,
       usersPrevMonthRes,
-      paymentsPaidRes,            // paid rows last 30d (amount + paid_at) for series
-      paymentsPaidAllRes,         // sum all-time paid
-      paymentsPrevMonthRes,       // paid prev 30d for delta
-      reportsTotalRes,            // total reports for conversion denominator
-      paidCountRes,               // count of paid payments for conversion numerator
+      paymentsPaidRes, // paid rows last 30d (amount + paid_at) for series
+      paymentsPaidAllRes, // sum all-time paid
+      paymentsPrevMonthRes, // paid prev 30d for delta
+      reportsTotalRes, // total reports for conversion denominator
+      paidCountRes, // count of paid payments for conversion numerator
       jobsRunningRes,
       jobsPendingRes,
       jobsFailedCountRes,
-      jobsRunningRowsRes,         // running rows to detect stuck (>30min)
+      jobsRunningRowsRes, // running rows to detect stuck (>30min)
       recentFailuresRes,
       leadsSourcesRes,
     ] = await Promise.all([
-      ctx.db.from('sc_analyzer_reports').select('id', { count: 'exact', head: true }).gte('created_at', startToday.toISOString()),
-      ctx.db.from('sc_analyzer_reports').select('id', { count: 'exact', head: true }).gte('created_at', iso(t7)),
-      ctx.db.from('sc_analyzer_reports').select('id', { count: 'exact', head: true }).gte('created_at', iso(t14ago)).lt('created_at', iso(t7)),
+      ctx.db
+        .from('sc_analyzer_reports')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', startToday.toISOString()),
+      ctx.db
+        .from('sc_analyzer_reports')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', iso(t7)),
+      ctx.db
+        .from('sc_analyzer_reports')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', iso(t14ago))
+        .lt('created_at', iso(t7)),
       ctx.db.from('sc_analyzer_reports').select('created_at, score').gte('created_at', t30),
       ctx.db.from('sc_analyzer_reports').select('score'),
       ctx.db.from('sc_profiles').select('id', { count: 'exact', head: true }),
-      ctx.db.from('sc_profiles').select('id', { count: 'exact', head: true }).gte('created_at', iso(now - 30 * DAY)),
-      ctx.db.from('sc_profiles').select('id', { count: 'exact', head: true }).gte('created_at', iso(now - 60 * DAY)).lt('created_at', iso(now - 30 * DAY)),
-      ctx.db.from('sc_payments').select('amount, paid_at, created_at').eq('status', 'paid').gte('created_at', t30),
+      ctx.db
+        .from('sc_profiles')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', iso(now - 30 * DAY)),
+      ctx.db
+        .from('sc_profiles')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', iso(now - 60 * DAY))
+        .lt('created_at', iso(now - 30 * DAY)),
+      ctx.db
+        .from('sc_payments')
+        .select('amount, paid_at, created_at')
+        .eq('status', 'paid')
+        .gte('created_at', t30),
       ctx.db.from('sc_payments').select('amount').eq('status', 'paid'),
-      ctx.db.from('sc_payments').select('amount').eq('status', 'paid').gte('created_at', iso(now - 60 * DAY)).lt('created_at', iso(now - 30 * DAY)),
+      ctx.db
+        .from('sc_payments')
+        .select('amount')
+        .eq('status', 'paid')
+        .gte('created_at', iso(now - 60 * DAY))
+        .lt('created_at', iso(now - 30 * DAY)),
       ctx.db.from('sc_analyzer_reports').select('id', { count: 'exact', head: true }),
       ctx.db.from('sc_payments').select('id', { count: 'exact', head: true }).eq('status', 'paid'),
-      ctx.db.from('sc_analyzer_jobs').select('id', { count: 'exact', head: true }).eq('status', 'running'),
-      ctx.db.from('sc_analyzer_jobs').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-      ctx.db.from('sc_analyzer_jobs').select('id', { count: 'exact', head: true }).eq('status', 'failed'),
+      ctx.db
+        .from('sc_analyzer_jobs')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'running'),
+      ctx.db
+        .from('sc_analyzer_jobs')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending'),
+      ctx.db
+        .from('sc_analyzer_jobs')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'failed'),
       ctx.db.from('sc_analyzer_jobs').select('updated_at').eq('status', 'running'),
-      ctx.db.from('sc_analyzer_jobs').select('id, research_key, error, attempts, updated_at').eq('status', 'failed').order('updated_at', { ascending: false }).limit(6),
+      ctx.db
+        .from('sc_analyzer_jobs')
+        .select('id, research_key, error, attempts, updated_at')
+        .eq('status', 'failed')
+        .order('updated_at', { ascending: false })
+        .limit(6),
       ctx.db.from('sc_leads').select('source'),
     ])
 
@@ -74,7 +115,10 @@ export const analyticsRouter = router({
     const reportsPrevWeek = reportsPrevWeekRes.count ?? 0
     const reportsWeekDelta = delta(reportsWeek, reportsPrevWeek)
 
-    const monthRows = (reportsMonthRowsRes.data ?? []) as { created_at: string; score: number | null }[]
+    const monthRows = (reportsMonthRowsRes.data ?? []) as {
+      created_at: string
+      score: number | null
+    }[]
     const reportsMonth = monthRows.length
 
     const usersTotal = usersTotalRes.count ?? 0
@@ -82,18 +126,31 @@ export const analyticsRouter = router({
     const usersPrevMonth = usersPrevMonthRes.count ?? 0
     const usersNewMonthDelta = delta(usersNewMonth, usersPrevMonth)
 
-    const paidMonthRows = (paymentsPaidRes.data ?? []) as { amount: number; paid_at: string | null; created_at: string }[]
-    const revenuePaid = ((paymentsPaidAllRes.data ?? []) as { amount: number }[]).reduce((s, r) => s + (Number(r.amount) || 0), 0)
+    const paidMonthRows = (paymentsPaidRes.data ?? []) as {
+      amount: number
+      paid_at: string | null
+      created_at: string
+    }[]
+    const revenuePaid = ((paymentsPaidAllRes.data ?? []) as { amount: number }[]).reduce(
+      (s, r) => s + (Number(r.amount) || 0),
+      0,
+    )
     const revenueMonth = paidMonthRows.reduce((s, r) => s + (Number(r.amount) || 0), 0)
-    const revenuePrevMonth = ((paymentsPrevMonthRes.data ?? []) as { amount: number }[]).reduce((s, r) => s + (Number(r.amount) || 0), 0)
+    const revenuePrevMonth = ((paymentsPrevMonthRes.data ?? []) as { amount: number }[]).reduce(
+      (s, r) => s + (Number(r.amount) || 0),
+      0,
+    )
     const revenueMonthDelta = delta(revenueMonth, revenuePrevMonth)
 
     const reportsProcessing = (jobsRunningRes.count ?? 0) + (jobsPendingRes.count ?? 0)
     const reportsFailed = jobsFailedCountRes.count ?? 0
 
     const allScores = ((scoreAllRes.data ?? []) as { score: number | null }[])
-      .map(r => r.score).filter((n): n is number => typeof n === 'number')
-    const avgScore = allScores.length ? Math.round(allScores.reduce((s, n) => s + n, 0) / allScores.length) : null
+      .map(r => r.score)
+      .filter((n): n is number => typeof n === 'number')
+    const avgScore = allScores.length
+      ? Math.round(allScores.reduce((s, n) => s + n, 0) / allScores.length)
+      : null
 
     const reportsTotal = reportsTotalRes.count ?? 0
     const paidCount = paidCountRes.count ?? 0
@@ -161,9 +218,15 @@ export const analyticsRouter = router({
       const t = new Date(r.updated_at).getTime()
       return Number.isFinite(t) && now - t > 30 * 60_000
     }).length
-    const recentFailures = ((recentFailuresRes.data ?? []) as {
-      id: string; research_key: string | null; error: string | null; attempts: number | null; updated_at: string
-    }[]).map(r => ({
+    const recentFailures = (
+      (recentFailuresRes.data ?? []) as {
+        id: string
+        research_key: string | null
+        error: string | null
+        attempts: number | null
+        updated_at: string
+      }[]
+    ).map(r => ({
       id: r.id,
       research_key: r.research_key ?? null,
       error: r.error ?? null,

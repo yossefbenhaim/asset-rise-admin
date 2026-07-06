@@ -7,7 +7,7 @@ import {
   type GodBroadcastBuilding,
   type GodBroadcastSendResult,
   type GodBroadcastRecent,
-} from '@asset-rise/shared/schemas/godNotifications'
+} from '@asset-rise/shared'
 
 // God-mode "System Broadcast" repo (Wave 3 — content + comms). Runs as
 // service-role (adminClient) so it reads sc_profiles / sc_tenant_profiles /
@@ -41,11 +41,16 @@ export const PG_FK_VIOLATION = '23503'
 const INSERT_CHUNK = 500
 const SAMPLE_SIZE = 20
 
-function addressOf(b: {
-  street?: string | null
-  building_number?: string | null
-  city?: string | null
-} | null | undefined): string | null {
+function addressOf(
+  b:
+    | {
+        street?: string | null
+        building_number?: string | null
+        city?: string | null
+      }
+    | null
+    | undefined,
+): string | null {
   if (!b) return null
   const line = [b.street, b.building_number].filter(Boolean).join(' ')
   const full = [line, b.city].filter(Boolean).join(', ').trim()
@@ -55,9 +60,7 @@ function addressOf(b: {
 // ── Buildings picker ───────────────────────────────────────────────────────────
 // Buildings that have at least one tenant, with a tenant count, for the
 // "one building" audience selector.
-export async function listBroadcastBuildings(
-  db: SupabaseClient,
-): Promise<GodBroadcastBuilding[]> {
+export async function listBroadcastBuildings(db: SupabaseClient): Promise<GodBroadcastBuilding[]> {
   // Count tenants per building first so we only surface buildings with people.
   const { data: tps, error: tpErr } = await db
     .from('sc_tenant_profiles')
@@ -193,10 +196,7 @@ async function profileSample(
   ids: string[],
 ): Promise<GodBroadcastRecipientSample[]> {
   if (!ids.length) return []
-  const { data } = await db
-    .from('sc_profiles')
-    .select('id, full_name, email')
-    .in('id', ids)
+  const { data } = await db.from('sc_profiles').select('id, full_name, email').in('id', ids)
   return ((data ?? []) as any[]).map(p => ({
     id: p.id,
     name: p.full_name ?? null,

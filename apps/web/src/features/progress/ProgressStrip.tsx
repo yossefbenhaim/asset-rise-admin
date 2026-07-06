@@ -11,7 +11,10 @@ const SEG: Record<ProgressStage['status'], string> = {
 }
 
 export function ProgressStrip({
-  stages, currentStageLabel, daysAtStage, stuckDaysThreshold = 14,
+  stages,
+  currentStageLabel,
+  daysAtStage,
+  stuckDaysThreshold = 14,
 }: {
   stages: ProgressStage[]
   currentStageLabel: string | null
@@ -31,7 +34,9 @@ export function ProgressStrip({
           {idx >= 0 && <span className="text-sc-text-muted sc-num">({idx + 1}/14)</span>}
         </span>
         {daysAtStage != null && (
-          <span className={`inline-flex items-center gap-1 ${stageStuck ? 'text-sc-warning font-semibold' : 'text-sc-text-muted'}`}>
+          <span
+            className={`inline-flex items-center gap-1 ${stageStuck ? 'text-sc-warning font-semibold' : 'text-sc-text-muted'}`}
+          >
             {stageStuck && <AlertTriangle size={13} />}
             <span className="sc-num">{daysAtStage}</span> ימים בשלב
           </span>
@@ -39,7 +44,7 @@ export function ProgressStrip({
       </div>
 
       <div className="flex items-center gap-1">
-        {stages.map((s) => (
+        {stages.map(s => (
           <div
             key={s.id}
             title={`${s.label} · ${s.tasksDone}/${s.tasksTotal} משימות${s.stuckCount ? ` · ${s.stuckCount} תקועות` : ''}`}
@@ -53,9 +58,18 @@ export function ProgressStrip({
       </div>
 
       <div className="flex items-center gap-3 text-[11px] text-sc-text-muted">
-        <span className="inline-flex items-center gap-1"><CheckCircle2 size={12} className="text-sc-success" />{doneCount} הושלמו</span>
-        <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-sc-primary" />בתהליך</span>
-        <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-sc-border" />ממתין</span>
+        <span className="inline-flex items-center gap-1">
+          <CheckCircle2 size={12} className="text-sc-success" />
+          {doneCount} הושלמו
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-sc-primary" />
+          בתהליך
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-sc-border" />
+          ממתין
+        </span>
       </div>
     </div>
   )

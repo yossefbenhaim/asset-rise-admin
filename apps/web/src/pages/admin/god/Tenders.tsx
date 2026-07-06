@@ -31,22 +31,31 @@ function statusLabel(s: string | null | undefined): string {
 
 function statusPillKind(s: string | null | undefined): React.ComponentProps<typeof Pill>['kind'] {
   switch (s) {
-    case 'open': return 'success'
-    case 'awarded': return 'gold'
-    case 'closed': return 'warning'
-    case 'cancelled': return 'danger'
+    case 'open':
+      return 'success'
+    case 'awarded':
+      return 'gold'
+    case 'closed':
+      return 'warning'
+    case 'cancelled':
+      return 'danger'
     case 'draft':
-    default: return 'neutral'
+    default:
+      return 'neutral'
   }
 }
 
 function bidStatusKind(s: string | null | undefined): React.ComponentProps<typeof Pill>['kind'] {
   switch (s) {
-    case 'accepted': return 'success'
-    case 'rejected': return 'danger'
-    case 'withdrawn': return 'neutral'
+    case 'accepted':
+      return 'success'
+    case 'rejected':
+      return 'danger'
+    case 'withdrawn':
+      return 'neutral'
     case 'submitted':
-    default: return 'info'
+    default:
+      return 'info'
   }
 }
 
@@ -64,7 +73,9 @@ const columns: ColumnDef<TenderRow, unknown>[] = [
       <div className="flex items-center gap-2 flex-wrap">
         <span className="font-semibold text-sc-text">{row.original.title || '(ללא כותרת)'}</span>
         {row.original.awarded_provider_id && (
-          <Pill kind="gold"><Trophy size={11} /> זוכה נבחר</Pill>
+          <Pill kind="gold">
+            <Trophy size={11} /> זוכה נבחר
+          </Pill>
         )}
       </div>
     ),
@@ -82,9 +93,11 @@ const columns: ColumnDef<TenderRow, unknown>[] = [
     header: 'בניין',
     accessorFn: r => r.building_address ?? '',
     cell: ({ row }) =>
-      row.original.building_address
-        ? <span className="text-sc-text-secondary">{row.original.building_address}</span>
-        : <span className="text-sc-text-muted">—</span>,
+      row.original.building_address ? (
+        <span className="text-sc-text-secondary">{row.original.building_address}</span>
+      ) : (
+        <span className="text-sc-text-muted">—</span>
+      ),
   },
   {
     id: 'budget',
@@ -93,9 +106,11 @@ const columns: ColumnDef<TenderRow, unknown>[] = [
     accessorFn: r => (r.budget_min ?? '') + ' ' + (r.budget_max ?? ''),
     cell: ({ row }) => {
       const { budget_min, budget_max } = row.original
-      return budget_min != null || budget_max != null
-        ? <span className="text-sc-text-secondary sc-num">{`${money(budget_min)} – ${money(budget_max)}`}</span>
-        : <span className="text-sc-text-muted">—</span>
+      return budget_min != null || budget_max != null ? (
+        <span className="text-sc-text-secondary sc-num">{`${money(budget_min)} – ${money(budget_max)}`}</span>
+      ) : (
+        <span className="text-sc-text-muted">—</span>
+      )
     },
   },
   {
@@ -154,16 +169,16 @@ export default function GodTenders() {
             >
               <option value="">כל הסטטוסים</option>
               {TENDER_STATUSES.map(s => (
-                <option key={s} value={s}>{TENDER_STATUS_LABEL[s]}</option>
+                <option key={s} value={s}>
+                  {TENDER_STATUS_LABEL[s]}
+                </option>
               ))}
             </select>
           }
         />
       </div>
 
-      {activeId && (
-        <TenderDetail id={activeId} onClose={() => setActiveId(null)} />
-      )}
+      {activeId && <TenderDetail id={activeId} onClose={() => setActiveId(null)} />}
     </div>
   )
 }
@@ -188,20 +203,23 @@ function TenderDetail({ id, onClose }: { id: string; onClose: () => void }) {
   if (detail.isError || !detail.data) {
     return (
       <Modal open onClose={onClose} title="פרטי מכרז">
-        <div className="text-center py-6 text-sc-danger text-[13px]">{detail.error?.message ?? 'מכרז לא נמצא'}</div>
+        <div className="text-center py-6 text-sc-danger text-[13px]">
+          {detail.error?.message ?? 'מכרז לא נמצא'}
+        </div>
       </Modal>
     )
   }
 
-  return (
-    <TenderDetailBody t={detail.data} onClose={onClose} onChanged={invalidate} toast={toast} />
-  )
+  return <TenderDetailBody t={detail.data} onClose={onClose} onChanged={invalidate} toast={toast} />
 }
 
 type Toast = ReturnType<typeof useToast>
 
 function TenderDetailBody({
-  t, onClose, onChanged, toast,
+  t,
+  onClose,
+  onChanged,
+  toast,
 }: {
   t: GodTenderDetail
   onClose: () => void
@@ -212,7 +230,10 @@ function TenderDetailBody({
   const [confirmCancel, setConfirmCancel] = useState(false)
 
   const setStatusM = trpc.god.tenders.setTenderStatus.useMutation({
-    onSuccess: () => { toast.show('סטטוס המכרז עודכן'); onChanged() },
+    onSuccess: () => {
+      toast.show('סטטוס המכרז עודכן')
+      onChanged()
+    },
     onError: e => toast.show(e.message),
   })
   const forceAwardM = trpc.god.tenders.forceAward.useMutation({
@@ -224,7 +245,11 @@ function TenderDetailBody({
     onError: e => toast.show(e.message),
   })
   const cancelM = trpc.god.tenders.cancelTender.useMutation({
-    onSuccess: () => { toast.show('המכרז בוטל'); setConfirmCancel(false); onChanged() },
+    onSuccess: () => {
+      toast.show('המכרז בוטל')
+      setConfirmCancel(false)
+      onChanged()
+    },
     onError: e => toast.show(e.message),
   })
 
@@ -235,10 +260,14 @@ function TenderDetailBody({
   // Lifecycle buttons available for a plain status move (awarding excluded).
   const lifecycleTargets: TenderStatus[] = (() => {
     switch (t.status) {
-      case 'draft': return ['open', 'closed']
-      case 'open': return ['closed']
-      case 'closed': return ['open'] // reopen
-      default: return []
+      case 'draft':
+        return ['open', 'closed']
+      case 'open':
+        return ['closed']
+      case 'closed':
+        return ['open'] // reopen
+      default:
+        return []
     }
   })()
 
@@ -249,14 +278,19 @@ function TenderDetailBody({
       title={`מכרז: ${t.title || t.id}`}
       footer={
         <div className="flex gap-2 justify-end">
-          <Button variant="ghost" onClick={onClose}>סגור</Button>
+          <Button variant="ghost" onClick={onClose}>
+            סגור
+          </Button>
         </div>
       }
     >
       <div className="space-y-5 text-[13px]">
         {/* Summary */}
         <div className="space-y-1">
-          <Row label="סטטוס" value={<Pill kind={statusPillKind(t.status)}>{statusLabel(t.status)}</Pill>} />
+          <Row
+            label="סטטוס"
+            value={<Pill kind={statusPillKind(t.status)}>{statusLabel(t.status)}</Pill>}
+          />
           <Row label="בניין" value={t.building_address || '—'} />
           <Row
             label="תקציב"
@@ -271,7 +305,11 @@ function TenderDetailBody({
           {t.awarded_provider_id && (
             <Row
               label="זוכה"
-              value={<Pill kind="gold"><Trophy size={11} /> {t.awarded_provider_name || t.awarded_provider_id}</Pill>}
+              value={
+                <Pill kind="gold">
+                  <Trophy size={11} /> {t.awarded_provider_name || t.awarded_provider_id}
+                </Pill>
+              }
             />
           )}
         </div>
@@ -325,9 +363,7 @@ function TenderDetailBody({
         <Section title="אזור מסוכן" danger>
           <div className="flex items-center justify-between gap-2">
             <div className="text-sc-text-secondary">
-              {isCancelled
-                ? 'המכרז כבר מבוטל.'
-                : 'ביטול מכרז כפוי. פעולה נרשמת ביומן הביקורת.'}
+              {isCancelled ? 'המכרז כבר מבוטל.' : 'ביטול מכרז כפוי. פעולה נרשמת ביומן הביקורת.'}
             </div>
             <Button
               size="sm"
@@ -335,7 +371,9 @@ function TenderDetailBody({
               icon={<Ban size={14} />}
               disabled={isCancelled}
               onClick={() => setConfirmCancel(true)}
-            >בטל מכרז</Button>
+            >
+              בטל מכרז
+            </Button>
           </div>
         </Section>
       </div>
@@ -357,8 +395,8 @@ function TenderDetailBody({
             <p className="text-sc-danger font-semibold m-0">פעולה עוקפת את תהליך ההצבעה הרגיל!</p>
             <p className="m-0">
               ההצעה של <b>{confirmAwardBid?.provider_name || confirmAwardBid?.provider_id}</b>
-              {confirmAwardBid?.amount != null && <> בסך {money(confirmAwardBid.amount)}</>} תוכרז כזוכה.
-              כל יתר ההצעות יידחו, המכרז יסומן "זכה", והספק יקושר לפרויקט הבניין.
+              {confirmAwardBid?.amount != null && <> בסך {money(confirmAwardBid.amount)}</>} תוכרז
+              כזוכה. כל יתר ההצעות יידחו, המכרז יסומן "זכה", והספק יקושר לפרויקט הבניין.
             </p>
           </div>
         }
@@ -384,7 +422,9 @@ function TenderDetailBody({
 }
 
 function BidRow({
-  b, canAward, onAward,
+  b,
+  canAward,
+  onAward,
 }: {
   b: GodTenderBid
   canAward: boolean
@@ -399,8 +439,14 @@ function BidRow({
       <div className="flex items-baseline gap-2 flex-wrap">
         <div className="font-semibold text-[14px]">{b.provider_name || '(ספק לא ידוע)'}</div>
         {b.provider_type && <Pill kind="navy">{b.provider_type}</Pill>}
-        <Pill kind={bidStatusKind(b.status)}>{TENDER_BID_STATUS_LABEL[b.status as TenderBidStatus] ?? b.status}</Pill>
-        {b.is_awarded && <Pill kind="gold"><Trophy size={11} /> זוכה</Pill>}
+        <Pill kind={bidStatusKind(b.status)}>
+          {TENDER_BID_STATUS_LABEL[b.status as TenderBidStatus] ?? b.status}
+        </Pill>
+        {b.is_awarded && (
+          <Pill kind="gold">
+            <Trophy size={11} /> זוכה
+          </Pill>
+        )}
         <div className="flex-1" />
         <div className="font-bold text-[15px]">{money(b.amount)}</div>
       </div>
@@ -420,10 +466,22 @@ function BidRow({
   )
 }
 
-function Section({ title, children, danger }: { title: string; children: React.ReactNode; danger?: boolean }) {
+function Section({
+  title,
+  children,
+  danger,
+}: {
+  title: string
+  children: React.ReactNode
+  danger?: boolean
+}) {
   return (
-    <div className={`rounded-sc-input border p-3 ${danger ? 'border-sc-danger bg-sc-danger-bg/30' : 'border-sc-border'}`}>
-      <div className={`font-bold text-[13px] mb-2 ${danger ? 'text-sc-danger' : 'text-sc-text'}`}>{title}</div>
+    <div
+      className={`rounded-sc-input border p-3 ${danger ? 'border-sc-danger bg-sc-danger-bg/30' : 'border-sc-border'}`}
+    >
+      <div className={`font-bold text-[13px] mb-2 ${danger ? 'text-sc-danger' : 'text-sc-text'}`}>
+        {title}
+      </div>
       {children}
     </div>
   )

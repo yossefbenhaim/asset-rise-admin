@@ -26,7 +26,9 @@ async function main() {
     )
   `)
 
-  const files = readdirSync(migrationsDir).filter(f => f.endsWith('.sql')).sort()
+  const files = readdirSync(migrationsDir)
+    .filter(f => f.endsWith('.sql'))
+    .sort()
   const { rows: applied } = await client.query<{ name: string }>('select name from ar_migrations')
   const appliedSet = new Set(applied.map(r => r.name))
 
@@ -53,4 +55,7 @@ async function main() {
   console.log('done')
 }
 
-main().catch(e => { console.error(e); process.exit(1) })
+main().catch(e => {
+  console.error(e)
+  process.exit(1)
+})

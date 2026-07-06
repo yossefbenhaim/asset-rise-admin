@@ -15,7 +15,9 @@ export function DashboardSkeleton() {
   return (
     <div className="flex flex-col gap-4" aria-hidden>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
+        {Array.from({ length: 8 }).map((_, i) => (
+          <SkeletonCard key={i} />
+        ))}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <ChartSkel />

@@ -5,7 +5,7 @@ import {
   GodBroadcastSendInput,
   GodBroadcastRecentInput,
   GodBroadcastResendInput,
-} from '@asset-rise/shared/schemas/godNotifications'
+} from '@asset-rise/shared'
 import { router, requireLevel } from '../../trpc.js'
 import { godProcedure, godMutation, logGod } from '../../lib/god.js'
 import {
@@ -145,8 +145,7 @@ export const godNotificationsRouter = router({
         meta: {
           event_id,
           audience: input.audience.type,
-          building_id:
-            input.audience.type === 'building' ? input.audience.building_id : null,
+          building_id: input.audience.type === 'building' ? input.audience.building_id : null,
           role: input.audience.type === 'role' ? input.audience.role : null,
           title: input.title,
           expected_count: input.expected_count,
@@ -208,8 +207,7 @@ export const godNotificationsRouter = router({
           event_id,
           source_event_id: input.source_event_id,
           audience: input.audience.type,
-          building_id:
-            input.audience.type === 'building' ? input.audience.building_id : null,
+          building_id: input.audience.type === 'building' ? input.audience.building_id : null,
           role: input.audience.type === 'role' ? input.audience.role : null,
           title: input.title,
           expected_count: input.expected_count,

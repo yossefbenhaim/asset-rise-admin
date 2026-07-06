@@ -4,8 +4,17 @@
 // signal are visually distinct from ones still awaiting their first check.
 import { motion } from 'framer-motion'
 import {
-  Map, Building2, FileText, Landmark, MapPin, Bot,
-  Gauge, AlertTriangle, Clock, Activity, HelpCircle,
+  Map,
+  Building2,
+  FileText,
+  Landmark,
+  MapPin,
+  Bot,
+  Gauge,
+  AlertTriangle,
+  Clock,
+  Activity,
+  HelpCircle,
   type LucideIcon,
 } from 'lucide-react'
 import type { SourceHealth } from '@asset-rise/shared'
@@ -14,14 +23,19 @@ import { num, timeAgo } from '@/lib/format'
 
 // Server sends an icon *name*; map it to a component here. Unknown → HelpCircle.
 const ICONS: Record<string, LucideIcon> = {
-  Map, Building2, FileText, Landmark, MapPin, Bot,
+  Map,
+  Building2,
+  FileText,
+  Landmark,
+  MapPin,
+  Bot,
 }
 
 // Icon tint per status — keeps the card readable at a glance.
 const TINT: Record<SourceHealth['status'], string> = {
-  active:   'bg-sc-success-bg text-sc-success',
+  active: 'bg-sc-success-bg text-sc-success',
   degraded: 'bg-sc-warning-bg text-sc-warning',
-  down:     'bg-sc-danger-bg text-sc-danger',
+  down: 'bg-sc-danger-bg text-sc-danger',
 }
 
 function fmtLatency(ms: number | null): string {
@@ -45,7 +59,9 @@ export function SourceCard({ source }: { source: SourceHealth; index?: number })
       {/* Header: icon + name + status */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2.5 min-w-0">
-          <span className={`grid place-items-center w-10 h-10 rounded-sc-input shrink-0 ${TINT[source.status]}`}>
+          <span
+            className={`grid place-items-center w-10 h-10 rounded-sc-input shrink-0 ${TINT[source.status]}`}
+          >
             <Icon size={19} />
           </span>
           <div className="min-w-0">
@@ -83,11 +99,7 @@ export function SourceCard({ source }: { source: SourceHealth; index?: number })
 
       {/* Metrics strip */}
       <div className="grid grid-cols-3 gap-2 mt-auto pt-1 border-t border-sc-border/60">
-        <Metric
-          icon={<Gauge size={13} />}
-          label="זמן תגובה"
-          value={fmtLatency(source.latencyMs)}
-        />
+        <Metric icon={<Gauge size={13} />} label="זמן תגובה" value={fmtLatency(source.latencyMs)} />
         <Metric
           icon={<AlertTriangle size={13} className={source.errorCount ? 'text-sc-danger' : ''} />}
           label="שגיאות"
@@ -121,7 +133,10 @@ export function SourceCard({ source }: { source: SourceHealth; index?: number })
 }
 
 function Metric({
-  icon, label, value, danger = false,
+  icon,
+  label,
+  value,
+  danger = false,
 }: {
   icon: React.ReactNode
   label: string
@@ -131,7 +146,8 @@ function Metric({
   return (
     <div className="flex flex-col gap-0.5 min-w-0">
       <span className="inline-flex items-center gap-1 text-[10px] text-sc-text-muted">
-        {icon}{label}
+        {icon}
+        {label}
       </span>
       <span
         className={`text-[12px] font-bold truncate sc-num ${danger ? 'text-sc-danger' : 'text-sc-text'}`}

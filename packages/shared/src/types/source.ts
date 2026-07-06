@@ -16,12 +16,12 @@
 // Stable identifiers for each platform data source. Kept in sync with the
 // SOURCE_DEFS catalog in the router AND the sc_source_health.source enum.
 export type SourceId =
-  | 'govmap'      // GovMap / GIS spatial layers
-  | 'renewal'     // מתחמי התחדשות עירונית
-  | 'mavat'       // MAVAT / תב״ע planning data
-  | 'municipal'   // נתוני עירייה
-  | 'geocode'     // Geocoding
-  | 'ai'          // AI provider (analyzer summaries / research)
+  | 'govmap' // GovMap / GIS spatial layers
+  | 'renewal' // מתחמי התחדשות עירונית
+  | 'mavat' // MAVAT / תב״ע planning data
+  | 'municipal' // נתוני עירייה
+  | 'geocode' // Geocoding
+  | 'ai' // AI provider (analyzer summaries / research)
 
 // Health status for a source. Mirrors the StatusBadge keys active/degraded/down.
 export type SourceStatus = 'active' | 'degraded' | 'down'

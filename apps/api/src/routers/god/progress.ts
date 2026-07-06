@@ -8,7 +8,11 @@ import {
   type BuildingProgress,
   type StuckOverview,
 } from '@asset-rise/shared'
-import { getUserProgress, getBuildingProgress, getStuckOverview } from '../../repos/godProgress.repo.js'
+import {
+  getUserProgress,
+  getBuildingProgress,
+  getStuckOverview,
+} from '../../repos/godProgress.repo.js'
 
 // God-mode Customer Progress Center (read-only). Per-user + per-building
 // standing across the 14 stages + a proactive "who's stuck" overview. Gated on

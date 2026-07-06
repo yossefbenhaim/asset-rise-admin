@@ -8,8 +8,7 @@
     "lib": ["ES2022"],
     "types": ["node"],
     "paths": {
-      "@asset-rise/shared": ["../../packages/shared/src/index.ts"],
-      "@asset-rise/shared/*": ["../../packages/shared/src/*"]
+      "@asset-rise/shared": ["../../packages/shared/src/index.ts"]
     }
   },
   "include": ["src/**/*"]

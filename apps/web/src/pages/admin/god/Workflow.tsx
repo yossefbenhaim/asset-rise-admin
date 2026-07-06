@@ -9,14 +9,7 @@ import { Modal } from '@/components/ui/Modal'
 import { DangerConfirm } from '@/components/ui/DangerConfirm'
 import { DataTable } from '@/components/ui/DataTable'
 import { useToast } from '@/components/ui/Toast'
-import {
-  ListChecks,
-  GitBranch,
-  Flag,
-  UserCog,
-  ShieldCheck,
-  Building2,
-} from 'lucide-react'
+import { ListChecks, GitBranch, Flag, UserCog, ShieldCheck, Building2 } from 'lucide-react'
 import {
   PROJECT_TASK_STATUSES,
   PROJECT_TASK_STATUS_LABEL,
@@ -40,7 +33,7 @@ import {
   type GodWorkflowBuildingTask,
   type GodWorkflowDualApproval,
   type GodWorkflowRoleRef,
-} from '@asset-rise/shared/schemas/godWorkflow'
+} from '@asset-rise/shared'
 
 // God-mode "Workflow / Baton / Dual-approval" page (Wave 2). The operator picks
 // a project, then sees its project tasks + building tasks + dual approvals + the
@@ -92,9 +85,7 @@ const god = trpc as unknown as {
         ) => Mut<{ project_id: string; slot: BatonSlot; user_id: string | null }>
       }
       resolveDualApproval: {
-        useMutation: (
-          o: ListMutOpts,
-        ) => Mut<{
+        useMutation: (o: ListMutOpts) => Mut<{
           id: string
           resolution: DualApprovalResolution
           reason?: string
@@ -235,10 +226,7 @@ export default function GodWorkflow() {
       </ControlPanel>
 
       <Card className="mt-4">
-        <CardHeader
-          title="פרויקטים"
-          meta={<Pill kind="info">{projects.data?.length ?? 0}</Pill>}
-        />
+        <CardHeader title="פרויקטים" meta={<Pill kind="info">{projects.data?.length ?? 0}</Pill>} />
         <CardBody>
           {projects.isError && (
             <div className="text-sc-danger text-[13px] mb-2">{projects.error?.message}</div>
@@ -364,7 +352,11 @@ function WorkflowDetailBody({ d, onClose }: { d: GodWorkflowDetail; onClose: () 
             <p className="text-sc-text-secondary text-[12px] m-0 mb-2">
               קביעת active_coordinator/lawyer/developer_id ישירות. ריקון = בחירת «—».
             </p>
-            <ProfileSearchBox value={profileQ} onChange={setProfileQ} loading={profiles.isLoading} />
+            <ProfileSearchBox
+              value={profileQ}
+              onChange={setProfileQ}
+              loading={profiles.isLoading}
+            />
             <div className="space-y-2 mt-2">
               {BATON_SLOTS.map(slot => (
                 <BatonRow
@@ -386,7 +378,10 @@ function WorkflowDetailBody({ d, onClose }: { d: GodWorkflowDetail; onClose: () 
           </Section>
 
           {/* Project tasks */}
-          <Section title={`משימות פרויקט (${d.project_tasks.length})`} icon={<GitBranch size={15} />}>
+          <Section
+            title={`משימות פרויקט (${d.project_tasks.length})`}
+            icon={<GitBranch size={15} />}
+          >
             {!d.project_tasks.length ? (
               <div className="text-sc-text-secondary">אין משימות פרויקט.</div>
             ) : (
@@ -464,7 +459,9 @@ function WorkflowDetailBody({ d, onClose }: { d: GodWorkflowDetail; onClose: () 
                             </div>
                           )}
                         </div>
-                        <Pill kind={dualStatusKind(a.status) as any}>{dualStatusLabel(a.status)}</Pill>
+                        <Pill kind={dualStatusKind(a.status) as any}>
+                          {dualStatusLabel(a.status)}
+                        </Pill>
                       </div>
                       {!terminal && (
                         <div className="flex flex-wrap gap-2 mt-2">
@@ -495,7 +492,9 @@ function WorkflowDetailBody({ d, onClose }: { d: GodWorkflowDetail; onClose: () 
         <DangerConfirm
           open
           onClose={() => setResolveTarget(null)}
-          title={resolveTarget.resolution === 'approved' ? 'כפיית אישור כפול' : 'כפיית דחיית אישור כפול'}
+          title={
+            resolveTarget.resolution === 'approved' ? 'כפיית אישור כפול' : 'כפיית דחיית אישור כפול'
+          }
           confirmText={resolveTarget.approval.action || resolveTarget.approval.id}
           confirmLabel={resolveTarget.resolution === 'approved' ? 'כפה אישור' : 'כפה דחייה'}
           loading={resolveM.isLoading}
@@ -652,7 +651,9 @@ function ProjectTaskRow({
           variant={dangerous ? 'danger' : 'primary'}
           loading={statusLoading}
           disabled={status === task.status}
-          onClick={() => (dangerous ? setConfirmOpen(true) : onSetStatus(status as ProjectTaskStatus))}
+          onClick={() =>
+            dangerous ? setConfirmOpen(true) : onSetStatus(status as ProjectTaskStatus)
+          }
         >
           עדכן סטטוס
         </Button>
@@ -735,7 +736,9 @@ function BuildingTaskRow({
             {task.assignee_name || task.assigned_role || '—'}
           </div>
         </div>
-        <Pill kind={taskStatusKind(task.status) as any}>{buildingTaskStatusLabel(task.status)}</Pill>
+        <Pill kind={taskStatusKind(task.status) as any}>
+          {buildingTaskStatusLabel(task.status)}
+        </Pill>
       </div>
 
       <div className="flex flex-wrap items-end gap-2 mt-2">

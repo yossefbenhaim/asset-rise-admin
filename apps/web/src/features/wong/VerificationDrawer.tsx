@@ -2,15 +2,7 @@
 // concerns, the gated task, and the tenant. Read-only; Wong owns the verdict.
 import { type ReactNode } from 'react'
 import { motion } from 'framer-motion'
-import {
-  FileText,
-  User,
-  ListChecks,
-  Clock,
-  Gauge,
-  AlertTriangle,
-  RotateCw,
-} from 'lucide-react'
+import { FileText, User, ListChecks, Clock, Gauge, AlertTriangle, RotateCw } from 'lucide-react'
 import type { WongVerification, WongConfidence } from '@asset-rise/shared'
 import { Drawer } from '@/components/ui/Drawer'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -27,7 +19,10 @@ const CATEGORY_LABEL: Record<string, string> = {
   other: 'אחר',
 }
 
-const CONFIDENCE: Record<WongConfidence, { label: string; kind: 'success' | 'warning' | 'danger' }> = {
+const CONFIDENCE: Record<
+  WongConfidence,
+  { label: string; kind: 'success' | 'warning' | 'danger' }
+> = {
   high: { label: 'ביטחון גבוה', kind: 'success' },
   medium: { label: 'ביטחון בינוני', kind: 'warning' },
   low: { label: 'ביטחון נמוך', kind: 'danger' },
@@ -144,7 +139,10 @@ export function VerificationDrawer({
             />
           )}
           {row.completedAt && (
-            <Row label="הושלם" value={<span className="sc-num">{dateTime(row.completedAt)}</span>} />
+            <Row
+              label="הושלם"
+              value={<span className="sc-num">{dateTime(row.completedAt)}</span>}
+            />
           )}
           {row.error && (
             <Row

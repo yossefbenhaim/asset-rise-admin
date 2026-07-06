@@ -11,8 +11,11 @@ function initialTheme(): Theme {
   try {
     const saved = localStorage.getItem(THEME_KEY)
     if (saved === 'light' || saved === 'dark') return saved
-  } catch { /* ignore */ }
-  if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches) return 'dark'
+  } catch {
+    /* ignore */
+  }
+  if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
+    return 'dark'
   return 'light'
 }
 
@@ -34,10 +37,18 @@ export const useUi = create<UiState>((set, get) => ({
   theme: initialTheme(),
   cmdkOpen: false,
   notifOpen: false,
-  setTheme: (t) => { applyTheme(t); try { localStorage.setItem(THEME_KEY, t) } catch { /* ignore */ }; set({ theme: t }) },
+  setTheme: t => {
+    applyTheme(t)
+    try {
+      localStorage.setItem(THEME_KEY, t)
+    } catch {
+      /* ignore */
+    }
+    set({ theme: t })
+  },
   toggleTheme: () => get().setTheme(get().theme === 'dark' ? 'light' : 'dark'),
-  setCmdkOpen: (v) => set({ cmdkOpen: v }),
-  setNotifOpen: (v) => set({ notifOpen: v }),
+  setCmdkOpen: v => set({ cmdkOpen: v }),
+  setNotifOpen: v => set({ notifOpen: v }),
 }))
 
 // Apply the persisted/system theme immediately on first import (no FOUC).

@@ -27,15 +27,41 @@ export default function AdminWong() {
       <div className="sc-page__head">
         <div>
           <h1>בקרת Wong · אימות מסמכים</h1>
-          <div className="sub">הסוכן שבודק ומאשר אוטומטית מסמכים שדיירים מעלים · היסטוריית אימותים וגרסאות הפרומפט</div>
+          <div className="sub">
+            הסוכן שבודק ומאשר אוטומטית מסמכים שדיירים מעלים · היסטוריית אימותים וגרסאות הפרומפט
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-        <KpiCard label="ממתינים לבדיקה" value={s?.pending ?? 0} icon={<Clock3 size={18} />} tone="gold" index={0} />
-        <KpiCard label="אושרו" value={s?.approved ?? 0} icon={<CheckCircle2 size={18} />} tone="success" index={1} />
-        <KpiCard label="נדחו" value={s?.rejected ?? 0} icon={<XCircle size={18} />} tone="danger" index={2} />
-        <KpiCard label="נבדקו היום" value={s?.today ?? 0} icon={<ShieldCheck size={18} />} tone="primary" index={3} />
+        <KpiCard
+          label="ממתינים לבדיקה"
+          value={s?.pending ?? 0}
+          icon={<Clock3 size={18} />}
+          tone="gold"
+          index={0}
+        />
+        <KpiCard
+          label="אושרו"
+          value={s?.approved ?? 0}
+          icon={<CheckCircle2 size={18} />}
+          tone="success"
+          index={1}
+        />
+        <KpiCard
+          label="נדחו"
+          value={s?.rejected ?? 0}
+          icon={<XCircle size={18} />}
+          tone="danger"
+          index={2}
+        />
+        <KpiCard
+          label="נבדקו היום"
+          value={s?.today ?? 0}
+          icon={<ShieldCheck size={18} />}
+          tone="primary"
+          index={3}
+        />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">

@@ -31,36 +31,34 @@ function checkRate(ip: string | null): void {
 }
 
 export const leadsRouter = router({
-  create: publicProcedure
-    .input(CreateLeadInput)
-    .mutation(async ({ ctx, input }): Promise<Lead> => {
-      checkRate(ctx.ip)
-      let row: Lead
-      try {
-        row = await insertLead(ctx.db, input, ctx.ip)
-      } catch (e: any) {
-        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: e.message })
-      }
-      await audit(ctx.db, {
-        actor_id: null,
-        action: 'lead.create',
-        target_type: 'lead',
-        target_id: row.id,
-        meta: { source: row.source, has_email: !!row.email },
-        ip: ctx.ip,
-      })
-      const recipients = await adminRecipientIds(ctx.db)
-      await notify({
-        db: ctx.db,
-        recipient_ids: recipients,
-        kind: 'lead.received',
-        title: `פנייה חדשה: ${row.name}`,
-        body: row.phone,
-        link: '/leads',
-        payload: { lead_id: row.id, source: row.source },
-      })
-      return row
-    }),
+  create: publicProcedure.input(CreateLeadInput).mutation(async ({ ctx, input }): Promise<Lead> => {
+    checkRate(ctx.ip)
+    let row: Lead
+    try {
+      row = await insertLead(ctx.db, input, ctx.ip)
+    } catch (e: any) {
+      throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: e.message })
+    }
+    await audit(ctx.db, {
+      actor_id: null,
+      action: 'lead.create',
+      target_type: 'lead',
+      target_id: row.id,
+      meta: { source: row.source, has_email: !!row.email },
+      ip: ctx.ip,
+    })
+    const recipients = await adminRecipientIds(ctx.db)
+    await notify({
+      db: ctx.db,
+      recipient_ids: recipients,
+      kind: 'lead.received',
+      title: `פנייה חדשה: ${row.name}`,
+      body: row.phone,
+      link: '/leads',
+      payload: { lead_id: row.id, source: row.source },
+    })
+    return row
+  }),
 
   list: requireAction('admin.leads.list')
     .input(ListLeadsInput)

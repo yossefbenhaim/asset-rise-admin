@@ -109,22 +109,17 @@ export async function listAudit(
   const rows = (data ?? []) as any[]
 
   // Batch-resolve actor emails.
-  const actorIds = Array.from(
-    new Set(rows.map(r => r.actor_id).filter((x): x is string => !!x)),
-  )
+  const actorIds = Array.from(new Set(rows.map(r => r.actor_id).filter((x): x is string => !!x)))
   const emailById = new Map<string, string | null>()
   if (actorIds.length) {
-    const { data: profiles } = await db
-      .from('sc_profiles')
-      .select('id, email')
-      .in('id', actorIds)
+    const { data: profiles } = await db.from('sc_profiles').select('id, email').in('id', actorIds)
     for (const p of (profiles ?? []) as any[]) emailById.set(p.id, p.email ?? null)
   }
 
   return rows.map(r => ({
     id: r.id,
     actor_id: r.actor_id ?? null,
-    actor_email: r.actor_id ? emailById.get(r.actor_id) ?? null : null,
+    actor_email: r.actor_id ? (emailById.get(r.actor_id) ?? null) : null,
     action: r.action,
     target_type: r.target_type ?? null,
     target_id: r.target_id ?? null,

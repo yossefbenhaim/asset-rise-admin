@@ -19,12 +19,12 @@ export type AiJobStatus = 'pending' | 'running' | 'done' | 'failed'
 export type AiSummaryRow = {
   research_key: string
   status: AiJobStatus
-  version: string | null          // RESEARCH_VERSION from the research_key prefix
-  model: string | null            // from request/result if present, else null
-  heading: string | null          // best-effort headline (summary_he)
-  summary: string | null          // longer text (opinion_he / summary_he)
-  confidence: string | null       // high / medium / low (if present)
-  has_perspectives: boolean       // 3-hat AI panel present
+  version: string | null // RESEARCH_VERSION from the research_key prefix
+  model: string | null // from request/result if present, else null
+  heading: string | null // best-effort headline (summary_he)
+  summary: string | null // longer text (opinion_he / summary_he)
+  confidence: string | null // high / medium / low (if present)
+  has_perspectives: boolean // 3-hat AI panel present
   attempts: number | null
   created_at: string
   updated_at: string | null
@@ -73,19 +73,19 @@ export type AiAgent = 'analyzer' | 'wong'
 // the live worker is on. `prompt` is the stored editable OVERRIDE text for that
 // version (null when nothing has been stored yet in sc_ai_prompts).
 export interface AiPromptVersion {
-  version: string            // 'v1' … 'v10'
+  version: string // 'v1' … 'v10'
   current: boolean
-  note: string | null        // human note about what changed in this version
-  prompt: string | null      // editable override text (sc_ai_prompts), if stored
-  hasOverride: boolean       // convenience flag (prompt != null)
-  base_note: string          // read-only note of the engine base prompt
-  updated_by: string | null  // admin id that last edited the override
-  updated_at: string | null  // when the stored override was last edited
+  note: string | null // human note about what changed in this version
+  prompt: string | null // editable override text (sc_ai_prompts), if stored
+  hasOverride: boolean // convenience flag (prompt != null)
+  base_note: string // read-only note of the engine base prompt
+  updated_by: string | null // admin id that last edited the override
+  updated_at: string | null // when the stored override was last edited
 }
 
 export interface AiPromptVersionsResult {
   agent: AiAgent
-  current: string                  // the live version for this agent
+  current: string // the live version for this agent
   versions: AiPromptVersion[]
   // The ACTUAL base prompt the host worker runs right now (static instruction
   // text with {placeholders} where per-request data is injected). Shown
@@ -121,7 +121,11 @@ export type AiPromptVersionsInput = z.infer<typeof AiPromptVersionsInput>
 // prompt body.
 export const AiEditPromptInput = z.object({
   agent: AiAgentInput,
-  version: z.string().min(1).max(20).regex(/^v\d{1,3}$/, 'גרסה חייבת להיות בפורמט v<מספר>'),
+  version: z
+    .string()
+    .min(1)
+    .max(20)
+    .regex(/^v\d{1,3}$/, 'גרסה חייבת להיות בפורמט v<מספר>'),
   text: z.string().max(20000),
   note: z.string().max(500).nullable().optional(),
 })

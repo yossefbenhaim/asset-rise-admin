@@ -4,160 +4,231 @@
  */
 
 /* Google Fonts must be the first @import (CSS spec). Local TTFs loaded in base.css. */
-@import url("https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap');
 
 :root {
   /* ── Brand colors ─────────────────────────────────────────────── */
-  --sc-navy:           #1e3a5f;   /* Deep Navy — authority, contracts, navbar */
-  --sc-primary:        #3b6b9c;   /* Royal Blue — buttons, active states, links */
-  --sc-primary-light:  #5a8db8;   /* Light Blue — highlights */
-  --sc-light-blue:     #ebf1f7;   /* Tint — hover backgrounds, info banners */
-  --sc-teal:           #4db6c4;   /* Used sparingly */
+  --sc-navy: #1e3a5f; /* Deep Navy — authority, contracts, navbar */
+  --sc-primary: #3b6b9c; /* Royal Blue — buttons, active states, links */
+  --sc-primary-light: #5a8db8; /* Light Blue — highlights */
+  --sc-light-blue: #ebf1f7; /* Tint — hover backgrounds, info banners */
+  --sc-teal: #4db6c4; /* Used sparingly */
 
-  --sc-gold:           #8b6f47;   /* Premium / committee badges (deeper) */
-  --sc-gold-light:     #a6895f;   /* Premium / committee badges (lighter) */
-  --sc-cream:          #f5f0e8;   /* Gold tint — soft accent surface */
+  --sc-gold: #8b6f47; /* Premium / committee badges (deeper) */
+  --sc-gold-light: #a6895f; /* Premium / committee badges (lighter) */
+  --sc-cream: #f5f0e8; /* Gold tint — soft accent surface */
 
   /* ── Surfaces ─────────────────────────────────────────────────── */
-  --sc-bg:             #f8f9fa;   /* App background (off-white) */
-  --sc-card:           #ffffff;   /* Card surface */
-  --sc-border:         #eeeeee;   /* Hairline divider / card border */
-  --sc-border-strong:  #d1d5db;   /* Form-input border (landing) */
+  --sc-bg: #f8f9fa; /* App background (off-white) */
+  --sc-card: #ffffff; /* Card surface */
+  --sc-border: #eeeeee; /* Hairline divider / card border */
+  --sc-border-strong: #d1d5db; /* Form-input border (landing) */
 
   /* ── Text ─────────────────────────────────────────────────────── */
-  --sc-text:           #212121;   /* Titles + primary body */
-  --sc-text-secondary: #5a5a6e;   /* Labels, captions */
-  --sc-text-muted:     #8e8e9e;   /* Tertiary, hints */
-  --sc-text-on-navy:   #ffffff;
-  --sc-text-on-navy-d: rgba(255,255,255,0.80);
+  --sc-text: #212121; /* Titles + primary body */
+  --sc-text-secondary: #5a5a6e; /* Labels, captions */
+  --sc-text-muted: #8e8e9e; /* Tertiary, hints */
+  --sc-text-on-navy: #ffffff;
+  --sc-text-on-navy-d: rgba(255, 255, 255, 0.8);
 
   /* ── Status ───────────────────────────────────────────────────── */
-  --sc-success:        #4a8c5c;
-  --sc-success-bg:     #edf5ef;
-  --sc-warning:        #c4841d;
-  --sc-warning-bg:     #fcf4e7;
-  --sc-danger:         #b94a48;
-  --sc-danger-bg:      #fdecec;
+  --sc-success: #4a8c5c;
+  --sc-success-bg: #edf5ef;
+  --sc-warning: #c4841d;
+  --sc-warning-bg: #fcf4e7;
+  --sc-danger: #b94a48;
+  --sc-danger-bg: #fdecec;
 
   /* ── Type ─────────────────────────────────────────────────────── */
-  --sc-font:           "Heebo", "Segoe UI", Arial, sans-serif;
-  --sc-font-mono:      ui-monospace, SFMono-Regular, Menlo, monospace;
+  --sc-font: 'Heebo', 'Segoe UI', Arial, sans-serif;
+  --sc-font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Sizes (px) — keep tabular figures on numerics */
-  --sc-fs-display: 46px;   /* Hero h1 */
-  --sc-fs-h1:      32px;
-  --sc-fs-h2:      24px;
-  --sc-fs-h3:      18px;
-  --sc-fs-section: 22px;   /* Page section title */
-  --sc-fs-card:    17px;   /* Card title */
-  --sc-fs-body:    15px;
-  --sc-fs-body-s:  13px;   /* Default in-app body */
+  --sc-fs-display: 46px; /* Hero h1 */
+  --sc-fs-h1: 32px;
+  --sc-fs-h2: 24px;
+  --sc-fs-h3: 18px;
+  --sc-fs-section: 22px; /* Page section title */
+  --sc-fs-card: 17px; /* Card title */
+  --sc-fs-body: 15px;
+  --sc-fs-body-s: 13px; /* Default in-app body */
   --sc-fs-caption: 12px;
-  --sc-fs-small:   11px;
-  --sc-fs-micro:   10px;   /* Badges */
+  --sc-fs-small: 11px;
+  --sc-fs-micro: 10px; /* Badges */
 
   /* Weights */
-  --sc-fw-light:     300;
-  --sc-fw-regular:   400;
-  --sc-fw-medium:    500;
-  --sc-fw-semibold:  600;
-  --sc-fw-bold:      700;
+  --sc-fw-light: 300;
+  --sc-fw-regular: 400;
+  --sc-fw-medium: 500;
+  --sc-fw-semibold: 600;
+  --sc-fw-bold: 700;
   --sc-fw-extrabold: 800;
 
   /* ── Radii ────────────────────────────────────────────────────── */
-  --sc-radius-btn:   8px;
+  --sc-radius-btn: 8px;
   --sc-radius-input: 10px;
-  --sc-radius-card:  14px;
-  --sc-radius-pill:  999px;
+  --sc-radius-card: 14px;
+  --sc-radius-pill: 999px;
 
   /* ── Shadows ──────────────────────────────────────────────────── */
-  --sc-shadow-sm:   0 2px 8px rgba(0,0,0,0.04);
-  --sc-shadow-card: 0 2px 12px rgba(0,0,0,0.06);
-  --sc-shadow-lg:   0 8px 32px rgba(0,0,0,0.10);
-  --sc-shadow-xl:   0 16px 48px rgba(0,0,0,0.12);
-  --sc-shadow-btn-primary: 0 2px 8px rgba(59,107,156,0.20);
-  --sc-shadow-btn-gold:    0 2px 8px rgba(139,111,71,0.20);
+  --sc-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --sc-shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --sc-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --sc-shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12);
+  --sc-shadow-btn-primary: 0 2px 8px rgba(59, 107, 156, 0.2);
+  --sc-shadow-btn-gold: 0 2px 8px rgba(139, 111, 71, 0.2);
 
   /* ── Spacing scale (matches Tailwind, expressed for non-Tailwind use) ── */
-  --sc-space-1:  4px;
-  --sc-space-2:  8px;
-  --sc-space-3:  12px;
-  --sc-space-4:  16px;
-  --sc-space-5:  20px;
-  --sc-space-6:  24px;
-  --sc-space-8:  32px;
+  --sc-space-1: 4px;
+  --sc-space-2: 8px;
+  --sc-space-3: 12px;
+  --sc-space-4: 16px;
+  --sc-space-5: 20px;
+  --sc-space-6: 24px;
+  --sc-space-8: 32px;
   --sc-space-10: 40px;
   --sc-space-12: 48px;
 
   /* ── Glass / elevation (admin control-center) ─────────────────── */
-  --sc-glass-bg:     rgba(255,255,255,0.72);
-  --sc-glass-border: rgba(255,255,255,0.55);
-  --sc-shadow-glass: 0 8px 30px rgba(30,58,95,0.10);
-  --sc-skeleton:     #eef1f5;
-  --sc-skeleton-hi:  #f7f9fc;
+  --sc-glass-bg: rgba(255, 255, 255, 0.72);
+  --sc-glass-border: rgba(255, 255, 255, 0.55);
+  --sc-shadow-glass: 0 8px 30px rgba(30, 58, 95, 0.1);
+  --sc-skeleton: #eef1f5;
+  --sc-skeleton-hi: #f7f9fc;
 }
 
 /* ── Dark theme ─────────────────────────────────────────────────────
    Brand navy/primary/gold stay constant; surfaces/text/borders/shadows
    flip. Toggled by data-theme="dark" on <html> (see lib/theme.ts). */
-:root[data-theme="dark"] {
-  --sc-light-blue:     #1b2c46;   /* dark tint — hover/info bg */
-  --sc-cream:          #2a2417;   /* dark gold tint */
+:root[data-theme='dark'] {
+  --sc-light-blue: #1b2c46; /* dark tint — hover/info bg */
+  --sc-cream: #2a2417; /* dark gold tint */
 
-  --sc-bg:             #0e1623;
-  --sc-card:           #16243a;
-  --sc-border:         #243650;
-  --sc-border-strong:  #32507a;
+  --sc-bg: #0e1623;
+  --sc-card: #16243a;
+  --sc-border: #243650;
+  --sc-border-strong: #32507a;
 
-  --sc-text:           #e8eef5;
+  --sc-text: #e8eef5;
   --sc-text-secondary: #a9b8cc;
-  --sc-text-muted:     #7f90a6;
+  --sc-text-muted: #7f90a6;
 
-  --sc-success-bg:     #14271c;
-  --sc-warning-bg:     #2a2113;
-  --sc-danger-bg:      #2a1717;
+  --sc-success-bg: #14271c;
+  --sc-warning-bg: #2a2113;
+  --sc-danger-bg: #2a1717;
 
-  --sc-shadow-sm:   0 2px 8px rgba(0,0,0,0.30);
-  --sc-shadow-card: 0 2px 12px rgba(0,0,0,0.38);
-  --sc-shadow-lg:   0 8px 32px rgba(0,0,0,0.50);
-  --sc-shadow-xl:   0 16px 48px rgba(0,0,0,0.55);
+  --sc-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --sc-shadow-card: 0 2px 12px rgba(0, 0, 0, 0.38);
+  --sc-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --sc-shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.55);
 
-  --sc-glass-bg:     rgba(22,36,58,0.66);
-  --sc-glass-border: rgba(122,160,210,0.16);
-  --sc-shadow-glass: 0 8px 30px rgba(0,0,0,0.45);
-  --sc-skeleton:     #1d2c44;
-  --sc-skeleton-hi:  #27395a;
+  --sc-glass-bg: rgba(22, 36, 58, 0.66);
+  --sc-glass-border: rgba(122, 160, 210, 0.16);
+  --sc-shadow-glass: 0 8px 30px rgba(0, 0, 0, 0.45);
+  --sc-skeleton: #1d2c44;
+  --sc-skeleton-hi: #27395a;
 }
-html { color-scheme: light; }
-html[data-theme="dark"] { color-scheme: dark; }
+html {
+  color-scheme: light;
+}
+html[data-theme='dark'] {
+  color-scheme: dark;
+}
 
 /* ── Base ───────────────────────────────────────────────────────── */
-html, body {
+html,
+body {
   font-family: var(--sc-font);
   color: var(--sc-text);
   background: var(--sc-bg);
-  font-feature-settings: "tnum" 1, "lnum" 1; /* tabular figures everywhere */
+  font-feature-settings:
+    'tnum' 1,
+    'lnum' 1; /* tabular figures everywhere */
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
-body { direction: rtl; }
+body {
+  direction: rtl;
+}
 
 /* ── Semantic type ──────────────────────────────────────────────── */
-.sc-display     { font-size: var(--sc-fs-display); font-weight: var(--sc-fw-extrabold); line-height: 1.08; letter-spacing: -0.01em; color: var(--sc-text); }
-.sc-h1          { font-size: var(--sc-fs-h1);      font-weight: var(--sc-fw-bold);      line-height: 1.2;  color: var(--sc-text); }
-.sc-h2          { font-size: var(--sc-fs-h2);      font-weight: var(--sc-fw-bold);      line-height: 1.25; color: var(--sc-text); }
-.sc-h3          { font-size: var(--sc-fs-h3);      font-weight: var(--sc-fw-semibold);  line-height: 1.3;  color: var(--sc-text); }
-.sc-section-title { font-size: var(--sc-fs-section); font-weight: var(--sc-fw-extrabold); color: var(--sc-text); }
-.sc-card-title  { font-size: var(--sc-fs-card);    font-weight: var(--sc-fw-bold);      color: var(--sc-text); }
-.sc-body        { font-size: var(--sc-fs-body);    font-weight: var(--sc-fw-regular);   color: var(--sc-text); line-height: 1.5; }
-.sc-body-s      { font-size: var(--sc-fs-body-s);  font-weight: var(--sc-fw-regular);   color: var(--sc-text); line-height: 1.55; }
-.sc-caption     { font-size: var(--sc-fs-caption); font-weight: var(--sc-fw-regular);   color: var(--sc-text-secondary); }
-.sc-small       { font-size: var(--sc-fs-small);   font-weight: var(--sc-fw-regular);   color: var(--sc-text-muted); }
-.sc-label       { font-size: var(--sc-fs-caption); font-weight: var(--sc-fw-semibold);  color: var(--sc-text-secondary); display: block; margin-bottom: 6px; }
-.sc-eyebrow     { font-size: var(--sc-fs-caption); font-weight: var(--sc-fw-bold);      color: var(--sc-gold); text-transform: uppercase; letter-spacing: 0.18em; }
+.sc-display {
+  font-size: var(--sc-fs-display);
+  font-weight: var(--sc-fw-extrabold);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  color: var(--sc-text);
+}
+.sc-h1 {
+  font-size: var(--sc-fs-h1);
+  font-weight: var(--sc-fw-bold);
+  line-height: 1.2;
+  color: var(--sc-text);
+}
+.sc-h2 {
+  font-size: var(--sc-fs-h2);
+  font-weight: var(--sc-fw-bold);
+  line-height: 1.25;
+  color: var(--sc-text);
+}
+.sc-h3 {
+  font-size: var(--sc-fs-h3);
+  font-weight: var(--sc-fw-semibold);
+  line-height: 1.3;
+  color: var(--sc-text);
+}
+.sc-section-title {
+  font-size: var(--sc-fs-section);
+  font-weight: var(--sc-fw-extrabold);
+  color: var(--sc-text);
+}
+.sc-card-title {
+  font-size: var(--sc-fs-card);
+  font-weight: var(--sc-fw-bold);
+  color: var(--sc-text);
+}
+.sc-body {
+  font-size: var(--sc-fs-body);
+  font-weight: var(--sc-fw-regular);
+  color: var(--sc-text);
+  line-height: 1.5;
+}
+.sc-body-s {
+  font-size: var(--sc-fs-body-s);
+  font-weight: var(--sc-fw-regular);
+  color: var(--sc-text);
+  line-height: 1.55;
+}
+.sc-caption {
+  font-size: var(--sc-fs-caption);
+  font-weight: var(--sc-fw-regular);
+  color: var(--sc-text-secondary);
+}
+.sc-small {
+  font-size: var(--sc-fs-small);
+  font-weight: var(--sc-fw-regular);
+  color: var(--sc-text-muted);
+}
+.sc-label {
+  font-size: var(--sc-fs-caption);
+  font-weight: var(--sc-fw-semibold);
+  color: var(--sc-text-secondary);
+  display: block;
+  margin-bottom: 6px;
+}
+.sc-eyebrow {
+  font-size: var(--sc-fs-caption);
+  font-weight: var(--sc-fw-bold);
+  color: var(--sc-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
 
 /* ── Tabular numbers ────────────────────────────────────────────── */
-.sc-num, .sc-num * { font-variant-numeric: tabular-nums lining-nums; }
+.sc-num,
+.sc-num * {
+  font-variant-numeric: tabular-nums lining-nums;
+}
 
 /* ── Components (cosmetic floor) ────────────────────────────────── */
 .sc-card {
@@ -175,11 +246,13 @@ body { direction: rtl; }
   font-size: var(--sc-fs-caption);
   color: var(--sc-text);
   outline: none;
-  transition: border-color .15s, box-shadow .15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 .sc-input:focus {
   border-color: var(--sc-primary);
-  box-shadow: 0 0 0 2px rgba(59,107,156,0.10);
+  box-shadow: 0 0 0 2px rgba(59, 107, 156, 0.1);
 }
 
 .sc-btn-primary {
@@ -192,9 +265,11 @@ body { direction: rtl; }
   border: none;
   cursor: pointer;
   box-shadow: var(--sc-shadow-btn-primary);
-  transition: opacity .15s;
+  transition: opacity 0.15s;
 }
-.sc-btn-primary:hover { opacity: .9; }
+.sc-btn-primary:hover {
+  opacity: 0.9;
+}
 
 .sc-btn-gold {
   background: var(--sc-gold);
@@ -206,9 +281,11 @@ body { direction: rtl; }
   border: none;
   cursor: pointer;
   box-shadow: var(--sc-shadow-btn-gold);
-  transition: opacity .15s;
+  transition: opacity 0.15s;
 }
-.sc-btn-gold:hover { opacity: .9; }
+.sc-btn-gold:hover {
+  opacity: 0.9;
+}
 
 .sc-btn-secondary {
   background: transparent;
@@ -219,22 +296,41 @@ body { direction: rtl; }
   font-size: var(--sc-fs-body-s);
   font-weight: var(--sc-fw-semibold);
   cursor: pointer;
-  transition: background-color .15s;
+  transition: background-color 0.15s;
 }
-.sc-btn-secondary:hover { background: var(--sc-light-blue); }
+.sc-btn-secondary:hover {
+  background: var(--sc-light-blue);
+}
 
 .sc-badge {
-  display: inline-flex; align-items: center; gap: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   padding: 4px 12px;
   border-radius: var(--sc-radius-pill);
   font-size: var(--sc-fs-micro);
   font-weight: var(--sc-fw-semibold);
 }
-.sc-badge-success { background: var(--sc-success-bg); color: var(--sc-success); }
-.sc-badge-warning { background: var(--sc-warning-bg); color: var(--sc-warning); }
-.sc-badge-info    { background: var(--sc-light-blue); color: var(--sc-primary); }
-.sc-badge-gold    { background: var(--sc-cream);      color: var(--sc-gold); }
-.sc-badge-navy    { background: var(--sc-navy);       color: #fff; }
+.sc-badge-success {
+  background: var(--sc-success-bg);
+  color: var(--sc-success);
+}
+.sc-badge-warning {
+  background: var(--sc-warning-bg);
+  color: var(--sc-warning);
+}
+.sc-badge-info {
+  background: var(--sc-light-blue);
+  color: var(--sc-primary);
+}
+.sc-badge-gold {
+  background: var(--sc-cream);
+  color: var(--sc-gold);
+}
+.sc-badge-navy {
+  background: var(--sc-navy);
+  color: #fff;
+}
 
 /* ── Admin control-center helpers ───────────────────────────────── */
 /* Glass card — frosted surface for KPI/chart panels. */
@@ -248,10 +344,26 @@ body { direction: rtl; }
 }
 /* Loading skeleton — shimmer between two token greys. Reduced-motion safe. */
 .sc-skel {
-  background: linear-gradient(100deg, var(--sc-skeleton) 30%, var(--sc-skeleton-hi) 50%, var(--sc-skeleton) 70%);
+  background: linear-gradient(
+    100deg,
+    var(--sc-skeleton) 30%,
+    var(--sc-skeleton-hi) 50%,
+    var(--sc-skeleton) 70%
+  );
   background-size: 200% 100%;
   animation: sc-skel-shimmer 1.4s ease-in-out infinite;
   border-radius: 8px;
 }
-@keyframes sc-skel-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
-@media (prefers-reduced-motion: reduce) { .sc-skel { animation: none; } }
+@keyframes sc-skel-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sc-skel {
+    animation: none;
+  }
+}

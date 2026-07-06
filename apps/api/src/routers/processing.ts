@@ -166,7 +166,10 @@ function buildTimeline(
   for (let i = 0; i < buckets; i++) {
     const startMs = firstStart + i * stepMs
     const d = new Date(startMs)
-    const label = granularity === 'hour' ? `${pad2(d.getHours())}:00` : `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}`
+    const label =
+      granularity === 'hour'
+        ? `${pad2(d.getHours())}:00`
+        : `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}`
     const cell = agg.get(i)
     out.push({
       bucket: new Date(startMs).toISOString(),
@@ -286,11 +289,11 @@ export const processingRouter = router({
         .limit(200),
     ])
 
-    const queue = (queueRes.data ?? []).map((r) => toProcessingJob(r as JobRow, nowMs))
+    const queue = (queueRes.data ?? []).map(r => toProcessingJob(r as JobRow, nowMs))
     // In-flight cold computes (sc_report_runs status='processing') — the live
     // "a check is running now" items — mapped into the running-job shape so the
     // monitor shows them alongside any in-flight AI-research jobs.
-    const liveRunJobs: ProcessingJob[] = ((liveRunsRes.data ?? []) as any[]).map((r) => ({
+    const liveRunJobs: ProcessingJob[] = ((liveRunsRes.data ?? []) as any[]).map(r => ({
       id: r.id,
       research_key: null,
       status: 'running',
@@ -307,20 +310,21 @@ export const processingRouter = router({
     }))
     const running = [
       ...liveRunJobs,
-      ...(runningRes.data ?? []).map((r) => toProcessingJob(r as JobRow, nowMs)),
+      ...(runningRes.data ?? []).map(r => toProcessingJob(r as JobRow, nowMs)),
     ]
-    const recentDone = (recentDoneRes.data ?? []).map((r) => toProcessingJob(r as JobRow, nowMs))
-    const recentFailed = (recentFailedRes.data ?? []).map((r) => toProcessingJob(r as JobRow, nowMs))
+    const recentDone = (recentDoneRes.data ?? []).map(r => toProcessingJob(r as JobRow, nowMs))
+    const recentFailed = (recentFailedRes.data ?? []).map(r => toProcessingJob(r as JobRow, nowMs))
     // Dedupe by address (keep the latest — rows arrive newest-first) so the same
     // request re-run twice doesn't show as duplicate cards.
     const seenAddr = new Set<string>()
     const recentRuns: ProcessingRun[] = ((runsRes.data ?? []) as any[])
-      .filter((r) => {
+      .filter(r => {
         const k = (r.address_display ?? r.id) as string
         if (seenAddr.has(k)) return false
-        seenAddr.add(k); return true
+        seenAddr.add(k)
+        return true
       })
-      .map((r) => ({
+      .map(r => ({
         id: r.id,
         addressDisplay: r.address_display ?? null,
         status: r.status,
@@ -331,7 +335,7 @@ export const processingRouter = router({
       }))
 
     // Global source-category health (last snapshot any cold compute wrote).
-    const sources: ProcessingSourceHealth[] = ((sourcesRes.data ?? []) as any[]).map((s) => ({
+    const sources: ProcessingSourceHealth[] = ((sourcesRes.data ?? []) as any[]).map(s => ({
       source: s.source,
       status: s.status ?? 'down',
       latencyMs: s.latency_ms ?? null,

@@ -53,59 +53,55 @@ export const godProvidersRouter = router({
     }),
 
   // ── Writes (all audited via godMutation) ─────────────────────────────────────
-  editProviderProfile: godProcedure
-    .input(GodEditProviderProfileInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.providers.update',
-          target_type: 'provider',
-          target_id: input.id,
-          meta: {
-            full_name: input.full_name,
-            phone: input.phone,
-            about: input.about,
-            completed_projects: input.completed_projects,
-          },
+  editProviderProfile: godProcedure.input(GodEditProviderProfileInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.providers.update',
+        target_type: 'provider',
+        target_id: input.id,
+        meta: {
+          full_name: input.full_name,
+          phone: input.phone,
+          about: input.about,
+          completed_projects: input.completed_projects,
         },
-        async () => {
-          // Only target a provider row — never a tenant/admin profile.
-          const target = await loadProviderTarget(ctx.db, input.id).catch(() => null)
-          if (!target) throw new TRPCError({ code: 'NOT_FOUND', message: 'ספק לא נמצא' })
-          if (target.role !== 'provider') {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'הרשומה אינה ספק' })
-          }
-          return editProviderProfile(ctx.db, input)
-        },
-      ),
+      },
+      async () => {
+        // Only target a provider row — never a tenant/admin profile.
+        const target = await loadProviderTarget(ctx.db, input.id).catch(() => null)
+        if (!target) throw new TRPCError({ code: 'NOT_FOUND', message: 'ספק לא נמצא' })
+        if (target.role !== 'provider') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'הרשומה אינה ספק' })
+        }
+        return editProviderProfile(ctx.db, input)
+      },
     ),
+  ),
 
   // Reversible ban — the default 'soft' destructive action (reuse of the
   // users.ts disable pattern via setProviderBanned).
-  setBanned: godProcedure
-    .input(GodSetProviderBannedInput)
-    .mutation(({ ctx, input }) =>
-      godMutation(
-        ctx,
-        {
-          action: 'god.providers.set_banned',
-          target_type: 'provider',
-          target_id: input.id,
-          meta: { banned: input.banned },
-        },
-        async () => {
-          // Don't let a super-admin ban their own session out.
-          if (input.id === ctx.user?.id) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'אי אפשר להשבית את עצמך' })
-          }
-          const target = await loadProviderTarget(ctx.db, input.id).catch(() => null)
-          if (!target) throw new TRPCError({ code: 'NOT_FOUND', message: 'ספק לא נמצא' })
-          if (target.role !== 'provider') {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'הרשומה אינה ספק' })
-          }
-          return setProviderBanned(ctx.db, input.id, input.banned)
-        },
-      ),
+  setBanned: godProcedure.input(GodSetProviderBannedInput).mutation(({ ctx, input }) =>
+    godMutation(
+      ctx,
+      {
+        action: 'god.providers.set_banned',
+        target_type: 'provider',
+        target_id: input.id,
+        meta: { banned: input.banned },
+      },
+      async () => {
+        // Don't let a super-admin ban their own session out.
+        if (input.id === ctx.user?.id) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'אי אפשר להשבית את עצמך' })
+        }
+        const target = await loadProviderTarget(ctx.db, input.id).catch(() => null)
+        if (!target) throw new TRPCError({ code: 'NOT_FOUND', message: 'ספק לא נמצא' })
+        if (target.role !== 'provider') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'הרשומה אינה ספק' })
+        }
+        return setProviderBanned(ctx.db, input.id, input.banned)
+      },
     ),
+  ),
 })

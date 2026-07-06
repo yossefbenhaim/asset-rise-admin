@@ -19,13 +19,19 @@ function fmtMs(ms: number): string {
 
 export function RunPhaseBar({ stages }: { stages: ProcessingRunStage[] }) {
   // Map known phases in canonical order; keep any extras after them.
-  const known = PHASES.map((p) => ({
+  const known = PHASES.map(p => ({
     ...p,
-    ms: stages.find((s) => s.stage === p.key)?.ms ?? 0,
-  })).filter((p) => p.ms > 0)
+    ms: stages.find(s => s.stage === p.key)?.ms ?? 0,
+  })).filter(p => p.ms > 0)
   const extras = stages
-    .filter((s) => !PHASES.some((p) => p.key === s.stage) && s.ms > 0)
-    .map((s) => ({ key: s.stage, label: s.stage, cls: 'bg-sc-text-muted', dot: 'bg-sc-text-muted', ms: s.ms }))
+    .filter(s => !PHASES.some(p => p.key === s.stage) && s.ms > 0)
+    .map(s => ({
+      key: s.stage,
+      label: s.stage,
+      cls: 'bg-sc-text-muted',
+      dot: 'bg-sc-text-muted',
+      ms: s.ms,
+    }))
   const segs = [...known, ...extras]
   const total = segs.reduce((a, s) => a + s.ms, 0)
   if (!segs.length || total <= 0) return null
@@ -33,8 +39,11 @@ export function RunPhaseBar({ stages }: { stages: ProcessingRunStage[] }) {
   return (
     <div className="flex flex-col gap-1">
       {/* Proportional stacked bar */}
-      <div className="flex h-1.5 w-full overflow-hidden rounded-sc-pill bg-sc-bg" title="פילוח שלבים (זמן אמת)">
-        {segs.map((s) => (
+      <div
+        className="flex h-1.5 w-full overflow-hidden rounded-sc-pill bg-sc-bg"
+        title="פילוח שלבים (זמן אמת)"
+      >
+        {segs.map(s => (
           <div
             key={s.key}
             className={s.cls}
@@ -45,7 +54,7 @@ export function RunPhaseBar({ stages }: { stages: ProcessingRunStage[] }) {
       </div>
       {/* Per-phase legend with ms */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-sc-text-muted">
-        {segs.map((s) => (
+        {segs.map(s => (
           <span key={s.key} className="inline-flex items-center gap-1">
             <span className={`inline-block w-1.5 h-1.5 rounded-full ${s.dot}`} />
             <span className="text-sc-text-secondary font-semibold">{s.label}</span>

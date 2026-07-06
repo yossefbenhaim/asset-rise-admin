@@ -18,7 +18,10 @@ type Row = GodSupportThreadListItem & Record<string, unknown>
 const ROLE_LABEL: Record<string, string> = { tenant: 'דייר', provider: 'נותן שירות' }
 
 export default function GodSupport() {
-  const q = trpc.god.support.list.useQuery(undefined, { refetchInterval: 8000, refetchOnWindowFocus: true })
+  const q = trpc.god.support.list.useQuery(undefined, {
+    refetchInterval: 8000,
+    refetchOnWindowFocus: true,
+  })
   const [active, setActive] = useState<{ id: string; name: string | null } | null>(null)
 
   const rows = (q.data ?? []) as Row[]
@@ -34,12 +37,19 @@ export default function GodSupport() {
         return (
           <div className="leading-tight">
             <div className="font-semibold text-sc-text">{r.user_name ?? r.user_email ?? '—'}</div>
-            <div className="text-[11px] text-sc-text-muted">{r.user_role ? (ROLE_LABEL[r.user_role] ?? r.user_role) : ''}</div>
+            <div className="text-[11px] text-sc-text-muted">
+              {r.user_role ? (ROLE_LABEL[r.user_role] ?? r.user_role) : ''}
+            </div>
           </div>
         )
       },
     },
-    { id: 'building', header: 'בניין', accessorFn: r => r.building_address ?? '', cell: ({ row }) => row.original.building_address ?? '—' },
+    {
+      id: 'building',
+      header: 'בניין',
+      accessorFn: r => r.building_address ?? '',
+      cell: ({ row }) => row.original.building_address ?? '—',
+    },
     {
       id: 'last',
       header: 'הודעה אחרונה',
@@ -59,9 +69,12 @@ export default function GodSupport() {
       id: 'updated',
       header: 'עדכון אחרון',
       accessorFn: r => r.last_message_at ?? '',
-      cell: ({ row }) => row.original.last_message_at
-        ? <span className="text-sc-text-secondary">{timeAgo(row.original.last_message_at)}</span>
-        : <span className="text-sc-text-muted">—</span>,
+      cell: ({ row }) =>
+        row.original.last_message_at ? (
+          <span className="text-sc-text-secondary">{timeAgo(row.original.last_message_at)}</span>
+        ) : (
+          <span className="text-sc-text-muted">—</span>
+        ),
     },
   ]
 
@@ -75,8 +88,20 @@ export default function GodSupport() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-        <KpiCard label="שיחות פעילות" value={rows.length} icon={<MessageSquare size={18} />} tone="primary" index={0} />
-        <KpiCard label="ממתינות לתשובה" value={awaiting} icon={<Inbox size={18} />} tone={awaiting > 0 ? 'gold' : 'success'} index={1} />
+        <KpiCard
+          label="שיחות פעילות"
+          value={rows.length}
+          icon={<MessageSquare size={18} />}
+          tone="primary"
+          index={0}
+        />
+        <KpiCard
+          label="ממתינות לתשובה"
+          value={awaiting}
+          icon={<Inbox size={18} />}
+          tone={awaiting > 0 ? 'gold' : 'success'}
+          index={1}
+        />
       </div>
 
       <DataTable<Row>
@@ -90,7 +115,13 @@ export default function GodSupport() {
         emptyBody="כשתפתח צ'אט עם לקוח (ממסך דייר/ספק) הוא יופיע כאן."
       />
 
-      <Modal open={!!active} onClose={() => setActive(null)} title={active?.name ? `צ'אט עם ${active.name}` : 'צ\'אט מערכת'} icon={<MessageSquare size={18} />} size="lg">
+      <Modal
+        open={!!active}
+        onClose={() => setActive(null)}
+        title={active?.name ? `צ'אט עם ${active.name}` : "צ'אט מערכת"}
+        icon={<MessageSquare size={18} />}
+        size="lg"
+      >
         {active && <SupportChat userId={active.id} userName={active.name} />}
       </Modal>
     </div>

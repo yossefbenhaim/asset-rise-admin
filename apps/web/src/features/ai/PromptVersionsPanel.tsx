@@ -15,9 +15,7 @@
 // Parameterized by `agent` so the SAME UI serves both the analyzer and Wong.
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import {
-  History, GitCompare, Lock, Save, Info, Layers, FileCode2, Server,
-} from 'lucide-react'
+import { History, GitCompare, Lock, Save, Info, Layers, FileCode2, Server } from 'lucide-react'
 import { trpc } from '@/lib/api/trpc'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -40,7 +38,10 @@ export function PromptVersionsPanel({ agent }: { agent: AiAgent }) {
   const [compareWith, setCompareWith] = useState<string | null>(null)
 
   // Reset selection when switching agents.
-  useEffect(() => { setSelected(null); setCompareWith(null) }, [agent])
+  useEffect(() => {
+    setSelected(null)
+    setCompareWith(null)
+  }, [agent])
 
   // Default-select the current version once data lands.
   useEffect(() => {
@@ -71,7 +72,8 @@ export function PromptVersionsPanel({ agent }: { agent: AiAgent }) {
       <CardBody className="pt-0">
         {q.isLoading ? (
           <div className="space-y-2">
-            <Skeleton h={36} /><Skeleton h={120} />
+            <Skeleton h={36} />
+            <Skeleton h={120} />
           </div>
         ) : q.isError || !data ? (
           <EmptyState title="לא ניתן לטעון גרסאות" body={q.error?.message} />
@@ -81,9 +83,12 @@ export function PromptVersionsPanel({ agent }: { agent: AiAgent }) {
             <div className="flex items-start gap-2 rounded-sc-input bg-sc-light-blue text-sc-primary px-3 py-2.5 text-[11.5px] leading-relaxed">
               <Layers size={15} className="shrink-0 mt-0.5" />
               <span>
-                <b>פרומפט המנוע הבסיסי</b> חי ב-worker באירוח (לא נערך מכאן).
-                הטקסט שנערך כאן הוא <b>override</b> שמתווסף לבסיס כ-<span dir="ltr" className="font-mono">rubric</span> תחום
-                ב-fences, ונקרא ע״י ה-worker בריצה הבאה. השינוי אינו מפיל גרסה חדשה אוטומטית.
+                <b>פרומפט המנוע הבסיסי</b> חי ב-worker באירוח (לא נערך מכאן). הטקסט שנערך כאן הוא{' '}
+                <b>override</b> שמתווסף לבסיס כ-
+                <span dir="ltr" className="font-mono">
+                  rubric
+                </span>{' '}
+                תחום ב-fences, ונקרא ע״י ה-worker בריצה הבאה. השינוי אינו מפיל גרסה חדשה אוטומטית.
               </span>
             </div>
 
@@ -169,10 +174,15 @@ function VersionDetail({
   const [text, setText] = useState(version.prompt ?? '')
 
   // Reset the editor when the selected version changes.
-  useEffect(() => { setText(version.prompt ?? '') }, [version.version, version.prompt])
+  useEffect(() => {
+    setText(version.prompt ?? '')
+  }, [version.version, version.prompt])
 
   const editPrompt = trpc.ai.editPrompt.useMutation({
-    onSuccess: () => { toast.show('הפרומפט נשמר'); onSaved() },
+    onSuccess: () => {
+      toast.show('הפרומפט נשמר')
+      onSaved()
+    },
     onError: e => toast.show(e.message),
   })
 
@@ -185,10 +195,16 @@ function VersionDetail({
         <span className="inline-flex items-center gap-2 text-[13px] font-bold text-sc-text">
           גרסה {version.version}
           {version.current && <Pill kind="success">פעילה</Pill>}
-          {hasOverride ? <Pill kind="gold">override מותאם</Pill> : <Pill kind="neutral">מנוע בלבד</Pill>}
+          {hasOverride ? (
+            <Pill kind="gold">override מותאם</Pill>
+          ) : (
+            <Pill kind="neutral">מנוע בלבד</Pill>
+          )}
         </span>
         {version.updated_at && (
-          <span className="text-[11px] text-sc-text-muted">עודכן {dateTime(version.updated_at)}</span>
+          <span className="text-[11px] text-sc-text-muted">
+            עודכן {dateTime(version.updated_at)}
+          </span>
         )}
       </div>
 
@@ -294,7 +310,8 @@ function CompareVersions({
             .filter(v => v.version !== base?.version)
             .map(v => (
               <option key={v.version} value={v.version}>
-                {v.version}{v.hasOverride ? ' · override' : ' · מנוע'}
+                {v.version}
+                {v.hasOverride ? ' · override' : ' · מנוע'}
               </option>
             ))}
         </select>
@@ -326,7 +343,9 @@ function DiffSide({ v }: { v: AiPromptVersion | null }) {
         {v?.current && <Pill kind="success">פעילה</Pill>}
         {v && !v.hasOverride && <Pill kind="neutral">מנוע</Pill>}
       </div>
-      {v?.note && <p className="text-[10.5px] text-sc-text-secondary m-0 mb-1 leading-snug">{v.note}</p>}
+      {v?.note && (
+        <p className="text-[10.5px] text-sc-text-secondary m-0 mb-1 leading-snug">{v.note}</p>
+      )}
       {v?.hasOverride ? (
         <pre
           dir="ltr"

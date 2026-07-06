@@ -33,11 +33,16 @@ function num(v: unknown): number | null {
   return Number.isFinite(n) ? n : null
 }
 
-function addressOf(b: {
-  street?: string | null
-  building_number?: string | null
-  city?: string | null
-} | null | undefined): string | null {
+function addressOf(
+  b:
+    | {
+        street?: string | null
+        building_number?: string | null
+        city?: string | null
+      }
+    | null
+    | undefined,
+): string | null {
   if (!b) return null
   const line = [b.street, b.building_number].filter(Boolean).join(' ')
   const full = [line, b.city].filter(Boolean).join(', ').trim()
@@ -96,15 +101,12 @@ export async function listTenders(
     if (k) bidCount.set(k, (bidCount.get(k) ?? 0) + 1)
   }
 
-  const addrById = await addressesFor(
-    db,
-    rows.map(r => r.building_id).filter(Boolean),
-  )
+  const addrById = await addressesFor(db, rows.map(r => r.building_id).filter(Boolean))
 
   return rows.map(r => ({
     id: r.id,
     building_id: r.building_id ?? null,
-    building_address: r.building_id ? addrById.get(r.building_id) ?? null : null,
+    building_address: r.building_id ? (addrById.get(r.building_id) ?? null) : null,
     title: r.title ?? null,
     status: (r.status ?? null) as TenderStatus | null,
     budget_min: num(r.budget_min),
@@ -136,7 +138,7 @@ export async function getTenderDetail(
   if (!t) return null
 
   const buildingAddress = t.building_id
-    ? (await addressesFor(db, [t.building_id])).get(t.building_id) ?? null
+    ? ((await addressesFor(db, [t.building_id])).get(t.building_id) ?? null)
     : null
 
   // Resolve the building's project id (for the forceAward linked record).
@@ -183,8 +185,7 @@ export async function getTenderDetail(
         eta_weeks: num(b.eta_weeks),
         scope_summary: b.scope_summary ?? null,
         status: b.status ?? null,
-        is_awarded:
-          !!t.awarded_provider_id && b.provider_id === t.awarded_provider_id,
+        is_awarded: !!t.awarded_provider_id && b.provider_id === t.awarded_provider_id,
         created_at: b.created_at ?? null,
       }
     })
@@ -196,9 +197,7 @@ export async function getTenderDetail(
       return a.amount - b.amount
     })
 
-  const awarded = t.awarded_provider_id
-    ? profileById.get(t.awarded_provider_id)
-    : null
+  const awarded = t.awarded_provider_id ? profileById.get(t.awarded_provider_id) : null
 
   return {
     id: t.id,
@@ -253,14 +252,10 @@ export async function setTenderStatus(
     throw new TenderPreconditionError('המכרז כבר נמצא בסטטוס המבוקש')
   }
   if (live.status === 'awarded') {
-    throw new TenderPreconditionError(
-      'לא ניתן לשנות סטטוס של מכרז שכבר הוכרז זוכה דרך מסך זה',
-    )
+    throw new TenderPreconditionError('לא ניתן לשנות סטטוס של מכרז שכבר הוכרז זוכה דרך מסך זה')
   }
   if (status === 'awarded') {
-    throw new TenderPreconditionError(
-      'הכרזת זוכה מתבצעת דרך פעולת "כפה זכייה" (forceAward) בלבד',
-    )
+    throw new TenderPreconditionError('הכרזת זוכה מתבצעת דרך פעולת "כפה זכייה" (forceAward) בלבד')
   }
   const { data, error } = await db
     .from('sc_tenders')
@@ -367,16 +362,14 @@ export async function forceAward(
   //    (project_id, provider_id)). Skipped only if the building has no project.
   let linked = false
   if (projectId) {
-    const { error: linkErr } = await db
-      .from('sc_project_providers')
-      .upsert(
-        {
-          project_id: projectId,
-          provider_id: providerId,
-          role_in_project: roleInProject,
-        },
-        { onConflict: 'project_id,provider_id' },
-      )
+    const { error: linkErr } = await db.from('sc_project_providers').upsert(
+      {
+        project_id: projectId,
+        provider_id: providerId,
+        role_in_project: roleInProject,
+      },
+      { onConflict: 'project_id,provider_id' },
+    )
     if (linkErr) throw linkErr
     linked = true
   }

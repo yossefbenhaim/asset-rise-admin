@@ -65,12 +65,7 @@ const ListBase = z.object({
 })
 
 // ── FAMILY — invitations ──────────────────────────────────────────────────────
-export const FAMILY_INVITATION_STATUSES = [
-  'pending',
-  'accepted',
-  'expired',
-  'cancelled',
-] as const
+export const FAMILY_INVITATION_STATUSES = ['pending', 'accepted', 'expired', 'cancelled'] as const
 export type FamilyInvitationStatus = (typeof FAMILY_INVITATION_STATUSES)[number]
 
 export const FAMILY_INVITATION_STATUS_LABEL: Record<FamilyInvitationStatus, string> = {

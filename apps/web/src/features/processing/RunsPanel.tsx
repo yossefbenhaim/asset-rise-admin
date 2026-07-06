@@ -47,7 +47,9 @@ export function RunsPanel({
 
       {/* Global source-category health */}
       <div className="flex flex-col gap-1.5">
-        <div className="text-[11px] font-semibold text-sc-text-secondary">בריאות מקורות (תמונת מצב כללית)</div>
+        <div className="text-[11px] font-semibold text-sc-text-secondary">
+          בריאות מקורות (תמונת מצב כללית)
+        </div>
         <SourceChips sources={sources} />
       </div>
 
@@ -61,14 +63,20 @@ export function RunsPanel({
       </div>
 
       {runs.length === 0 ? (
-        <EmptyState title="טרם נרשמו ריצות" body="ריצת ניתוח חדשה (לא מהמטמון) תופיע כאן עם משך אמיתי ופילוח שלבים." />
+        <EmptyState
+          title="טרם נרשמו ריצות"
+          body="ריצת ניתוח חדשה (לא מהמטמון) תופיע כאן עם משך אמיתי ופילוח שלבים."
+        />
       ) : (
         <ul className="flex flex-col divide-y divide-sc-border/60 -mb-1">
-          {runs.map((r) => (
+          {runs.map(r => (
             <li key={r.id} className="flex flex-col gap-2 py-2.5">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="text-[12.5px] font-semibold text-sc-text truncate" title={r.addressDisplay ?? ''}>
+                  <div
+                    className="text-[12.5px] font-semibold text-sc-text truncate"
+                    title={r.addressDisplay ?? ''}
+                  >
                     {r.addressDisplay ?? '—'}
                   </div>
                   <div className="text-[11px] text-sc-text-muted truncate">

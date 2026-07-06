@@ -5,13 +5,7 @@
 export type Role = 'tenant' | 'provider' | 'admin'
 
 export type ProviderType =
-  | 'architect'
-  | 'appraiser'
-  | 'lawyer'
-  | 'developer'
-  | 'contractor'
-  | 'coordinator'
-  | 'generic'
+  'architect' | 'appraiser' | 'lawyer' | 'developer' | 'contractor' | 'coordinator' | 'generic'
 
 export interface TenantLevels {
   is_organizer: boolean

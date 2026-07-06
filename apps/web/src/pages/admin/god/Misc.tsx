@@ -7,7 +7,15 @@ import { Button } from '@/components/ui/Button'
 import { DangerConfirm } from '@/components/ui/DangerConfirm'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useToast } from '@/components/ui/Toast'
-import { Users, ClipboardCheck, Star, CalendarDays, Trash2, ShieldCheck, ShieldX } from 'lucide-react'
+import {
+  Users,
+  ClipboardCheck,
+  Star,
+  CalendarDays,
+  Trash2,
+  ShieldCheck,
+  ShieldX,
+} from 'lucide-react'
 import {
   FAMILY_INVITATION_STATUS_LABEL,
   INSPECTION_STATUSES,
@@ -23,7 +31,7 @@ import {
   type GodRatingItem,
   type GodCalendarItem,
   type GodMiscCounts,
-} from '@asset-rise/shared/schemas/godMisc'
+} from '@asset-rise/shared'
 
 // God-mode "Cross-domain Admin / Misc" page (Wave 3 — content + comms). A
 // READ-FIRST cross-building console for the remaining domains, with a few
@@ -109,10 +117,25 @@ export default function GodMisc() {
   const counts = god.god.misc.counts.useQuery()
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode; count?: number }[] = [
-    { key: 'family', label: 'משפחה', icon: <Users size={15} />, count: counts.data?.family_links_active },
-    { key: 'inspections', label: 'בדיקות', icon: <ClipboardCheck size={15} />, count: counts.data?.inspections },
+    {
+      key: 'family',
+      label: 'משפחה',
+      icon: <Users size={15} />,
+      count: counts.data?.family_links_active,
+    },
+    {
+      key: 'inspections',
+      label: 'בדיקות',
+      icon: <ClipboardCheck size={15} />,
+      count: counts.data?.inspections,
+    },
     { key: 'ratings', label: 'דירוגים', icon: <Star size={15} />, count: counts.data?.ratings },
-    { key: 'calendar', label: 'יומן', icon: <CalendarDays size={15} />, count: counts.data?.calendar_events },
+    {
+      key: 'calendar',
+      label: 'יומן',
+      icon: <CalendarDays size={15} />,
+      count: counts.data?.calendar_events,
+    },
   ]
 
   return (
@@ -120,9 +143,7 @@ export default function GodMisc() {
       <div className="sc-page__head">
         <div>
           <h1>ניהול חוצה-תחומים — מנהל-על</h1>
-          <div className="sub">
-            פעולות-על נוספות: הסרת בן-משפחה, ביטול בדיקה, אימות/הסרת דירוג
-          </div>
+          <div className="sub">פעולות-על נוספות: הסרת בן-משפחה, ביטול בדיקה, אימות/הסרת דירוג</div>
         </div>
       </div>
 
@@ -141,9 +162,7 @@ export default function GodMisc() {
               onClick={() => setTab(t.key)}
             >
               {t.label}
-              {typeof t.count === 'number' && (
-                <span className="mr-1 opacity-70">({t.count})</span>
-              )}
+              {typeof t.count === 'number' && <span className="mr-1 opacity-70">({t.count})</span>}
             </Button>
           ))}
         </div>
@@ -205,14 +224,21 @@ function FamilyTab() {
       </div>
 
       <Card>
-        <CardHeader title="קישורים משפחתיים פעילים" meta={<Pill kind="info">{links.data?.length ?? 0}</Pill>} />
+        <CardHeader
+          title="קישורים משפחתיים פעילים"
+          meta={<Pill kind="info">{links.data?.length ?? 0}</Pill>}
+        />
         <CardBody>
           {links.isLoading ? (
             <Loading />
           ) : links.isError ? (
             <ErrText msg={links.error?.message} />
           ) : !links.data?.length ? (
-            <EmptyState icon={<Users size={28} />} title="אין קישורים" body="לא נמצאו קישורים משפחתיים." />
+            <EmptyState
+              icon={<Users size={28} />}
+              title="אין קישורים"
+              body="לא נמצאו קישורים משפחתיים."
+            />
           ) : (
             <div className="sc-table-wrap">
               <table className="sc-table">
@@ -230,11 +256,15 @@ function FamilyTab() {
                     <tr key={l.id}>
                       <td className="text-[12px]">
                         {l.primary_name ?? '—'}
-                        {l.primary_email && <div className="text-sc-text-muted">{l.primary_email}</div>}
+                        {l.primary_email && (
+                          <div className="text-sc-text-muted">{l.primary_email}</div>
+                        )}
                       </td>
                       <td className="text-[12px] font-semibold">
                         {l.member_name ?? l.member_display_name ?? '—'}
-                        {l.member_email && <div className="text-sc-text-muted font-normal">{l.member_email}</div>}
+                        {l.member_email && (
+                          <div className="text-sc-text-muted font-normal">{l.member_email}</div>
+                        )}
                       </td>
                       <td className="text-[12px]">{fmtDate(l.created_at)}</td>
                       <td>
@@ -266,14 +296,21 @@ function FamilyTab() {
       </Card>
 
       <Card>
-        <CardHeader title="הזמנות משפחתיות" meta={<Pill kind="info">{invites.data?.length ?? 0}</Pill>} />
+        <CardHeader
+          title="הזמנות משפחתיות"
+          meta={<Pill kind="info">{invites.data?.length ?? 0}</Pill>}
+        />
         <CardBody>
           {invites.isLoading ? (
             <Loading />
           ) : invites.isError ? (
             <ErrText msg={invites.error?.message} />
           ) : !invites.data?.length ? (
-            <EmptyState icon={<Users size={28} />} title="אין הזמנות" body="לא נמצאו הזמנות משפחתיות." />
+            <EmptyState
+              icon={<Users size={28} />}
+              title="אין הזמנות"
+              body="לא נמצאו הזמנות משפחתיות."
+            />
           ) : (
             <div className="sc-table-wrap">
               <table className="sc-table">
@@ -291,15 +328,30 @@ function FamilyTab() {
                     <tr key={iv.id}>
                       <td className="text-[12px]">
                         {iv.primary_name ?? '—'}
-                        {iv.primary_email && <div className="text-sc-text-muted">{iv.primary_email}</div>}
+                        {iv.primary_email && (
+                          <div className="text-sc-text-muted">{iv.primary_email}</div>
+                        )}
                       </td>
                       <td className="text-[12px]">
                         {iv.invitee_name ?? '—'}
-                        {iv.invitee_email && <div className="text-sc-text-muted">{iv.invitee_email}</div>}
+                        {iv.invitee_email && (
+                          <div className="text-sc-text-muted">{iv.invitee_email}</div>
+                        )}
                       </td>
                       <td>
-                        <Pill kind={iv.status === 'accepted' ? 'success' : iv.status === 'cancelled' || iv.status === 'expired' ? 'neutral' : 'gold'}>
-                          {label(FAMILY_INVITATION_STATUS_LABEL as Record<string, string>, iv.status)}
+                        <Pill
+                          kind={
+                            iv.status === 'accepted'
+                              ? 'success'
+                              : iv.status === 'cancelled' || iv.status === 'expired'
+                                ? 'neutral'
+                                : 'gold'
+                          }
+                        >
+                          {label(
+                            FAMILY_INVITATION_STATUS_LABEL as Record<string, string>,
+                            iv.status,
+                          )}
                         </Pill>
                       </td>
                       <td className="text-[12px]">{fmtDate(iv.created_at)}</td>
@@ -340,7 +392,8 @@ function FamilyTab() {
           <div className="space-y-2">
             <p className="text-sc-danger font-semibold m-0">פעולה הרסנית!</p>
             <p className="m-0">
-              הסרת הקישור תנתק את בן/בת המשפחה מהחשבון הראשי ותשלול את הגישה היורשת לבניין. הפעולה רכה (removed_at) ונרשמת ביומן הביקורת.
+              הסרת הקישור תנתק את בן/בת המשפחה מהחשבון הראשי ותשלול את הגישה היורשת לבניין. הפעולה
+              רכה (removed_at) ונרשמת ביומן הביקורת.
             </p>
           </div>
         }
@@ -375,10 +428,7 @@ function InspectionsTab() {
 
   return (
     <Card>
-      <CardHeader
-        title="בדיקות ספקים"
-        meta={<Pill kind="info">{list.data?.length ?? 0}</Pill>}
-      />
+      <CardHeader title="בדיקות ספקים" meta={<Pill kind="info">{list.data?.length ?? 0}</Pill>} />
       <CardBody>
         <div className="flex flex-col sm:flex-row gap-2 mb-3">
           <input
@@ -387,10 +437,16 @@ function InspectionsTab() {
             onChange={e => setQ(e.target.value)}
             placeholder="חיפוש לפי פרויקט / ספק / כותרת…"
           />
-          <select className={`${inputCls} sm:w-48`} value={status} onChange={e => setStatus(e.target.value)}>
+          <select
+            className={`${inputCls} sm:w-48`}
+            value={status}
+            onChange={e => setStatus(e.target.value)}
+          >
             <option value="">כל הסטטוסים</option>
             {INSPECTION_STATUSES.map(s => (
-              <option key={s} value={s}>{INSPECTION_STATUS_LABEL[s]}</option>
+              <option key={s} value={s}>
+                {INSPECTION_STATUS_LABEL[s]}
+              </option>
             ))}
           </select>
         </div>
@@ -400,7 +456,11 @@ function InspectionsTab() {
         ) : list.isError ? (
           <ErrText msg={list.error?.message} />
         ) : !list.data?.length ? (
-          <EmptyState icon={<ClipboardCheck size={28} />} title="אין בדיקות" body="לא נמצאו בדיקות התואמות את הסינון." />
+          <EmptyState
+            icon={<ClipboardCheck size={28} />}
+            title="אין בדיקות"
+            body="לא נמצאו בדיקות התואמות את הסינון."
+          />
         ) : (
           <div className="sc-table-wrap">
             <table className="sc-table">
@@ -420,14 +480,26 @@ function InspectionsTab() {
                   <tr key={i.id}>
                     <td className="text-[12px] font-semibold">
                       {i.project_name ?? '—'}
-                      {i.building_address && <div className="text-sc-text-muted font-normal">{i.building_address}</div>}
+                      {i.building_address && (
+                        <div className="text-sc-text-muted font-normal">{i.building_address}</div>
+                      )}
                     </td>
                     <td className="text-[12px]">{i.provider_name ?? '—'}</td>
-                    <td><Pill kind="gold">{label(INSPECTION_TYPE_LABEL, i.inspection_type)}</Pill></td>
+                    <td>
+                      <Pill kind="gold">{label(INSPECTION_TYPE_LABEL, i.inspection_type)}</Pill>
+                    </td>
                     <td className="text-[12px]">{i.title ?? '—'}</td>
                     <td>{i.score ?? '—'}</td>
                     <td>
-                      <Pill kind={i.status === 'submitted' ? 'success' : i.status === 'revised' ? 'gold' : 'neutral'}>
+                      <Pill
+                        kind={
+                          i.status === 'submitted'
+                            ? 'success'
+                            : i.status === 'revised'
+                              ? 'gold'
+                              : 'neutral'
+                        }
+                      >
                         {label(INSPECTION_STATUS_LABEL as Record<string, string>, i.status)}
                       </Pill>
                     </td>
@@ -463,7 +535,8 @@ function InspectionsTab() {
           <div className="space-y-2">
             <p className="text-sc-danger font-semibold m-0">פעולה הרסנית!</p>
             <p className="m-0">
-              ביטול הבדיקה ימחק את רשומת הבדיקה ואת הקבצים המצורפים לה לצמיתות (אין סטטוס «מבוטל» — המחיקה סופית). הפעולה נרשמת ביומן הביקורת.
+              ביטול הבדיקה ימחק את רשומת הבדיקה ואת הקבצים המצורפים לה לצמיתות (אין סטטוס «מבוטל» —
+              המחיקה סופית). הפעולה נרשמת ביומן הביקורת.
             </p>
           </div>
         }
@@ -490,11 +563,18 @@ function RatingsTab() {
   }
 
   const verifyM = god.god.misc.setRatingVerified.useMutation({
-    onSuccess: () => { toast.show('סטטוס האימות עודכן'); refresh() },
+    onSuccess: () => {
+      toast.show('סטטוס האימות עודכן')
+      refresh()
+    },
     onError: e => toast.show(e.message),
   })
   const removeM = god.god.misc.removeRating.useMutation({
-    onSuccess: () => { toast.show('הדירוג הוסר'); setRemoveTarget(null); refresh() },
+    onSuccess: () => {
+      toast.show('הדירוג הוסר')
+      setRemoveTarget(null)
+      refresh()
+    },
     onError: e => toast.show(e.message),
   })
 
@@ -511,10 +591,16 @@ function RatingsTab() {
             onChange={e => setQ(e.target.value)}
             placeholder="חיפוש לפי ספק / מדרג / טקסט…"
           />
-          <select className={`${inputCls} sm:w-48`} value={source} onChange={e => setSource(e.target.value)}>
+          <select
+            className={`${inputCls} sm:w-48`}
+            value={source}
+            onChange={e => setSource(e.target.value)}
+          >
             <option value="">כל המקורות</option>
             {RATING_SOURCES.map(s => (
-              <option key={s} value={s}>{RATING_SOURCE_LABEL[s]}</option>
+              <option key={s} value={s}>
+                {RATING_SOURCE_LABEL[s]}
+              </option>
             ))}
           </select>
         </div>
@@ -524,7 +610,11 @@ function RatingsTab() {
         ) : list.isError ? (
           <ErrText msg={list.error?.message} />
         ) : !list.data?.length ? (
-          <EmptyState icon={<Star size={28} />} title="אין דירוגים" body="לא נמצאו דירוגים התואמים את הסינון." />
+          <EmptyState
+            icon={<Star size={28} />}
+            title="אין דירוגים"
+            body="לא נמצאו דירוגים התואמים את הסינון."
+          />
         ) : (
           <div className="sc-table-wrap">
             <table className="sc-table">
@@ -543,15 +633,30 @@ function RatingsTab() {
                   <tr key={r.id}>
                     <td className="text-[12px] font-semibold">
                       {r.provider_name ?? '—'}
-                      {r.submitter_name && <div className="text-sc-text-muted font-normal">מדרג: {r.submitter_name}</div>}
+                      {r.submitter_name && (
+                        <div className="text-sc-text-muted font-normal">
+                          מדרג: {r.submitter_name}
+                        </div>
+                      )}
                     </td>
-                    <td><Pill kind="neutral">{label(RATING_SOURCE_LABEL as Record<string, string>, r.source)}</Pill></td>
-                    <td className="font-semibold">{r.rating ?? '—'}{r.rating !== null ? ' ★' : ''}</td>
+                    <td>
+                      <Pill kind="neutral">
+                        {label(RATING_SOURCE_LABEL as Record<string, string>, r.source)}
+                      </Pill>
+                    </td>
+                    <td className="font-semibold">
+                      {r.rating ?? '—'}
+                      {r.rating !== null ? ' ★' : ''}
+                    </td>
                     <td className="text-[12px] max-w-[260px] truncate" title={r.review_text ?? ''}>
                       {r.review_text ?? '—'}
                     </td>
                     <td>
-                      {r.verified ? <Pill kind="success">מאומת</Pill> : <Pill kind="neutral">לא מאומת</Pill>}
+                      {r.verified ? (
+                        <Pill kind="success">מאומת</Pill>
+                      ) : (
+                        <Pill kind="neutral">לא מאומת</Pill>
+                      )}
                     </td>
                     <td>
                       <div className="flex gap-1 justify-end">
@@ -596,7 +701,8 @@ function RatingsTab() {
           <div className="space-y-2">
             <p className="text-sc-danger font-semibold m-0">פעולה הרסנית!</p>
             <p className="m-0">
-              הסרת הדירוג תמחק את הרשומה לצמיתות והממוצע הציבורי של הספק יחושב מחדש. אם ברצונך רק להסתיר דירוג זמנית — השתמש/י ב«בטל אימות». הפעולה נרשמת ביומן הביקורת.
+              הסרת הדירוג תמחק את הרשומה לצמיתות והממוצע הציבורי של הספק יחושב מחדש. אם ברצונך רק
+              להסתיר דירוג זמנית — השתמש/י ב«בטל אימות». הפעולה נרשמת ביומן הביקורת.
             </p>
           </div>
         }
@@ -617,7 +723,10 @@ function CalendarTab() {
 
   return (
     <Card>
-      <CardHeader title="אירועי יומן ופגישות" meta={<Pill kind="info">{list.data?.length ?? 0}</Pill>} />
+      <CardHeader
+        title="אירועי יומן ופגישות"
+        meta={<Pill kind="info">{list.data?.length ?? 0}</Pill>}
+      />
       <CardBody>
         <div className="flex flex-col sm:flex-row gap-2 mb-3">
           <input
@@ -626,10 +735,16 @@ function CalendarTab() {
             onChange={e => setQ(e.target.value)}
             placeholder="חיפוש לפי כותרת / בניין / יוצר…"
           />
-          <select className={`${inputCls} sm:w-48`} value={kind} onChange={e => setKind(e.target.value)}>
+          <select
+            className={`${inputCls} sm:w-48`}
+            value={kind}
+            onChange={e => setKind(e.target.value)}
+          >
             <option value="">כל הסוגים</option>
             {CALENDAR_KINDS.map(k => (
-              <option key={k} value={k}>{CALENDAR_KIND_LABEL[k]}</option>
+              <option key={k} value={k}>
+                {CALENDAR_KIND_LABEL[k]}
+              </option>
             ))}
           </select>
         </div>
@@ -639,7 +754,11 @@ function CalendarTab() {
         ) : list.isError ? (
           <ErrText msg={list.error?.message} />
         ) : !list.data?.length ? (
-          <EmptyState icon={<CalendarDays size={28} />} title="אין אירועים" body="לא נמצאו אירועי יומן התואמים את הסינון." />
+          <EmptyState
+            icon={<CalendarDays size={28} />}
+            title="אין אירועים"
+            body="לא נמצאו אירועי יומן התואמים את הסינון."
+          />
         ) : (
           <div className="sc-table-wrap">
             <table className="sc-table">
@@ -657,7 +776,11 @@ function CalendarTab() {
                 {list.data.map(e => (
                   <tr key={e.id}>
                     <td className="text-[12px] font-semibold">{e.title ?? '—'}</td>
-                    <td><Pill kind="neutral">{label(CALENDAR_KIND_LABEL as Record<string, string>, e.kind)}</Pill></td>
+                    <td>
+                      <Pill kind="neutral">
+                        {label(CALENDAR_KIND_LABEL as Record<string, string>, e.kind)}
+                      </Pill>
+                    </td>
                     <td className="text-[12px]">
                       {e.building_address ?? '—'}
                       {e.project_name && <div className="text-sc-text-muted">{e.project_name}</div>}

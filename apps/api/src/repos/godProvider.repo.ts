@@ -86,10 +86,7 @@ export async function listProviders(
   const lawyerIds = norm.filter(r => r.provider_type === 'lawyer').map(r => r.id)
   const cityById = new Map<string, string | null>()
   if (lawyerIds.length) {
-    const { data: lp } = await db
-      .from('sc_lawyer_profiles')
-      .select('id, city')
-      .in('id', lawyerIds)
+    const { data: lp } = await db.from('sc_lawyer_profiles').select('id, city').in('id', lawyerIds)
     for (const l of (lp ?? []) as any[]) cityById.set(l.id, l.city ?? null)
   }
 
@@ -114,10 +111,7 @@ export async function listProviders(
   const cityTerm = input.city ? input.city.trim().toLowerCase() : ''
   if (cityTerm) {
     items = items.filter(i => {
-      const hay = [i.city, i.full_name, i.email]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase()
+      const hay = [i.city, i.full_name, i.email].filter(Boolean).join(' ').toLowerCase()
       return hay.includes(cityTerm)
     })
   }
@@ -141,11 +135,7 @@ export async function getProvider(
   if (error) throw new Error(error.message)
   if (!p) return null
 
-  const { data: pp } = await db
-    .from('sc_provider_profiles')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle()
+  const { data: pp } = await db.from('sc_provider_profiles').select('*').eq('id', id).maybeSingle()
 
   // Per-type license/specialization row (null for coordinator/generic).
   const typeTable = typeTableFor(p.provider_type)
@@ -200,11 +190,7 @@ export async function loadProviderTarget(
 // provider created without onboarding may lack one — upsert keeps the about/
 // completed_projects writes idempotent and safe.
 async function ensureProviderProfile(db: SupabaseClient, id: string): Promise<void> {
-  const { data } = await db
-    .from('sc_provider_profiles')
-    .select('id')
-    .eq('id', id)
-    .maybeSingle()
+  const { data } = await db.from('sc_provider_profiles').select('id').eq('id', id).maybeSingle()
   if (!data) {
     const { error } = await db.from('sc_provider_profiles').insert({ id })
     if (error) throw new Error(error.message)
@@ -230,14 +216,10 @@ export async function editProviderProfile(
   // sc_provider_profiles side (about / completed_projects)
   const ppPatch: Record<string, unknown> = {}
   if (input.about !== undefined) ppPatch.about = input.about
-  if (input.completed_projects !== undefined)
-    ppPatch.completed_projects = input.completed_projects
+  if (input.completed_projects !== undefined) ppPatch.completed_projects = input.completed_projects
   if (Object.keys(ppPatch).length) {
     await ensureProviderProfile(db, input.id)
-    const { error } = await db
-      .from('sc_provider_profiles')
-      .update(ppPatch)
-      .eq('id', input.id)
+    const { error } = await db.from('sc_provider_profiles').update(ppPatch).eq('id', input.id)
     if (error) throw new Error(error.message)
   }
   return { ok: true }

@@ -44,13 +44,10 @@ export function DangerConfirm({
       title={title}
       footer={
         <div className="flex gap-2 justify-end">
-          <Button variant="ghost" onClick={onClose}>ביטול</Button>
-          <Button
-            variant="danger"
-            disabled={!matches}
-            loading={loading}
-            onClick={onConfirm}
-          >
+          <Button variant="ghost" onClick={onClose}>
+            ביטול
+          </Button>
+          <Button variant="danger" disabled={!matches} loading={loading} onClick={onConfirm}>
             {confirmLabel}
           </Button>
         </div>
@@ -59,9 +56,7 @@ export function DangerConfirm({
       <div className="space-y-3 text-[13px]">
         {body}
         <div>
-          <div className="text-sc-text-secondary mb-1">
-            הקלד/י «{confirmText}» לאישור
-          </div>
+          <div className="text-sc-text-secondary mb-1">הקלד/י «{confirmText}» לאישור</div>
           <input
             value={typed}
             onChange={e => setTyped(e.target.value)}

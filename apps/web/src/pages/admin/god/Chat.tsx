@@ -10,11 +10,7 @@ import { DataTable } from '@/components/ui/DataTable'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useToast } from '@/components/ui/Toast'
 import { MessageSquare, Trash2, RotateCcw, UserCog } from 'lucide-react'
-import type {
-  GodChatBuilding,
-  GodChatThread,
-  GodChatMessage,
-} from '@asset-rise/shared/schemas/godChat'
+import type { GodChatBuilding, GodChatThread, GodChatMessage } from '@asset-rise/shared'
 
 // God-mode "Chat Moderation" page (Wave 3 — content + comms). Pick a building
 // from the room list (every building with a chat thread + message / deleted
@@ -125,13 +121,12 @@ export default function GodChat() {
       </ControlPanel>
 
       <Card className="mt-4">
-        <CardHeader
-          title="חדרי צ׳אט"
-          meta={<Pill kind="info">{rooms.length}</Pill>}
-        />
+        <CardHeader title="חדרי צ׳אט" meta={<Pill kind="info">{rooms.length}</Pill>} />
         <CardBody>
           {buildings.isError ? (
-            <div className="text-center py-6 text-sc-danger text-[13px]">{buildings.error?.message}</div>
+            <div className="text-center py-6 text-sc-danger text-[13px]">
+              {buildings.error?.message}
+            </div>
           ) : (
             <DataTable<RoomRow>
               columns={roomColumns}
@@ -168,9 +163,13 @@ function ChatThread({ building, onClose }: { building: GodChatBuilding; onClose:
           <div className="flex items-center gap-2">
             <Pill kind="info">{thread.data?.message_count ?? building.message_count} הודעות</Pill>
             {(thread.data?.deleted_count ?? building.deleted_count) > 0 && (
-              <Pill kind="danger">{thread.data?.deleted_count ?? building.deleted_count} נמחקו</Pill>
+              <Pill kind="danger">
+                {thread.data?.deleted_count ?? building.deleted_count} נמחקו
+              </Pill>
             )}
-            <Button size="sm" variant="ghost" onClick={onClose}>סגור</Button>
+            <Button size="sm" variant="ghost" onClick={onClose}>
+              סגור
+            </Button>
           </div>
         }
       />
@@ -207,11 +206,18 @@ function MessageRow({ m, building }: { m: GodChatMessage; building: GodChatBuild
   }
 
   const deleteM = god.god.chat.deleteMessage.useMutation({
-    onSuccess: () => { toast.show('ההודעה נמחקה (מחיקה רכה)'); setDeleteOpen(false); refresh() },
+    onSuccess: () => {
+      toast.show('ההודעה נמחקה (מחיקה רכה)')
+      setDeleteOpen(false)
+      refresh()
+    },
     onError: e => toast.show(e.message),
   })
   const restoreM = god.god.chat.restoreMessage.useMutation({
-    onSuccess: () => { toast.show('ההודעה שוחזרה'); refresh() },
+    onSuccess: () => {
+      toast.show('ההודעה שוחזרה')
+      refresh()
+    },
     onError: e => toast.show(e.message),
   })
 
@@ -257,14 +263,18 @@ function MessageRow({ m, building }: { m: GodChatMessage; building: GodChatBuild
                 icon={<RotateCcw size={14} />}
                 loading={restoreM.isLoading}
                 onClick={() => restoreM.mutate({ id: m.id })}
-              >שחזר</Button>
+              >
+                שחזר
+              </Button>
             ) : (
               <Button
                 size="sm"
                 variant="danger"
                 icon={<Trash2 size={14} />}
                 onClick={() => setDeleteOpen(true)}
-              >מחק</Button>
+              >
+                מחק
+              </Button>
             )}
           </div>
         </div>
@@ -282,8 +292,8 @@ function MessageRow({ m, building }: { m: GodChatMessage; building: GodChatBuild
           <div className="space-y-2">
             <p className="text-sc-danger font-semibold m-0">פעולה הרסנית!</p>
             <p className="m-0">
-              מחיקה רכה תסתיר את ההודעה מכל הדיירים בשרשור (היא תוצג כ«הודעה נמחקה»).
-              תוכן ההודעה נשמר במסד הנתונים וניתן לשחזר אותה בכל עת.
+              מחיקה רכה תסתיר את ההודעה מכל הדיירים בשרשור (היא תוצג כ«הודעה נמחקה»). תוכן ההודעה
+              נשמר במסד הנתונים וניתן לשחזר אותה בכל עת.
             </p>
             <p className="m-0 text-sc-text-secondary">
               מאת: {sender} · {fmtTime(m.created_at)}
