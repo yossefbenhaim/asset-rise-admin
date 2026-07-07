@@ -17,6 +17,7 @@ import {
   GitBranch,
   ShieldCheck,
   ExternalLink,
+  Scale,
 } from 'lucide-react'
 import { trpc } from '@/lib/api/trpc'
 import { KpiCard } from '@/components/ui/KpiCard'
@@ -61,11 +62,18 @@ const KIND_LABEL: Record<string, string> = {
   identity: 'זהות והגדרה',
   deliverable: 'תוצר',
   report: 'דוח',
+  contract: 'חוזה',
   'legal-draft': 'טיוטה משפטית',
   card: 'כרטיס משימה',
   ledger: 'לדג׳ר',
   health: 'בריאות',
   doc: 'מסמך',
+}
+// Legal deliverables get an emphasized treatment in the drawer.
+const LEGAL_KINDS = new Set(['contract', 'legal-draft'])
+const KIND_PILL: Record<string, 'gold' | 'navy' | 'neutral'> = {
+  contract: 'gold',
+  'legal-draft': 'navy',
 }
 const ACT_LABEL: Record<string, string> = {
   approval: 'בקשת אישור',
@@ -191,6 +199,7 @@ function AgentDrawer({ agent, onClose }: { agent: AgentListRow | null; onClose: 
 
   if (!agent) return <Drawer open={false} onClose={onClose} />
   const d = detail.data
+  const isLegal = agent.team === 'legal'
 
   return (
     <Drawer
@@ -354,27 +363,51 @@ function AgentDrawer({ agent, onClose }: { agent: AgentListRow | null; onClose: 
           )}
         </Section>
 
-        <Section title={`מסמכים ותוצרים (${d?.docs.length ?? 0})`} icon={<FileText size={13} />}>
+        <Section
+          title={`${isLegal ? 'מסמכים משפטיים וחוזים' : 'מסמכים ותוצרים'} (${d?.docs.length ?? 0})`}
+          icon={<FileText size={13} />}
+        >
           {d?.docs.length ? (
             <div className="space-y-1.5">
-              {d.docs.map(doc => (
-                <button
-                  key={doc.id}
-                  type="button"
-                  onClick={() => setViewDoc({ id: doc.id, title: doc.title })}
-                  className="w-full flex items-center gap-2 text-[12px] bg-sc-bg hover:bg-sc-light-blue/40 transition-colors rounded-lg px-3 py-2 text-right cursor-pointer border-0"
-                >
-                  <FileText size={13} className="text-sc-gold flex-shrink-0" />
-                  <span className="font-bold text-sc-text truncate">{doc.title}</span>
-                  <Pill kind="neutral">{KIND_LABEL[doc.kind] ?? doc.kind}</Pill>
-                  <span className="text-sc-text-muted flex-shrink-0 sc-num">
-                    {fmtBytes(doc.size_bytes)}
-                  </span>
-                  <span className="text-sc-text-muted flex-shrink-0 sc-num">
-                    {fmtDate(doc.modified_at)}
-                  </span>
-                </button>
-              ))}
+              {d.docs.map(doc => {
+                const emph = LEGAL_KINDS.has(doc.kind)
+                return (
+                  <button
+                    key={doc.id}
+                    type="button"
+                    onClick={() => setViewDoc({ id: doc.id, title: doc.title })}
+                    className={
+                      emph
+                        ? 'w-full flex items-center gap-2 text-[13px] bg-sc-gold/5 border border-sc-gold/40 hover:bg-sc-gold/10 transition-colors rounded-lg px-3 py-2.5 text-right cursor-pointer shadow-sm'
+                        : 'w-full flex items-center gap-2 text-[12px] bg-sc-bg hover:bg-sc-light-blue/40 transition-colors rounded-lg px-3 py-2 text-right cursor-pointer border-0'
+                    }
+                  >
+                    {emph ? (
+                      <Scale size={15} className="text-sc-gold flex-shrink-0" />
+                    ) : (
+                      <FileText size={13} className="text-sc-gold flex-shrink-0" />
+                    )}
+                    <span
+                      className={
+                        emph
+                          ? 'font-extrabold text-sc-text truncate'
+                          : 'font-bold text-sc-text truncate'
+                      }
+                    >
+                      {doc.title}
+                    </span>
+                    <Pill kind={KIND_PILL[doc.kind] ?? 'neutral'}>
+                      {KIND_LABEL[doc.kind] ?? doc.kind}
+                    </Pill>
+                    <span className="text-sc-text-muted flex-shrink-0 sc-num">
+                      {fmtBytes(doc.size_bytes)}
+                    </span>
+                    <span className="text-sc-text-muted flex-shrink-0 sc-num">
+                      {fmtDate(doc.modified_at)}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           ) : (
             <div className="text-[12px] text-sc-text-muted">אין מסמכים שסונכרנו.</div>
