@@ -27,6 +27,7 @@ import {
   AlertTriangle,
   MessageCircle,
   Bot,
+  Scale,
 } from 'lucide-react'
 import { ADMIN_NAV } from '@/lib/nav/config'
 import { useUser, useRoleKeys } from '@/lib/auth/session'
@@ -61,6 +62,7 @@ const ICONS: Record<string, any> = {
   AlertTriangle,
   MessageCircle,
   Bot,
+  Scale,
 }
 function Ic({ name }: { name: string }) {
   const C = ICONS[name] ?? Circle

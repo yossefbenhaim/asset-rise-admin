@@ -72,6 +72,22 @@ export interface AgentActivityRow {
   source: string | null
 }
 
+export interface LegalRequirementRow {
+  id: string
+  domain: string
+  title: string
+  why: string | null
+  law: string
+  section: string | null
+  source_url: string | null
+  severity: string
+  status: string
+  doc_path: string | null
+  notes: string | null
+  sort_order: number
+  synced_at: string
+}
+
 export const agentsRouter = router({
   list: requireAction('admin.agents.view').query(async ({ ctx }) => {
     const [reg, skills, docs, crons] = await Promise.all([
@@ -170,6 +186,21 @@ export const agentsRouter = router({
         content: string | null
       } | null
     }),
+
+  // The legal-office tab: every requirement in the compliance map, backed by a
+  // specific Israeli law + section. Synced from ~/legal/מפת-ציות.json by the
+  // host collector; this endpoint only reads.
+  compliance: requireAction('admin.agents.view').query(async ({ ctx }) => {
+    const { data, error } = await ctx.db
+      .from('sc_legal_requirements')
+      .select(
+        'id,domain,title,why,law,section,source_url,severity,status,doc_path,notes,sort_order,synced_at',
+      )
+      .order('domain')
+      .order('sort_order')
+    if (error) throw error
+    return { requirements: (data ?? []) as unknown as LegalRequirementRow[] }
+  }),
 
   stats: requireAction('admin.agents.view').query(async ({ ctx }) => {
     const [reg, skills, docs] = await Promise.all([

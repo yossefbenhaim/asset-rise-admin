@@ -95,6 +95,13 @@ export const ADMIN_NAV: NavGroup[] = [
         requires: ['admin.agents.view'],
       },
       {
+        id: 'legal',
+        label: 'לשכה משפטית',
+        to: '/legal',
+        icon: 'Scale',
+        requires: ['admin.agents.view'],
+      },
+      {
         id: 'wong',
         label: 'Wong · מסמכים',
         to: '/wong',
