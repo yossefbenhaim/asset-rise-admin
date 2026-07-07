@@ -25,6 +25,7 @@ import { DataTable } from '@/components/ui/DataTable'
 import { Drawer } from '@/components/ui/Drawer'
 import { Modal } from '@/components/ui/Modal'
 import { Pill } from '@/components/ui/Pill'
+import { LegalDocView } from './LegalDocView'
 
 const TEAM_LABEL: Record<string, string> = {
   command: 'פיקוד',
@@ -182,7 +183,7 @@ function ContentModal({
 
 function AgentDrawer({ agent, onClose }: { agent: AgentListRow | null; onClose: () => void }) {
   const [viewSkill, setViewSkill] = useState<{ id: string; name: string } | null>(null)
-  const [viewDoc, setViewDoc] = useState<{ id: string; title: string } | null>(null)
+  const [viewDoc, setViewDoc] = useState<{ id: string; title: string; kind: string } | null>(null)
 
   const detail = trpc.agents.detail.useQuery(
     { id: agent?.id ?? '' },
@@ -375,7 +376,7 @@ function AgentDrawer({ agent, onClose }: { agent: AgentListRow | null; onClose: 
                   <button
                     key={doc.id}
                     type="button"
-                    onClick={() => setViewDoc({ id: doc.id, title: doc.title })}
+                    onClick={() => setViewDoc({ id: doc.id, title: doc.title, kind: doc.kind })}
                     className={
                       emph
                         ? 'w-full flex items-center gap-2 text-[13px] bg-sc-gold/5 border border-sc-gold/40 hover:bg-sc-gold/10 transition-colors rounded-lg px-3 py-2.5 text-right cursor-pointer shadow-sm'
@@ -463,15 +464,23 @@ function AgentDrawer({ agent, onClose }: { agent: AgentListRow | null; onClose: 
           onClose={() => setViewSkill(null)}
         />
       )}
-      {viewDoc && (
-        <ContentModal
-          title={viewDoc.title}
-          path={docContent.data?.path}
-          content={docContent.data?.content ?? null}
-          loading={docContent.isLoading}
-          onClose={() => setViewDoc(null)}
-        />
-      )}
+      {viewDoc &&
+        (LEGAL_KINDS.has(viewDoc.kind) ? (
+          <LegalDocView
+            title={viewDoc.title}
+            content={docContent.data?.content ?? null}
+            loading={docContent.isLoading}
+            onClose={() => setViewDoc(null)}
+          />
+        ) : (
+          <ContentModal
+            title={viewDoc.title}
+            path={docContent.data?.path}
+            content={docContent.data?.content ?? null}
+            loading={docContent.isLoading}
+            onClose={() => setViewDoc(null)}
+          />
+        ))}
     </Drawer>
   )
 }
