@@ -75,71 +75,76 @@ export function DomainHeader({
   const pct = total > 0 ? Math.round((done / total) * 100) : 0
 
   return (
-    <div className="sc-card p-0 overflow-hidden mb-3 border-r-4 border-r-sc-gold">
-      <div className="p-4 flex items-start gap-3.5">
-        <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-sc-navy text-sc-gold flex items-center justify-center">
-          <Icon size={24} />
+    <div className="sc-card p-4 overflow-hidden mb-3 border-r-4 border-r-sc-gold">
+      {/* icon + name + counters — one compact row that survives narrow screens */}
+      <div className="flex items-center gap-3">
+        <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-sc-navy text-sc-gold flex items-center justify-center">
+          <Icon size={22} />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-[16px] font-black text-sc-text m-0">{name}</h2>
-            <span className="text-[11px] text-sc-text-muted">{total} דרישות</span>
+          <h2 className="text-[15px] sm:text-[16px] font-black text-sc-text m-0 leading-tight">
+            {name}
+          </h2>
+          <div className="flex items-center gap-2 flex-wrap text-[11px] mt-0.5">
+            <span className="text-sc-text-muted">{total} דרישות</span>
             {mustsMissing > 0 && (
-              <span className="text-[11px] font-bold text-sc-danger">
-                {mustsMissing} חובות בדין טרם טופלו
-              </span>
+              <span className="font-bold text-sc-danger">{mustsMissing} חובות בדין טרם טופלו</span>
             )}
-          </div>
-          {info?.summary && (
-            <p className="text-[12.5px] text-sc-text-secondary leading-relaxed mt-1 mb-0">
-              {info.summary}
-            </p>
-          )}
-          <div className="flex items-center gap-1.5 flex-wrap mt-2">
-            {(info?.tags ?? []).map(t => {
-              const s = TAG_STYLE[t] ?? { icon: Landmark, cls: 'bg-sc-bg text-sc-text-secondary' }
-              const TIcon = s.icon
-              return (
-                <span
-                  key={t}
-                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-sc-pill text-[10.5px] font-bold ${s.cls}`}
-                >
-                  <TIcon size={11} /> {t}
-                </span>
-              )
-            })}
-            {info?.applies && (
-              <button
-                onClick={() => setShowApplies(v => !v)}
-                className="inline-flex items-center gap-1 text-[11px] font-bold text-sc-primary bg-transparent border-0 p-0 cursor-pointer mr-1"
-              >
-                <ChevronDown
-                  size={12}
-                  className={`transition-transform ${showApplies ? 'rotate-180' : ''}`}
-                />
-                הניתוח המשפטי המלא
-              </button>
-            )}
-          </div>
-        </div>
-        <div className="flex-shrink-0 w-28 text-left">
-          <div className="text-[11px] text-sc-text-muted mb-1">
-            טופלו <b className="sc-num text-sc-text">{done}</b>/
-            <span className="sc-num">{total}</span>
-          </div>
-          <div className="h-1.5 rounded-full bg-sc-bg overflow-hidden">
-            <div
-              className={`h-full rounded-full ${pct === 100 ? 'bg-sc-success' : 'bg-sc-gold'}`}
-              style={{ width: `${pct}%` }}
-            />
           </div>
         </div>
       </div>
+
+      {/* full-width text — never squeezed by side columns */}
+      {info?.summary && (
+        <p className="text-[12.5px] text-sc-text-secondary leading-relaxed mt-2.5 mb-0">
+          {info.summary}
+        </p>
+      )}
+
+      <div className="flex items-center gap-1.5 flex-wrap mt-2.5">
+        {(info?.tags ?? []).map(t => {
+          const s = TAG_STYLE[t] ?? { icon: Landmark, cls: 'bg-sc-bg text-sc-text-secondary' }
+          const TIcon = s.icon
+          return (
+            <span
+              key={t}
+              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-sc-pill text-[10.5px] font-bold ${s.cls}`}
+            >
+              <TIcon size={11} /> {t}
+            </span>
+          )
+        })}
+        {info?.applies && (
+          <button
+            onClick={() => setShowApplies(v => !v)}
+            className="inline-flex items-center gap-1 text-[11px] font-bold text-sc-primary bg-transparent border-0 p-0 cursor-pointer mr-1"
+          >
+            <ChevronDown
+              size={12}
+              className={`transition-transform ${showApplies ? 'rotate-180' : ''}`}
+            />
+            הניתוח המשפטי המלא
+          </button>
+        )}
+      </div>
+
+      {/* progress strip across the card bottom */}
+      <div className="flex items-center gap-2.5 mt-3">
+        <div className="flex-1 h-1.5 rounded-full bg-sc-bg overflow-hidden">
+          <div
+            className={`h-full rounded-full ${pct === 100 ? 'bg-sc-success' : 'bg-sc-gold'}`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <span className="flex-shrink-0 text-[11px] text-sc-text-muted">
+          טופלו <b className="sc-num text-sc-text">{done}</b>/
+          <span className="sc-num">{total}</span>
+        </span>
+      </div>
+
       {showApplies && info?.applies && (
-        <div className="px-4 pb-4">
-          <div className="bg-sc-bg rounded-lg p-3 text-[12px] text-sc-text-secondary leading-relaxed whitespace-pre-wrap">
-            {info.applies}
-          </div>
+        <div className="mt-3 bg-sc-bg rounded-lg p-3 text-[12px] text-sc-text-secondary leading-relaxed whitespace-pre-wrap">
+          {info.applies}
         </div>
       )}
     </div>
