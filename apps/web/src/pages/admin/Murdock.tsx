@@ -13,7 +13,6 @@ import {
   FileText,
   GraduationCap,
   ShieldCheck,
-  BookOpen,
   AlertTriangle,
   CheckCircle2,
   RefreshCw,
@@ -22,6 +21,7 @@ import { trpc } from '@/lib/api/trpc'
 import { KpiCard } from '@/components/ui/KpiCard'
 import { Pill } from '@/components/ui/Pill'
 import { Modal } from '@/components/ui/Modal'
+import { DomainHeader, type DomainInfo } from '@/features/legal/DomainHeader'
 import { LegalDocView } from './LegalDocView'
 
 const SEVERITY_LABEL: Record<string, string> = {
@@ -132,20 +132,31 @@ function RequirementCard({
         <p className="text-[12.5px] text-sc-text-secondary leading-relaxed m-0">{req.why}</p>
       )}
 
-      {/* the legal anchor — always researchable */}
+      {/* the legal anchor — the law itself links to the official source */}
       <div className="flex items-start gap-2 bg-sc-bg rounded-lg px-3 py-2">
         <Landmark size={14} className="text-sc-gold flex-shrink-0 mt-0.5" />
         <div className="text-[12px] leading-relaxed">
-          <span className="font-bold text-sc-text">{req.law}</span>
+          {req.source_url ? (
+            <a
+              href={req.source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-sc-text underline decoration-sc-gold decoration-2 underline-offset-4 hover:text-sc-gold transition-colors"
+            >
+              {req.law}
+            </a>
+          ) : (
+            <span className="font-bold text-sc-text">{req.law}</span>
+          )}
           {req.section && <span className="text-sc-text-secondary"> · {req.section}</span>}
           {req.source_url && (
             <a
               href={req.source_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sc-primary font-bold mr-2"
+              className="inline-flex items-center gap-1 text-sc-primary font-bold underline underline-offset-2 hover:text-sc-gold transition-colors mr-2"
             >
-              <ExternalLink size={11} /> למקור הרשמי
+              <ExternalLink size={11} /> לחקור את החוק במקור
             </a>
           )}
         </div>
@@ -231,6 +242,12 @@ export default function Murdock() {
     return m
   }, [docs])
 
+  const domainInfo = useMemo(() => {
+    const m = new Map<string, DomainInfo>()
+    for (const d of (compliance.data?.domains ?? []) as DomainInfo[]) m.set(d.name, d)
+    return m
+  }, [compliance.data])
+
   const domains = useMemo(() => [...new Set(reqs.map(r => r.domain))], [reqs])
   const filtered = reqs.filter(
     r =>
@@ -240,8 +257,9 @@ export default function Murdock() {
   const byDomain = useMemo(() => {
     const m = new Map<string, Requirement[]>()
     for (const r of filtered) m.set(r.domain, [...(m.get(r.domain) ?? []), r])
-    return m
-  }, [filtered])
+    const order = (name: string) => domainInfo.get(name)?.sort_order ?? 99
+    return new Map([...m.entries()].sort((a, b) => order(a[0]) - order(b[0])))
+  }, [filtered, domainInfo])
 
   const musts = reqs.filter(r => r.severity === 'must')
   const mustsDone = musts.filter(r => DONE_STATUSES.has(r.status))
@@ -368,25 +386,34 @@ export default function Murdock() {
           מפת הציות טרם סונכרנה. הרץ את agents-center-sync.py בשרת.
         </div>
       ) : (
-        [...byDomain.entries()].map(([domain, rows]) => (
-          <div key={domain} className="mb-5">
-            <div className="flex items-center gap-2 mb-2">
-              <BookOpen size={15} className="text-sc-gold" />
-              <h2 className="text-[14px] font-black text-sc-text m-0">{domain}</h2>
-              <span className="text-[11px] text-sc-text-muted">{rows.length} דרישות</span>
+        [...byDomain.entries()].map(([domain, rows]) => {
+          const all = reqs.filter(r => r.domain === domain)
+          const done = all.filter(r => DONE_STATUSES.has(r.status)).length
+          const mustsMissing = all.filter(
+            r => r.severity === 'must' && r.status === 'missing',
+          ).length
+          return (
+            <div key={domain} className="mb-6">
+              <DomainHeader
+                name={domain}
+                info={domainInfo.get(domain) ?? null}
+                total={all.length}
+                done={done}
+                mustsMissing={mustsMissing}
+              />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                {rows.map(r => (
+                  <RequirementCard
+                    key={r.id}
+                    req={r}
+                    doc={docsByName.get(baseName(r.doc_path)) ?? null}
+                    onOpenDoc={openDoc}
+                  />
+                ))}
+              </div>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {rows.map(r => (
-                <RequirementCard
-                  key={r.id}
-                  req={r}
-                  doc={docsByName.get(baseName(r.doc_path)) ?? null}
-                  onOpenDoc={openDoc}
-                />
-              ))}
-            </div>
-          </div>
-        ))
+          )
+        })
       )}
 
       {/* every legal document he produced */}

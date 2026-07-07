@@ -88,6 +88,15 @@ export interface LegalRequirementRow {
   synced_at: string
 }
 
+export interface LegalDomainRow {
+  name: string
+  icon: string | null
+  summary: string | null
+  applies: string | null
+  tags: string[]
+  sort_order: number
+}
+
 export const agentsRouter = router({
   list: requireAction('admin.agents.view').query(async ({ ctx }) => {
     const [reg, skills, docs, crons] = await Promise.all([
@@ -191,15 +200,25 @@ export const agentsRouter = router({
   // specific Israeli law + section. Synced from ~/legal/מפת-ציות.json by the
   // host collector; this endpoint only reads.
   compliance: requireAction('admin.agents.view').query(async ({ ctx }) => {
-    const { data, error } = await ctx.db
-      .from('sc_legal_requirements')
-      .select(
-        'id,domain,title,why,law,section,source_url,severity,status,doc_path,notes,sort_order,synced_at',
-      )
-      .order('domain')
-      .order('sort_order')
-    if (error) throw error
-    return { requirements: (data ?? []) as unknown as LegalRequirementRow[] }
+    const [reqs, doms] = await Promise.all([
+      ctx.db
+        .from('sc_legal_requirements')
+        .select(
+          'id,domain,title,why,law,section,source_url,severity,status,doc_path,notes,sort_order,synced_at',
+        )
+        .order('domain')
+        .order('sort_order'),
+      ctx.db
+        .from('sc_legal_domains')
+        .select('name,icon,summary,applies,tags,sort_order')
+        .order('sort_order'),
+    ])
+    if (reqs.error) throw reqs.error
+    if (doms.error) throw doms.error
+    return {
+      requirements: (reqs.data ?? []) as unknown as LegalRequirementRow[],
+      domains: (doms.data ?? []) as unknown as LegalDomainRow[],
+    }
   }),
 
   stats: requireAction('admin.agents.view').query(async ({ ctx }) => {
