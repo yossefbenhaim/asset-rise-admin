@@ -22,6 +22,7 @@ import { KpiCard } from '@/components/ui/KpiCard'
 import { Pill } from '@/components/ui/Pill'
 import { Modal } from '@/components/ui/Modal'
 import { DomainHeader, type DomainInfo } from '@/features/legal/DomainHeader'
+import { ResolverBlock } from '@/features/legal/ResolverBlock'
 import { LegalDocView } from './LegalDocView'
 
 const SEVERITY_LABEL: Record<string, string> = {
@@ -72,6 +73,9 @@ type Requirement = {
   status: string
   doc_path: string | null
   notes: string | null
+  resolver: string | null
+  resolver_how: string | null
+  task_prompt: string | null
   sort_order: number
   synced_at: string
 }
@@ -179,6 +183,8 @@ function RequirementCard({
         )}
         {req.notes && <span className="text-[11px] text-sc-text-muted">{req.notes}</span>}
       </div>
+
+      <ResolverBlock resolver={req.resolver} how={req.resolver_how} prompt={req.task_prompt} />
     </div>
   )
 }
@@ -288,7 +294,7 @@ export default function Murdock() {
       </div>
 
       {/* KPI row */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
         <KpiCard
           label="דרישות במפה"
           value={reqs.length}
@@ -323,6 +329,13 @@ export default function Murdock() {
           icon={<GraduationCap size={18} />}
           tone="navy"
           index={4}
+        />
+        <KpiCard
+          label="בידי הסוכנים"
+          value={`${reqs.filter(r => r.resolver && r.resolver !== 'yossef').length}/${reqs.length}`}
+          icon={<RefreshCw size={18} />}
+          tone="teal"
+          index={5}
         />
       </div>
 

@@ -84,6 +84,9 @@ export interface LegalRequirementRow {
   status: string
   doc_path: string | null
   notes: string | null
+  resolver: string | null
+  resolver_how: string | null
+  task_prompt: string | null
   sort_order: number
   synced_at: string
 }
@@ -204,7 +207,7 @@ export const agentsRouter = router({
       ctx.db
         .from('sc_legal_requirements')
         .select(
-          'id,domain,title,why,law,section,source_url,severity,status,doc_path,notes,sort_order,synced_at',
+          'id,domain,title,why,law,section,source_url,severity,status,doc_path,notes,resolver,resolver_how,task_prompt,sort_order,synced_at',
         )
         .order('domain')
         .order('sort_order'),
