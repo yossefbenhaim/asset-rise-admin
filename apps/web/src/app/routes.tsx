@@ -16,6 +16,7 @@ import AdminPipelineRuns from '@/pages/admin/PipelineRuns'
 import AdminOutreach from '@/pages/admin/Outreach'
 import AdminCosts from '@/pages/admin/Costs'
 import AdminAgents from '@/pages/admin/Agents'
+import AdminAgentPage from '@/pages/admin/AgentPage'
 import AdminMurdock from '@/pages/admin/Murdock'
 import AdminAiAnalyst from '@/pages/admin/AiAnalyst'
 import AdminWong from '@/pages/admin/Wong'
@@ -77,6 +78,7 @@ export const router = createBrowserRouter([
           { path: 'outreach', element: <AdminOutreach /> },
           { path: 'costs', element: <AdminCosts /> },
           { path: 'agents', element: <AdminAgents /> },
+          { path: 'agents/:agentId', element: <AdminAgentPage /> },
           { path: 'legal', element: <AdminMurdock /> },
           { path: 'ai', element: <AdminAiAnalyst /> },
           { path: 'wong', element: <AdminWong /> },

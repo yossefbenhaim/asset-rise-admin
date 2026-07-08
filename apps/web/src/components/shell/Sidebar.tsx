@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom'
+import { useState } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import {
   Home,
   Mail,
@@ -28,10 +29,12 @@ import {
   MessageCircle,
   Bot,
   Scale,
+  ChevronDown,
 } from 'lucide-react'
 import { ADMIN_NAV } from '@/lib/nav/config'
 import { useUser, useRoleKeys } from '@/lib/auth/session'
 import { can } from '@/lib/auth/permissions'
+import { trpc } from '@/lib/api/trpc'
 
 // lucide-react's typed component is awkward to constrain — `any` here is fine,
 // runtime is identical.
@@ -86,6 +89,71 @@ function adminLabel(roleKeys: string[]): string {
   return 'admin'
 }
 
+// The "מרכז סוכנים" item expands (chevron) into one sub-tab per agent — each
+// navigating to that agent's own page (/agents/:id).
+function AgentsNavItem({ label, onNavigate }: { label: string; onNavigate?: () => void }) {
+  const location = useLocation()
+  const inAgents = location.pathname.startsWith('/agents')
+  const [open, setOpen] = useState(inAgents)
+  const list = trpc.agents.list.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+    enabled: open || inAgents,
+  })
+  const agents = (
+    (list.data?.agents ?? []) as Array<{
+      id: string
+      name: string
+      emoji: string | null
+      status: string
+    }>
+  ).filter(a => a.status !== 'archived')
+
+  return (
+    <div>
+      <div className="flex items-stretch">
+        <NavLink
+          to="/agents"
+          end
+          onClick={onNavigate}
+          className={({ isActive }) => 'sc-side__item flex-1 ' + (isActive ? 'active' : '')}
+        >
+          <Bot size={18} />
+          <span>{label}</span>
+        </NavLink>
+        <button
+          onClick={() => setOpen(v => !v)}
+          aria-label={open ? 'סגור רשימת סוכנים' : 'פתח רשימת סוכנים'}
+          className="bg-transparent border-0 cursor-pointer px-2 text-sc-text-muted hover:text-sc-text flex items-center"
+        >
+          <ChevronDown size={14} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
+      {open && (
+        <div className="pr-5">
+          {agents.map(a => (
+            <NavLink
+              key={a.id}
+              to={`/agents/${a.id}`}
+              onClick={onNavigate}
+              className={({ isActive }) =>
+                'sc-side__item text-[12.5px] py-1.5 ' + (isActive ? 'active' : '')
+              }
+            >
+              <span className="text-[14px] leading-none w-[18px] text-center">
+                {a.emoji ?? '🤖'}
+              </span>
+              <span>{a.name}</span>
+            </NavLink>
+          ))}
+          {list.isLoading && (
+            <div className="text-[11px] text-sc-text-muted px-3 py-1">טוען סוכנים…</div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function Sidebar({ onNavigate }: { onNavigate?: () => void } = {}) {
   const user = useUser()
   const roleKeys = useRoleKeys()
@@ -116,18 +184,22 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void } = {}) {
         {groups.map(g => (
           <div key={g.group}>
             <div className="sc-side__group">{g.group}</div>
-            {g.items.map(it => (
-              <NavLink
-                key={it.id}
-                to={it.to}
-                end={it.to === '/'}
-                onClick={onNavigate}
-                className={({ isActive }) => 'sc-side__item ' + (isActive ? 'active' : '')}
-              >
-                <Ic name={it.icon} />
-                <span>{it.label}</span>
-              </NavLink>
-            ))}
+            {g.items.map(it =>
+              it.id === 'agents' ? (
+                <AgentsNavItem key={it.id} label={it.label} onNavigate={onNavigate} />
+              ) : (
+                <NavLink
+                  key={it.id}
+                  to={it.to}
+                  end={it.to === '/'}
+                  onClick={onNavigate}
+                  className={({ isActive }) => 'sc-side__item ' + (isActive ? 'active' : '')}
+                >
+                  <Ic name={it.icon} />
+                  <span>{it.label}</span>
+                </NavLink>
+              ),
+            )}
           </div>
         ))}
       </nav>
