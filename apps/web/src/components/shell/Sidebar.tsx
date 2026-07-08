@@ -89,12 +89,31 @@ function adminLabel(roleKeys: string[]): string {
   return 'admin'
 }
 
-// The "מרכז סוכנים" item expands (chevron) into one sub-tab per agent — each
-// navigating to that agent's own page (/agents/:id).
+// The "מרכז סוכנים" item expands (chevron) into TEAMS, and each team expands
+// into its agents. Agents with a dedicated ops page open it directly:
+// Analyzer → בקרת AI (/ai), Wong → אימות מסמכים (/wong), Murdock → לשכה
+// משפטית (/legal); everyone else opens their profile page (/agents/:id).
+const AGENT_TARGET: Record<string, string> = {
+  analyzer: '/ai',
+  wong: '/wong',
+  murdock: '/legal',
+}
+const TEAM_ORDER = ['command', 'dev', 'growth', 'marketing', 'ops', 'legal', 'product']
+const TEAM_HE: Record<string, string> = {
+  command: 'פיקוד',
+  dev: 'פיתוח',
+  growth: 'צמיחה ומכירות',
+  marketing: 'שיווק',
+  ops: 'תפעול',
+  legal: 'משפטי',
+  product: 'מוצר',
+}
+
 function AgentsNavItem({ label, onNavigate }: { label: string; onNavigate?: () => void }) {
   const location = useLocation()
-  const inAgents = location.pathname.startsWith('/agents')
+  const inAgents = ['/agents', '/ai', '/wong', '/legal'].some(p => location.pathname.startsWith(p))
   const [open, setOpen] = useState(inAgents)
+  const [openTeams, setOpenTeams] = useState<Record<string, boolean>>({})
   const list = trpc.agents.list.useQuery(undefined, {
     refetchOnWindowFocus: false,
     enabled: open || inAgents,
@@ -105,8 +124,16 @@ function AgentsNavItem({ label, onNavigate }: { label: string; onNavigate?: () =
       name: string
       emoji: string | null
       status: string
+      team: string
     }>
   ).filter(a => a.status !== 'archived')
+
+  const byTeam: Record<string, typeof agents> = {}
+  for (const a of agents) (byTeam[a.team] ??= []).push(a)
+
+  const targetOf = (id: string) => AGENT_TARGET[id] ?? `/agents/${id}`
+  // auto-open the team that owns the current route
+  const activeTeam = agents.find(a => location.pathname.startsWith(targetOf(a.id)))?.team
 
   return (
     <div>
@@ -129,22 +156,44 @@ function AgentsNavItem({ label, onNavigate }: { label: string; onNavigate?: () =
         </button>
       </div>
       {open && (
-        <div className="pr-5">
-          {agents.map(a => (
-            <NavLink
-              key={a.id}
-              to={`/agents/${a.id}`}
-              onClick={onNavigate}
-              className={({ isActive }) =>
-                'sc-side__item text-[12.5px] py-1.5 ' + (isActive ? 'active' : '')
-              }
-            >
-              <span className="text-[14px] leading-none w-[18px] text-center">
-                {a.emoji ?? '🤖'}
-              </span>
-              <span>{a.name}</span>
-            </NavLink>
-          ))}
+        <div className="pr-3">
+          {TEAM_ORDER.filter(t => byTeam[t]?.length).map(team => {
+            const teamOpen = openTeams[team] ?? team === activeTeam
+            return (
+              <div key={team}>
+                <button
+                  onClick={() => setOpenTeams(s => ({ ...s, [team]: !teamOpen }))}
+                  className="w-full flex items-center gap-1.5 bg-transparent border-0 cursor-pointer px-3 py-1.5 text-[11px] font-extrabold text-sc-text-muted uppercase tracking-wide hover:text-sc-text"
+                >
+                  <ChevronDown
+                    size={11}
+                    className={`transition-transform ${teamOpen ? 'rotate-180' : ''}`}
+                  />
+                  <span>{TEAM_HE[team] ?? team}</span>
+                  <span className="font-normal">({byTeam[team].length})</span>
+                </button>
+                {teamOpen && (
+                  <div className="pr-4">
+                    {byTeam[team].map(a => (
+                      <NavLink
+                        key={a.id}
+                        to={targetOf(a.id)}
+                        onClick={onNavigate}
+                        className={({ isActive }) =>
+                          'sc-side__item text-[12.5px] py-1.5 ' + (isActive ? 'active' : '')
+                        }
+                      >
+                        <span className="text-[14px] leading-none w-[18px] text-center">
+                          {a.emoji ?? '🤖'}
+                        </span>
+                        <span>{a.name}</span>
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
           {list.isLoading && (
             <div className="text-[11px] text-sc-text-muted px-3 py-1">טוען סוכנים…</div>
           )}

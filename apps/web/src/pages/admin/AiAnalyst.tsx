@@ -1,6 +1,7 @@
 // AI Analyst Control — operational view of the analyzer's AI layer. Thin page:
 // fetch recent AI summaries, lay out KPIs + the summaries table (→ SummaryDrawer)
 // + the prompt-versions panel. Heavy UI lives in features/ai/*.
+import { Link } from 'react-router-dom'
 import { useMemo, useState } from 'react'
 import { Sparkles, CheckCircle2, Loader2, AlertTriangle } from 'lucide-react'
 import { trpc } from '@/lib/api/trpc'
@@ -29,7 +30,10 @@ export default function AdminAiAnalyst() {
         <div>
           <h1>בקרת אנלייזר AI</h1>
           <div className="sub">
-            ניתוחי ה-AI של מנוע ההיתכנות · חוות דעת, פאנל 3 הכובעים וגרסאות הפרומפט
+            ניתוחי ה-AI של מנוע ההיתכנות · חוות דעת, פאנל 3 הכובעים וגרסאות הפרומפט ·{' '}
+            <Link to="/agents/analyzer" className="text-sc-primary font-bold">
+              כרטיס הסוכן ←
+            </Link>
           </div>
         </div>
       </div>

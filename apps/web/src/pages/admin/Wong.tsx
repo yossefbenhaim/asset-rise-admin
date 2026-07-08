@@ -5,6 +5,7 @@
 // recent-verifications table (2 cols) beside the prompt-versions panel (1 col),
 // no tabs.
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ShieldCheck, Clock3, CheckCircle2, XCircle } from 'lucide-react'
 import { trpc } from '@/lib/api/trpc'
 import { KpiCard } from '@/components/ui/KpiCard'
@@ -28,7 +29,10 @@ export default function AdminWong() {
         <div>
           <h1>בקרת Wong · אימות מסמכים</h1>
           <div className="sub">
-            הסוכן שבודק ומאשר אוטומטית מסמכים שדיירים מעלים · היסטוריית אימותים וגרסאות הפרומפט
+            הסוכן שבודק ומאשר אוטומטית מסמכים שדיירים מעלים · היסטוריית אימותים וגרסאות הפרומפט ·{' '}
+            <Link to="/agents/wong" className="text-sc-primary font-bold">
+              כרטיס הסוכן ←
+            </Link>
           </div>
         </div>
       </div>

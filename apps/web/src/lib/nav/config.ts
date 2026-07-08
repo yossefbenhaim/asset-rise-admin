@@ -86,27 +86,12 @@ export const ADMIN_NAV: NavGroup[] = [
         icon: 'Wallet',
         requires: ['admin.costs.view'],
       },
-      { id: 'ai', label: 'בקרת AI', to: '/ai', icon: 'Sparkles', requires: ['admin.ai.view'] },
       {
         id: 'agents',
         label: 'מרכז סוכנים',
         to: '/agents',
         icon: 'Bot',
         requires: ['admin.agents.view'],
-      },
-      {
-        id: 'legal',
-        label: 'לשכה משפטית',
-        to: '/legal',
-        icon: 'Scale',
-        requires: ['admin.agents.view'],
-      },
-      {
-        id: 'wong',
-        label: 'Wong · מסמכים',
-        to: '/wong',
-        icon: 'FileCheck2',
-        requires: ['admin.docverify.view'],
       },
       {
         id: 'logs',

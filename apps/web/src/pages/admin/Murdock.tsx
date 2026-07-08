@@ -5,6 +5,7 @@
 // Murdock produced, opened in the branded A4 viewer; (3) his skill set and
 // self-learning loop. Data is pushed by the host collector; this page only reads.
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   Scale,
   Landmark,
@@ -288,7 +289,10 @@ export default function Murdock() {
                 {' '}
                 סונכרן: <b className="sc-num">{fmtDate(lastSync)}</b>
               </>
-            )}
+            )}{' '}
+            <Link to="/agents/murdock" className="text-sc-primary font-bold">
+              כרטיס הסוכן ←
+            </Link>
           </div>
         </div>
       </div>
