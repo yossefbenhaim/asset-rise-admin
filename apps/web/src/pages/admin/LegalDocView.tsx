@@ -66,6 +66,12 @@ function stripDraftHeader(src: string): string {
       i++
       continue
     }
+    // Murdock's first-person verification run-notes and compliance-map
+    // references — belong in the lawyer version, not the published one
+    if (/בריצה זו|לא הצלחתי לאמת|במפת הציות|למפת הציות|מפת-ציות/.test(ls)) {
+      i++
+      continue
+    }
     if (/^\*{0,2}מסמך זה (הוא|הינו) טיוטה/.test(ls)) {
       while (i < lines.length && lines[i].trim() !== '') i++
       continue
