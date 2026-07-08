@@ -1,13 +1,17 @@
 // Branded A4 viewer for Matt Murdock's legal documents. Renders the doc's
-// Markdown as a professional, RTL, Asset-Rise-branded A4 page — logo header,
-// legal typography, and a lawyer-signature block at the bottom — previewed
+// Markdown as a professional, RTL, Asset-Rise-branded A4 page, previewed
 // inline in an <iframe> and exported to a vector PDF via the browser's
-// Save-as-PDF (A4). One HTML string powers both preview and print (WYSIWYG).
-import { useMemo } from 'react'
+// Save-as-PDF (A4). Two modes, toggled in the modal:
+//   'publish' — clean official Asset Rise document: draft headers stripped,
+//               no signature block, "מסמך רשמי" footer. Ready to upload as-is.
+//   'draft'   — the lawyer-review version with the signature block.
+import { useMemo, useState } from 'react'
 import { marked } from 'marked'
-import { Download, FileSignature } from 'lucide-react'
+import { Download, FileSignature, Globe } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
+
+export type DocMode = 'publish' | 'draft'
 
 const LOGO_URL = 'https://asset-rise.byclick.co.il/brand/logo-text.png'
 const NAVY = '#1e3a5f'
@@ -18,10 +22,62 @@ function todayHe(): string {
   return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`
 }
 
+// Remove the leading "טיוטה — טעונה בדיקת עו״ד" heading/blockquote Murdock puts
+// at the top of every draft, so the published version opens clean.
+function stripDraftHeader(src: string): string {
+  const lines = src.split('\n')
+  let i = 0
+  while (i < lines.length) {
+    const l = lines[i].trim()
+    if (l === '') {
+      i++
+      continue
+    }
+    if (/^#{1,3}\s*טיוטה/.test(l)) {
+      i++
+      continue
+    }
+    if (l.startsWith('>') && /טיוטה|עו"ד|עו״ד/.test(l)) {
+      while (i < lines.length && lines[i].trim().startsWith('>')) i++
+      continue
+    }
+    break
+  }
+  return lines.slice(i).join('\n')
+}
+
 // Build one self-contained, print-ready A4 HTML document (RTL Hebrew).
-export function buildLegalHtml(title: string, markdownSrc: string): string {
-  const body = marked.parse(markdownSrc ?? '', { async: false }) as string
+export function buildLegalHtml(
+  title: string,
+  markdownSrc: string,
+  mode: DocMode = 'draft',
+): string {
+  const source = mode === 'publish' ? stripDraftHeader(markdownSrc ?? '') : (markdownSrc ?? '')
+  const body = marked.parse(source, { async: false }) as string
   const safeTitle = title.replace(/\.md$/i, '').replace(/[<>]/g, '')
+  const metaLine =
+    mode === 'publish'
+      ? `Asset Rise · התחדשות עירונית<br>מסמך רשמי · עודכן ${todayHe()}`
+      : `Asset Rise · התחדשות עירונית<br>מסמך משפטי · הופק ${todayHe()}`
+  const hint =
+    mode === 'publish'
+      ? 'גיליון A4 · גרסת פרסום רשמית של Asset Rise (בחר/י "שמירה כ־PDF" ביעד ההדפסה)'
+      : 'גיליון A4 · ממותג · מוכן לחתימת עו״ד (בחר/י "שמירה כ־PDF" ביעד ההדפסה)'
+  const sigblock =
+    mode === 'publish'
+      ? ''
+      : `
+    <div class="sigblock">
+      <h4>אישור וחתימת עורך דין</h4>
+      <div class="sub">מסמך זה הוא טיוטה. הוא טעון בדיקה, אישור וחתימה של עו״ד מוסמך בטרם ייעשה בו שימוש.</div>
+      <div class="sigrow">
+        <div class="cell"><div class="sigline"></div>שם עורך/ת הדין</div>
+        <div class="cell"><div class="sigline"></div>מס׳ רישיון</div>
+        <div class="cell"><div class="sigline"></div>תאריך</div>
+        <div class="cell" style="max-width:120px"><div class="sigline"></div>חתימה</div>
+        <div class="stamp">חותמת</div>
+      </div>
+    </div>`
   return `<!doctype html>
 <html lang="he" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -86,26 +142,15 @@ export function buildLegalHtml(title: string, markdownSrc: string): string {
 <body>
   <div class="toolbar no-print">
     <button onclick="window.print()">הורד / שמור כ־PDF</button>
-    <span class="hint">גיליון A4 · ממותג · מוכן לחתימת עו״ד (בחר/י "שמירה כ־PDF" ביעד ההדפסה)</span>
+    <span class="hint">${hint}</span>
   </div>
   <div class="page">
     <div class="brandhdr">
       <img src="${LOGO_URL}" alt="Asset Rise" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
       <span class="fallback" style="display:none">Asset Rise</span>
-      <div class="meta">Asset Rise · התחדשות עירונית<br>מסמך משפטי · הופק ${todayHe()}</div>
+      <div class="meta">${metaLine}</div>
     </div>
-    ${body}
-    <div class="sigblock">
-      <h4>אישור וחתימת עורך דין</h4>
-      <div class="sub">מסמך זה הוא טיוטה. הוא טעון בדיקה, אישור וחתימה של עו״ד מוסמך בטרם ייעשה בו שימוש.</div>
-      <div class="sigrow">
-        <div class="cell"><div class="sigline"></div>שם עורך/ת הדין</div>
-        <div class="cell"><div class="sigline"></div>מס׳ רישיון</div>
-        <div class="cell"><div class="sigline"></div>תאריך</div>
-        <div class="cell" style="max-width:120px"><div class="sigline"></div>חתימה</div>
-        <div class="stamp">חותמת</div>
-      </div>
-    </div>
+    ${body}${sigblock}
     <div class="foot"><span>Asset Rise · asset-rise.byclick.co.il</span><span>${safeTitle}</span></div>
   </div>
 </body></html>`
@@ -122,7 +167,11 @@ export function LegalDocView({
   loading: boolean
   onClose: () => void
 }) {
-  const html = useMemo(() => (content ? buildLegalHtml(title, content) : ''), [title, content])
+  const [mode, setMode] = useState<DocMode>('publish')
+  const html = useMemo(
+    () => (content ? buildLegalHtml(title, content, mode) : ''),
+    [title, content, mode],
+  )
 
   const download = () => {
     const w = window.open('', '_blank', 'noopener,noreferrer,width=900,height=1000')
@@ -134,19 +183,37 @@ export function LegalDocView({
     w.setTimeout(() => w.print(), 700)
   }
 
+  const modeBtn = (m: DocMode, label: string, Icon: typeof Globe) => (
+    <button
+      onClick={() => setMode(m)}
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold border transition-colors ${
+        mode === m
+          ? 'bg-sc-navy text-white border-sc-navy'
+          : 'bg-transparent text-sc-text-secondary border-sc-border hover:border-sc-navy'
+      }`}
+    >
+      <Icon size={13} /> {label}
+    </button>
+  )
+
   return (
     <Modal
       open
       onClose={onClose}
       title={title.replace(/\.md$/i, '')}
-      subtitle="תצוגת A4 ממותגת · מוכן לחתימת עו״ד"
+      subtitle={
+        mode === 'publish'
+          ? 'גרסת פרסום — מסמך רשמי של Asset Rise, מוכן להעלאה כמו שהוא'
+          : 'גרסת עו״ד — כולל בלוק חתימה לבדיקה משפטית'
+      }
       size="xl"
       icon={<FileSignature size={18} />}
       footer={
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-[12px] text-sc-text-muted">
-            גיליון A4 · לוגו + בלוק חתימה · ייצוא PDF וקטורי
-          </span>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            {modeBtn('publish', 'גרסת פרסום', Globe)}
+            {modeBtn('draft', 'גרסת עו״ד', FileSignature)}
+          </div>
           <Button onClick={download} disabled={!content}>
             <Download size={15} /> הורד PDF
           </Button>
