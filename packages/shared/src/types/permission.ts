@@ -29,6 +29,8 @@ export type Action =
   | 'admin.docverify.view'
   // Agents Center (read-only OpenClaw estate dashboard). Seeded by migration 025.
   | 'admin.agents.view'
+  // Agents Center writes — per-agent model routing. Seeded by migration 029.
+  | 'admin.agents.manage'
   // god.* — super-admin (role_key 'admin.super') capabilities. Future waves
   // add more god actions here; they must stay in lockstep with migration 006's
   // seed and the frontend can() mirror.

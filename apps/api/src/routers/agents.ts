@@ -1,9 +1,28 @@
-// Agents Center — read-only dashboard of the whole OpenClaw agent estate.
-// Data is pushed by the HOST collector (~/.openclaw/scripts/agents-center-sync.py)
-// into sc_agent_* snapshot tables; this router only reads. Doc/skill file
-// contents are fetched lazily (they can be large) via docContent/skillContent.
+// Agents Center — dashboard of the whole OpenClaw agent estate. Data is pushed
+// by the HOST collector (~/.openclaw/scripts/agents-center-sync.py) into
+// sc_agent_* snapshot tables; this router reads those. The one WRITE surface is
+// model routing (setModel): the admin picks which model an agent runs on, the
+// row lands in sc_agent_model_config as 'pending', and a host applier makes it
+// live. Doc/skill contents are fetched lazily via docContent/skillContent.
 import { z } from 'zod'
 import { router, requireAction } from '../trpc.js'
+
+// The only models an agent may be routed to (mirrors agent-run.sh lanes).
+export const AGENT_MODELS = [
+  'openai-codex/gpt-5.5',
+  'claude/sonnet',
+  'claude/opus',
+  'claude/haiku',
+] as const
+
+export interface AgentModelConfigRow {
+  agent_id: string
+  desired_model: string
+  status: string
+  error: string | null
+  requested_at: string
+  applied_at: string | null
+}
 
 const REGISTRY_SELECT =
   'id,name,emoji,team,role_title,purpose,guardrails,model,fallback_model,status,version,version_why,version_history,workspace,telegram_bound,key_files,discrepancies,sessions_count,last_activity_at,synced_at'
@@ -102,13 +121,20 @@ export interface LegalDomainRow {
 
 export const agentsRouter = router({
   list: requireAction('admin.agents.view').query(async ({ ctx }) => {
-    const [reg, skills, docs, crons] = await Promise.all([
+    const [reg, skills, docs, crons, models] = await Promise.all([
       ctx.db.from('sc_agent_registry').select(REGISTRY_SELECT).order('team').order('name'),
       ctx.db.from('sc_agent_skills').select('agent_id'),
       ctx.db.from('sc_agent_docs').select('agent_id'),
       ctx.db.from('sc_agent_crons').select('agent_id'),
+      ctx.db
+        .from('sc_agent_model_config')
+        .select('agent_id,desired_model,status,error,requested_at,applied_at'),
     ])
     if (reg.error) throw reg.error
+    const modelConfig: Record<string, AgentModelConfigRow> = {}
+    for (const m of (models.data ?? []) as unknown as AgentModelConfigRow[]) {
+      modelConfig[m.agent_id] = m
+    }
     const count = (rows: { agent_id: string }[] | null) => {
       const m: Record<string, number> = {}
       for (const r of rows ?? []) m[r.agent_id] = (m[r.agent_id] ?? 0) + 1
@@ -122,9 +148,36 @@ export const agentsRouter = router({
       skills_count: skillCount[a.id] ?? 0,
       docs_count: docCount[a.id] ?? 0,
       crons_count: cronCount[a.id] ?? 0,
+      model_config: modelConfig[a.id] ?? null,
     }))
     return { agents }
   }),
+
+  // Route an agent to a different model. Writes a pending row; the host
+  // applier (cron) makes it live and flips status to 'applied'.
+  setModel: requireAction('admin.agents.manage')
+    .input(
+      z.object({
+        agentId: z.string().min(1).max(64),
+        model: z.enum(AGENT_MODELS),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { error } = await ctx.db.from('sc_agent_model_config').upsert(
+        {
+          agent_id: input.agentId,
+          desired_model: input.model,
+          status: 'pending',
+          error: null,
+          requested_by: ctx.user?.email ?? null,
+          requested_at: new Date().toISOString(),
+          applied_at: null,
+        },
+        { onConflict: 'agent_id' },
+      )
+      if (error) throw error
+      return { ok: true }
+    }),
 
   detail: requireAction('admin.agents.view')
     .input(z.object({ id: z.string().min(1).max(64) }))

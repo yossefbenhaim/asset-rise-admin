@@ -25,6 +25,7 @@ import { DataTable } from '@/components/ui/DataTable'
 import { Drawer } from '@/components/ui/Drawer'
 import { Modal } from '@/components/ui/Modal'
 import { Pill } from '@/components/ui/Pill'
+import { ModelPicker, type ModelConfig } from '@/features/agents/ModelPicker'
 import { LegalDocView } from './LegalDocView'
 
 const TEAM_LABEL: Record<string, string> = {
@@ -109,6 +110,7 @@ type AgentListRow = {
   skills_count: number
   docs_count: number
   crons_count: number
+  model_config: ModelConfig | null
   [key: string]: unknown
 }
 
@@ -229,6 +231,14 @@ function AgentDrawer({ agent, onClose }: { agent: AgentListRow | null; onClose: 
           </span>
           {agent.telegram_bound && <Pill kind="gold">Telegram</Pill>}
         </div>
+
+        <Section title="מודל הרצה" icon={<Wrench size={13} />}>
+          <ModelPicker
+            agentId={agent.id}
+            effectiveModel={agent.model}
+            config={agent.model_config}
+          />
+        </Section>
 
         <Section title="תפקיד ומטרה" icon={<Bot size={13} />}>
           <div className="text-[13px] font-bold text-sc-text mb-1">{agent.role_title}</div>
