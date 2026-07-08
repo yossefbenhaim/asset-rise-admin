@@ -22,28 +22,67 @@ function todayHe(): string {
   return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`
 }
 
-// Remove the leading "טיוטה — טעונה בדיקת עו״ד" heading/blockquote Murdock puts
-// at the top of every draft, so the published version opens clean.
+// Publish-mode cleaner: removes every draft marker Murdock puts in his docs —
+// the "טיוטה" headings/blockquotes, status/date-of-draft lines, table rows and
+// lawyer-handoff instructions — and rephrases draft-speak ("טיוטה זו") into
+// document-speak ("מסמך זה"), so the published version reads as a final
+// official Asset Rise document. The source files stay untouched.
 function stripDraftHeader(src: string): string {
   const lines = src.split('\n')
+  const out: string[] = []
   let i = 0
   while (i < lines.length) {
-    const l = lines[i].trim()
-    if (l === '') {
+    let l = lines[i]
+    const ls = l.trim()
+    if (/^#{1,3}\s*טיוטה/.test(ls)) {
       i++
       continue
     }
-    if (/^#{1,3}\s*טיוטה/.test(l)) {
+    if (ls.startsWith('>')) {
+      let j = i
+      let block = ''
+      while (j < lines.length && lines[j].trim().startsWith('>')) {
+        block += lines[j] + ' '
+        j++
+      }
+      if (block.includes('טיוטה')) {
+        i = j
+        continue
+      }
+    }
+    if (ls.startsWith('|') && ls.includes('טיוטה')) {
       i++
       continue
     }
-    if (l.startsWith('>') && /טיוטה|עו"ד|עו״ד/.test(l)) {
-      while (i < lines.length && lines[i].trim().startsWith('>')) i++
+    if (/^[-*]?\s*(תאריך|סטטוס)\s+ה?טיוטה/.test(ls)) {
+      i++
       continue
     }
-    break
+    if (ls.includes('סטטוס השורה לצורכי הטיוטה') || ls.includes('סטטוס הטיוטה')) {
+      i++
+      continue
+    }
+    if (ls.includes('טיוטה') && /(לבדיקת|למסירה|מוכנה? ל|ממתין)/.test(ls) && ls.includes('עו')) {
+      i++
+      continue
+    }
+    if (/^\*{0,2}מסמך זה (הוא|הינו) טיוטה/.test(ls)) {
+      while (i < lines.length && lines[i].trim() !== '') i++
+      continue
+    }
+    l = l
+      .replace(/לצורך הכנת טיוטה זו/g, 'לצורך הכנת מסמך זה')
+      .replace(/במסגרת הכנת טיוטה זו/g, 'במסגרת הכנת מסמך זה')
+      .replace(/נכון לטיוטה זו/g, 'נכון למועד העדכון')
+      .replace(/לטיוטה זו/g, 'למסמך זה')
+      .replace(/טיוטה זו/g, 'מסמך זה')
+      .replace(/לצורך הטיוטה/g, 'לצורך המסמך')
+      .replace(/, ברמת טיוטה,/g, ',')
+      .replace(/כטיוטה פנימית/g, 'כמסמך פנימי')
+    out.push(l)
+    i++
   }
-  return lines.slice(i).join('\n')
+  return out.join('\n')
 }
 
 // Build one self-contained, print-ready A4 HTML document (RTL Hebrew).
