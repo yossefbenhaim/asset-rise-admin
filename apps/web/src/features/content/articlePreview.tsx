@@ -21,8 +21,7 @@ export interface DraftArticle {
   sources?: Array<{ name: string; url: string }>
 }
 
-const esc = (s: string) =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
 const fmtHe = (iso: string) => {
   const d = new Date(iso + 'T00:00:00')
