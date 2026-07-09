@@ -17,6 +17,7 @@ import AdminOutreach from '@/pages/admin/Outreach'
 import AdminCosts from '@/pages/admin/Costs'
 import AdminAgents from '@/pages/admin/Agents'
 import AdminAgentPage from '@/pages/admin/AgentPage'
+import AdminContentDrafts from '@/pages/admin/ContentDrafts'
 import AdminMurdock from '@/pages/admin/Murdock'
 import AdminAiAnalyst from '@/pages/admin/AiAnalyst'
 import AdminWong from '@/pages/admin/Wong'
@@ -79,6 +80,7 @@ export const router = createBrowserRouter([
           { path: 'costs', element: <AdminCosts /> },
           { path: 'agents', element: <AdminAgents /> },
           { path: 'agents/:agentId', element: <AdminAgentPage /> },
+          { path: 'content-drafts', element: <AdminContentDrafts /> },
           { path: 'legal', element: <AdminMurdock /> },
           { path: 'ai', element: <AdminAiAnalyst /> },
           { path: 'wong', element: <AdminWong /> },

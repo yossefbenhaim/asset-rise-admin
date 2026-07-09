@@ -94,6 +94,13 @@ export const ADMIN_NAV: NavGroup[] = [
         requires: ['admin.agents.view'],
       },
       {
+        id: 'content-drafts',
+        label: 'טיוטות תוכן',
+        to: '/content-drafts',
+        icon: 'Newspaper',
+        requires: ['admin.agents.view'],
+      },
+      {
         id: 'logs',
         label: 'לוגים',
         to: '/logs',

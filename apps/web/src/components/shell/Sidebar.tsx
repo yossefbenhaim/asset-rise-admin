@@ -29,6 +29,7 @@ import {
   MessageCircle,
   Bot,
   Scale,
+  Newspaper,
   ChevronDown,
 } from 'lucide-react'
 import { ADMIN_NAV } from '@/lib/nav/config'
@@ -66,6 +67,7 @@ const ICONS: Record<string, any> = {
   MessageCircle,
   Bot,
   Scale,
+  Newspaper,
 }
 function Ic({ name }: { name: string }) {
   const C = ICONS[name] ?? Circle
