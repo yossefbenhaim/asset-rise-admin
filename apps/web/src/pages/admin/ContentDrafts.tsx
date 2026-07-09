@@ -1,92 +1,32 @@
 // טיוטות תוכן — Parker's article drafts, previewed EXACTLY as they will look on
-// the customer site (hero + overlay + logo chip + icons + sources), straight
-// from the draft payload — nothing is deployed until Yossef approves here.
+// the customer site. Approving a draft publishes it automatically (the host
+// publish-worker merges + deploys). The same desk also lives on Parker's agent
+// page (/agents/newsroom).
 import { useState } from 'react'
-import { Newspaper, Check, X, Eye, GitBranch } from 'lucide-react'
+import { Newspaper, Eye, GitBranch } from 'lucide-react'
 import { trpc } from '@/lib/api/trpc'
 import { Pill } from '@/components/ui/Pill'
-import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui/Button'
-import { useToast } from '@/components/ui/Toast'
-import { buildArticlePreviewHtml, type DraftArticle } from '@/features/content/articlePreview'
+import { DraftPreviewModal } from '@/features/content/DraftPreviewModal'
 
 const STATUS_PILL: Record<string, 'warning' | 'success' | 'neutral' | 'info'> = {
   pending: 'warning',
-  approved: 'success',
+  approved: 'info',
   rejected: 'neutral',
-  published: 'info',
+  published: 'success',
 }
 const STATUS_HE: Record<string, string> = {
   pending: 'ממתין לאישורך',
-  approved: 'אושר — בדרך לאוויר',
+  approved: 'מתפרסם עכשיו…',
   rejected: 'נדחה',
   published: 'פורסם',
 }
 
-function PreviewModal({ id, onClose }: { id: string; onClose: () => void }) {
-  const toast = useToast()
-  const utils = trpc.useUtils()
-  const q = trpc.contentDrafts.detail.useQuery({ id }, { refetchOnWindowFocus: false })
-  const decide = trpc.contentDrafts.decide.useMutation({
-    onSuccess: (_d, vars) => {
-      toast.show(vars.decision === 'approved' ? 'הטיוטה אושרה' : 'הטיוטה נדחתה')
-      utils.contentDrafts.list.invalidate()
-      onClose()
-    },
-    onError: e => toast.show(e.message),
-  })
-  const draft = q.data?.draft
-  const html = draft
-    ? buildArticlePreviewHtml(draft.payload as DraftArticle, draft.hero_image_b64)
-    : null
-
-  return (
-    <Modal
-      open
-      onClose={onClose}
-      title={draft?.title ?? 'טיוטה'}
-      subtitle={draft?.branch ?? undefined}
-      size="xl"
-    >
-      {q.isLoading || !html ? (
-        <div className="text-[13px] text-sc-text-secondary p-4">טוען תצוגה מקדימה…</div>
-      ) : (
-        <>
-          <iframe
-            srcDoc={html}
-            title="תצוגה מקדימה"
-            className="w-full rounded-lg border border-sc-border bg-white"
-            style={{ height: '68vh' }}
-          />
-          {draft?.status === 'pending' && (
-            <div className="flex items-center gap-2 mt-3">
-              <Button
-                onClick={() => decide.mutate({ id, decision: 'approved' })}
-                disabled={decide.isLoading}
-              >
-                <Check size={15} /> אשר לפרסום
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => decide.mutate({ id, decision: 'rejected' })}
-                disabled={decide.isLoading}
-              >
-                <X size={15} /> דחה
-              </Button>
-              <span className="text-[12px] text-sc-text-muted">
-                אישור כאן = עובר למיזוג ופריסה; דחייה מחזירה ל-Parker.
-              </span>
-            </div>
-          )}
-        </>
-      )}
-    </Modal>
-  )
-}
-
 export default function AdminContentDrafts() {
   const [openId, setOpenId] = useState<string | null>(null)
-  const list = trpc.contentDrafts.list.useQuery(undefined, { refetchOnWindowFocus: false })
+  const list = trpc.contentDrafts.list.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+    refetchInterval: 30_000,
+  })
   const drafts = list.data?.drafts ?? []
 
   return (
@@ -95,8 +35,8 @@ export default function AdminContentDrafts() {
         <div>
           <h1>טיוטות תוכן · Parker</h1>
           <div className="sub">
-            כל כתבה שהכתב מכין נעצרת כאן קודם — תצוגה מקדימה אחד-לאחד כמו באתר, ואישור שלך לפני שהיא
-            עולה לאוויר.
+            כל כתבה נעצרת כאן קודם — תצוגה מקדימה אחד-לאחד כמו באתר. אישור = פרסום אוטומטי לאתר תוך
+            דקות.
           </div>
         </div>
       </div>
@@ -137,7 +77,7 @@ export default function AdminContentDrafts() {
         </div>
       )}
 
-      {openId && <PreviewModal id={openId} onClose={() => setOpenId(null)} />}
+      {openId && <DraftPreviewModal id={openId} onClose={() => setOpenId(null)} />}
     </div>
   )
 }

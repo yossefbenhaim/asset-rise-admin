@@ -36,6 +36,7 @@ import {
   ContentModal,
   type AgentListRow,
 } from '@/features/agents/meta'
+import { NewsroomPanel } from '@/features/agents/NewsroomPanel'
 import { LegalDocView } from './LegalDocView'
 
 // Agents that also own a dedicated ops tab get a shortcut to it.
@@ -247,6 +248,8 @@ export default function AgentPage() {
 
         {/* main column — knowledge and output */}
         <div className="lg:col-span-2">
+          {agent.id === 'newsroom' && <NewsroomPanel />}
+
           <Section title={`סקילים (${d?.skills.length ?? 0})`} icon={<Wrench size={13} />}>
             {d?.skills.length ? (
               <div className="space-y-1.5">
