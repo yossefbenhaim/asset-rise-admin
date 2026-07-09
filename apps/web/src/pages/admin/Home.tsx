@@ -15,6 +15,7 @@ import { nis } from '@/lib/format'
 import { KpiRow } from '@/features/dashboard/KpiRow'
 import { AlertsPanel } from '@/features/dashboard/AlertsPanel'
 import { PinnedReports } from '@/features/dashboard/PinnedReports'
+import { PublishedContent } from '@/features/dashboard/PublishedContent'
 import { DashboardSkeleton } from '@/features/dashboard/DashboardSkeleton'
 
 export default function AdminHome() {
@@ -50,6 +51,8 @@ export default function AdminHome() {
           variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
         >
           <KpiRow d={q.data} />
+
+          <PublishedContent index={0} />
 
           <PinnedReports index={0} />
 

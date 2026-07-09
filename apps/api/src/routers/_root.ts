@@ -19,6 +19,7 @@ import { pipelineRunsRouter } from './pipelineRuns.js'
 import { outreachRouter } from './outreach.js'
 import { costsRouter } from './costs.js'
 import { agentsRouter } from './agents.js'
+import { contentRouter } from './content.js'
 
 export const appRouter = router({
   auth: authRouter,
@@ -41,6 +42,7 @@ export const appRouter = router({
   outreach: outreachRouter,
   costs: costsRouter,
   agents: agentsRouter,
+  content: contentRouter,
 })
 
 export type AppRouter = typeof appRouter
