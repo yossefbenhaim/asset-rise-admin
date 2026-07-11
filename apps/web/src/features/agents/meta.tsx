@@ -93,7 +93,7 @@ export type AgentListRow = {
 }
 
 export const shortModel = (m: string | null) =>
-  (m ?? '—').replace('openai-codex/', '').replace('anthropic/', '')
+  (m ?? '—').replace('openai-codex/', '').replace('codex/', '').replace('anthropic/', '')
 
 export const fmtDate = (iso: string | null | undefined) => {
   if (!iso) return '—'

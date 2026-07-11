@@ -7,8 +7,12 @@
 import { z } from 'zod'
 import { router, requireAction } from '../trpc.js'
 
-// The only models an agent may be routed to (mirrors agent-run.sh lanes).
+// The only models an agent may be routed to (mirrors agent-run.sh lanes and the
+// host applier's VALID set in agent-model-applier.py — keep the two in sync).
 export const AGENT_MODELS = [
+  'codex/gpt-5.6-sol',
+  'codex/gpt-5.6-terra',
+  'codex/gpt-5.6-luna',
   'openai-codex/gpt-5.5',
   'claude/sonnet',
   'claude/opus',

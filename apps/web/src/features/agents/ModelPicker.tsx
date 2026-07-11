@@ -16,7 +16,14 @@ export interface ModelConfig {
 }
 
 const MODEL_OPTIONS = [
-  { value: 'openai-codex/gpt-5.5', label: 'Codex · GPT-5.5', sub: 'מנוי Codex — ברירת המחדל' },
+  { value: 'codex/gpt-5.6-sol', label: 'Codex · GPT-5.6 · Sol', sub: 'מנוי Codex — דור 5.6' },
+  { value: 'codex/gpt-5.6-terra', label: 'Codex · GPT-5.6 · Terra', sub: 'מנוי Codex — דור 5.6' },
+  { value: 'codex/gpt-5.6-luna', label: 'Codex · GPT-5.6 · Luna', sub: 'מנוי Codex — דור 5.6' },
+  {
+    value: 'openai-codex/gpt-5.5',
+    label: 'Codex · GPT-5.5',
+    sub: 'מנוי Codex — דור קודם (ברירת מחדל)',
+  },
   { value: 'claude/sonnet', label: 'Claude · Sonnet', sub: 'מנוי Max — חכם ומהיר' },
   { value: 'claude/opus', label: 'Claude · Opus', sub: 'מנוי Max — החזק ביותר, כבד במכסה' },
   { value: 'claude/haiku', label: 'Claude · Haiku', sub: 'מנוי Max — קל וזול' },
