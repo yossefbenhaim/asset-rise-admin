@@ -160,7 +160,8 @@ export default function AdminDevTasks() {
                   </div>
                   <span className="text-[11px] font-bold text-sc-text-muted">{colRows.length}</span>
                 </div>
-                <div className="space-y-2 min-h-[60px]">
+                {/* Cap at ~5 cards, then scroll inside the column. */}
+                <div className="space-y-2 min-h-[60px] max-h-[560px] overflow-y-auto pe-0.5">
                   {colRows.map(t => (
                     <TaskCard
                       key={t.id}
