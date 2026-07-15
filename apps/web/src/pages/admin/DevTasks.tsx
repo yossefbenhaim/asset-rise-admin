@@ -24,8 +24,9 @@ import {
   STAGE_COLUMNS,
   STATUS_LABEL,
   STATUS_PILL,
-  PHASE_LABEL,
-  TYPE_LABEL,
+  stageProgress,
+  isWorking,
+  devRounds,
   type DevTaskRow,
   type DevTaskQuestionRow,
 } from '@/features/devtasks/meta'
@@ -39,6 +40,9 @@ function TaskCard({
   openQuestions: number
   onClick: () => void
 }) {
+  const prog = stageProgress(t.status)
+  const working = isWorking(t.status)
+  const rounds = devRounds(t.work_log)
   return (
     <button
       onClick={onClick}
@@ -53,15 +57,37 @@ function TaskCard({
         )}
       </div>
       <div className="text-[13px] font-bold text-sc-text leading-snug mt-1">{t.title}</div>
-      <div className="flex items-center gap-1.5 flex-wrap mt-2">
-        <Pill kind="neutral">{PHASE_LABEL[t.phase] ?? t.phase}</Pill>
-        {t.task_type !== 'dev' && (
-          <Pill kind={t.task_type === 'human' ? 'gold' : 'info'}>{TYPE_LABEL[t.task_type]}</Pill>
-        )}
+
+      {/* Stage progress — animated shimmer while an agent is on it. */}
+      <div className="mt-2">
+        <div className="flex items-center justify-between text-[10px] text-sc-text-muted mb-1">
+          <span className="inline-flex items-center gap-1">
+            {working && <span className="dpf-livedot w-1.5 h-1.5 rounded-full bg-sc-gold" />}
+            {working ? `${STATUS_LABEL[t.status]} · עובד…` : STATUS_LABEL[t.status]}
+          </span>
+          <span className="font-mono">
+            {prog.step}/{prog.total}
+          </span>
+        </div>
+        <div className="h-1.5 rounded-full bg-sc-bg overflow-hidden">
+          <div
+            className={`h-full rounded-full ${working ? 'dpf-bar__fill--working' : 'bg-sc-primary'}`}
+            style={{ width: `${prog.pct}%`, transition: 'width 0.6s ease' }}
+          />
+        </div>
       </div>
+
       <div className="flex items-center gap-1 mt-2 text-[11px] text-sc-text-secondary">
         {t.agent === 'Yossef' ? <User size={11} /> : <Bot size={11} />}
         {t.agent}
+        {rounds > 1 && (
+          <span
+            className="text-sc-warning font-bold"
+            title={`חזר לפיתוח ${rounds} פעמים אחרי בדיקות`}
+          >
+            · סבב {rounds}
+          </span>
+        )}
         {t.status === 'review' && t.preview_url && (
           <span className="ms-auto inline-flex items-center gap-1 text-sc-gold font-bold">
             <Eye size={11} /> תצוגה מוכנה
@@ -83,12 +109,12 @@ export default function AdminDevTasks() {
     utils.devTasks.questions.invalidate()
   }
   // Poll — the factory advances cards from the host, the board should breathe.
-  const stats = trpc.devTasks.stats.useQuery(undefined, { refetchInterval: 30_000 })
+  const stats = trpc.devTasks.stats.useQuery(undefined, { refetchInterval: 15_000 })
   const list = trpc.devTasks.list.useQuery(undefined, {
-    refetchInterval: 30_000,
+    refetchInterval: 15_000,
     keepPreviousData: true,
   })
-  const questionsQ = trpc.devTasks.questions.useQuery(undefined, { refetchInterval: 30_000 })
+  const questionsQ = trpc.devTasks.questions.useQuery(undefined, { refetchInterval: 15_000 })
 
   const s = stats.data
   const rows = useMemo(() => (list.data ?? []) as DevTaskRow[], [list.data])

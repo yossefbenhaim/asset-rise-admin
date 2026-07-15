@@ -81,6 +81,32 @@ export interface DevTaskRow {
   updated_at: string
 }
 
+// Pipeline order for the progress bar. backlog=0%; each agent stage advances;
+// deployed=100%. review sits near the end (waiting on Yossef).
+const PROGRESS_ORDER = ['spec', 'in_dev', 'qa', 'security', 'review', 'approved', 'deployed']
+
+export function stageProgress(status: string): { step: number; total: number; pct: number } {
+  const total = PROGRESS_ORDER.length
+  if (status === 'backlog') return { step: 0, total, pct: 4 }
+  const i = PROGRESS_ORDER.indexOf(status)
+  if (i < 0) return { step: 0, total, pct: 0 } // blocked / waiting_yossef
+  return { step: i + 1, total, pct: Math.round(((i + 1) / total) * 100) }
+}
+
+// An agent is actively working this card while it sits in one of these stages.
+const ACTIVE_STAGES = new Set(['spec', 'in_dev', 'qa', 'security'])
+export function isWorking(status: string): boolean {
+  return ACTIVE_STAGES.has(status)
+}
+
+// The worker stamps each stage report "[YYYY-MM-DD HH:MM] <agent> (<status>):".
+// Counting the in_dev stamps ≈ how many dev rounds the card has survived, which
+// is the "why is this still in dev?" signal the board otherwise hides.
+export function devRounds(workLog: string | null): number {
+  if (!workLog) return 0
+  return (workLog.match(/\(in_dev\):/g) ?? []).length
+}
+
 export interface DevTaskQuestionRow {
   id: string
   task_id: string
