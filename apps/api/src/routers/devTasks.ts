@@ -22,14 +22,15 @@ const STATUSES = [
   'in_dev',
   'qa',
   'security',
-  'review',
+  'review', // waiting for Yossef's live check on the staging preview
+  'approved', // Yossef approved — the factory merges to main + deploys
   'deployed',
   'blocked',
   'waiting_yossef',
 ] as const
 
 const SELECT =
-  'id,seq,title,description,context,branch,work_log,phase,task_type,agent,status,blocked_reason,notes,depends_on,created_at,updated_at'
+  'id,seq,title,description,context,branch,work_log,preview_url,phase,task_type,agent,status,blocked_reason,notes,depends_on,created_at,updated_at'
 
 export interface DevTask {
   id: string
@@ -39,6 +40,7 @@ export interface DevTask {
   context: string | null
   branch: string | null
   work_log: string | null
+  preview_url: string | null
   phase: string
   task_type: string
   agent: string

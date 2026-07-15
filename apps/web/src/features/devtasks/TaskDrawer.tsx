@@ -2,7 +2,14 @@
 // question thread (agent asks → Yossef answers inline → factory resumes),
 // per-stage work log, and manual stage/agent overrides.
 import { useState } from 'react'
-import { Trash2, MessageCircleQuestion, Send } from 'lucide-react'
+import {
+  Trash2,
+  MessageCircleQuestion,
+  Send,
+  ExternalLink,
+  CheckCircle2,
+  Undo2,
+} from 'lucide-react'
 import { trpc } from '@/lib/api/trpc'
 import { Drawer } from '@/components/ui/Drawer'
 import { Button } from '@/components/ui/Button'
@@ -134,6 +141,54 @@ export function TaskDrawer({
             </span>
           )}
         </div>
+
+        {/* Yossef's review stage — live preview + approve→merge or send back. */}
+        {t.status === 'review' && (
+          <div className="rounded-xl border-2 border-sc-gold bg-sc-gold/5 p-4 space-y-3">
+            <div className="text-[14px] font-extrabold text-sc-text">
+              המשימה עברה את כל שרשרת הסוכנים — תורך לבדוק
+            </div>
+            {t.preview_url ? (
+              <a
+                href={t.preview_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-[13px] font-bold text-sc-primary"
+              >
+                <ExternalLink size={14} /> פתח תצוגה מקדימה חיה של השינוי
+              </a>
+            ) : (
+              <div className="text-[12px] text-sc-text-secondary">
+                אין תצוגה מקדימה (שינוי צד-שרת בלבד) — עיין ביומן העבודה ובסיכום למטה.
+              </div>
+            )}
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                icon={<CheckCircle2 size={15} />}
+                disabled={update.isLoading}
+                onClick={() => {
+                  if (confirm('לאשר? המשימה תמוזג ל-main ותיפרס לפרודקשן.'))
+                    update.mutate({ id: t.id, patch: { status: 'approved' as never } })
+                }}
+              >
+                נבדק על ידי — אשר ומזג לפרודקשן
+              </Button>
+              <Button
+                variant="ghost"
+                icon={<Undo2 size={14} />}
+                disabled={update.isLoading}
+                onClick={() =>
+                  update.mutate({
+                    id: t.id,
+                    patch: { status: 'in_dev' as never, agent: 'Vision' },
+                  })
+                }
+              >
+                החזר לתיקון
+              </Button>
+            </div>
+          </div>
+        )}
 
         {taskQs.length > 0 && (
           <div>

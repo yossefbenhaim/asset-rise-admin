@@ -6,7 +6,8 @@ export const STAGE_COLUMNS = [
   { key: 'in_dev', label: 'פיתוח', agent: 'Vision' },
   { key: 'qa', label: 'בדיקות', agent: 'Hawkeye' },
   { key: 'security', label: 'אבטחה', agent: 'Shield' },
-  { key: 'review', label: 'מוכן לפריסה', agent: '' },
+  { key: 'review', label: 'בדיקה של יוסף', agent: 'Yossef' },
+  { key: 'approved', label: 'אושר · במיזוג', agent: '' },
   { key: 'deployed', label: 'באוויר', agent: '' },
 ] as const
 
@@ -16,7 +17,8 @@ export const STATUS_LABEL: Record<string, string> = {
   in_dev: 'בפיתוח · Vision',
   qa: 'בבדיקות · Hawkeye',
   security: 'באבטחה · Shield',
-  review: 'מוכן לפריסה',
+  review: 'בדיקה של יוסף',
+  approved: 'אושר · במיזוג',
   deployed: 'באוויר',
   blocked: 'חסום',
   waiting_yossef: 'ממתין ליוסף',
@@ -30,7 +32,8 @@ export const STATUS_PILL: Record<string, PillKind> = {
   in_dev: 'gold',
   qa: 'warning',
   security: 'navy',
-  review: 'info',
+  review: 'gold',
+  approved: 'info',
   deployed: 'success',
   blocked: 'danger',
   waiting_yossef: 'warning',
@@ -66,6 +69,7 @@ export interface DevTaskRow {
   context: string | null
   branch: string | null
   work_log: string | null
+  preview_url: string | null
   phase: string
   task_type: string
   agent: string

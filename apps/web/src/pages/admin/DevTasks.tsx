@@ -4,7 +4,16 @@
 // (context); agents post questions that pause the task until Yossef answers
 // in the drawer. Driven on the host by ~/dev-factory-worker.sh.
 import { useMemo, useState } from 'react'
-import { ListChecks, Rocket, Hourglass, MessageCircleQuestion, Plus, Bot, User } from 'lucide-react'
+import {
+  ListChecks,
+  Rocket,
+  Hourglass,
+  MessageCircleQuestion,
+  Plus,
+  Bot,
+  User,
+  Eye,
+} from 'lucide-react'
 import { trpc } from '@/lib/api/trpc'
 import { KpiCard } from '@/components/ui/KpiCard'
 import { Button } from '@/components/ui/Button'
@@ -53,6 +62,11 @@ function TaskCard({
       <div className="flex items-center gap-1 mt-2 text-[11px] text-sc-text-secondary">
         {t.agent === 'Yossef' ? <User size={11} /> : <Bot size={11} />}
         {t.agent}
+        {t.status === 'review' && t.preview_url && (
+          <span className="ms-auto inline-flex items-center gap-1 text-sc-gold font-bold">
+            <Eye size={11} /> תצוגה מוכנה
+          </span>
+        )}
       </div>
     </button>
   )
