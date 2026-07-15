@@ -87,6 +87,13 @@ export const ADMIN_NAV: NavGroup[] = [
         requires: ['admin.costs.view'],
       },
       {
+        id: 'dev-tasks',
+        label: 'מרכז פיתוח',
+        to: '/dev-tasks',
+        icon: 'ListChecks',
+        requires: ['admin.devtasks.view'],
+      },
+      {
         id: 'agents',
         label: 'מרכז סוכנים',
         to: '/agents',

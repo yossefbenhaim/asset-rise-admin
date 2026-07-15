@@ -31,6 +31,9 @@ export type Action =
   | 'admin.agents.view'
   // Agents Center writes — per-agent model routing. Seeded by migration 029.
   | 'admin.agents.manage'
+  // Dev Tasks board (מרכז פיתוח) — the gap-closing campaign. Seeded by migration 031.
+  | 'admin.devtasks.view'
+  | 'admin.devtasks.manage'
   // god.* — super-admin (role_key 'admin.super') capabilities. Future waves
   // add more god actions here; they must stay in lockstep with migration 006's
   // seed and the frontend can() mirror.
