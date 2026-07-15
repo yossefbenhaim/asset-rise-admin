@@ -14,10 +14,14 @@ const PHASES = [
   'quickwin',
 ] as const
 const TYPES = ['dev', 'dev_external', 'human'] as const
+// Delivery pipeline: every task passes dev → QA (Hawkeye) → security (Shield)
+// before it may be marked deployed. 'review' kept for backward-compat rows.
 const STATUSES = [
   'backlog',
   'spec',
   'in_dev',
+  'qa',
+  'security',
   'review',
   'deployed',
   'blocked',
@@ -25,13 +29,16 @@ const STATUSES = [
 ] as const
 
 const SELECT =
-  'id,seq,title,description,phase,task_type,agent,status,blocked_reason,notes,depends_on,created_at,updated_at'
+  'id,seq,title,description,context,branch,work_log,phase,task_type,agent,status,blocked_reason,notes,depends_on,created_at,updated_at'
 
 export interface DevTask {
   id: string
   seq: number
   title: string
   description: string | null
+  context: string | null
+  branch: string | null
+  work_log: string | null
   phase: string
   task_type: string
   agent: string
@@ -41,6 +48,17 @@ export interface DevTask {
   depends_on: number[]
   created_at: string
   updated_at: string
+}
+
+export interface DevTaskQuestion {
+  id: string
+  task_id: string
+  asked_by: string
+  question: string
+  answer: string | null
+  status: string
+  asked_at: string
+  answered_at: string | null
 }
 
 export const devTasksRouter = router({
@@ -69,13 +87,42 @@ export const devTasksRouter = router({
     if (error) throw error
     const rows = (data ?? []) as { status: string }[]
     const count = (...s: string[]) => rows.filter(r => s.includes(r.status)).length
+    const { count: openQ } = await ctx.db
+      .from('sc_dev_task_questions')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'open')
     return {
       total: rows.length,
-      working: count('spec', 'in_dev', 'review'),
+      working: count('spec', 'in_dev', 'qa', 'security', 'review'),
       deployed: count('deployed'),
       waiting: count('blocked', 'waiting_yossef'),
+      openQuestions: openQ ?? 0,
     }
   }),
+
+  // All questions across the board — the web joins them to cards client-side.
+  questions: requireAction('admin.devtasks.view').query(async ({ ctx }) => {
+    const { data, error } = await ctx.db
+      .from('sc_dev_task_questions')
+      .select('id,task_id,asked_by,question,answer,status,asked_at,answered_at')
+      .order('asked_at', { ascending: false })
+      .limit(500)
+    if (error) throw error
+    return (data ?? []) as unknown as DevTaskQuestion[]
+  }),
+
+  // Yossef answers an agent's question — the factory worker resumes the task
+  // on its next tick with the answer injected into the agent's context.
+  answerQuestion: requireAction('admin.devtasks.manage')
+    .input(z.object({ id: z.string().uuid(), answer: z.string().trim().min(1).max(4000) }))
+    .mutation(async ({ ctx, input }) => {
+      const { error } = await ctx.db
+        .from('sc_dev_task_questions')
+        .update({ answer: input.answer, status: 'answered', answered_at: new Date().toISOString() })
+        .eq('id', input.id)
+      if (error) throw error
+      return { ok: true }
+    }),
 
   create: requireAction('admin.devtasks.manage')
     .input(
@@ -112,6 +159,7 @@ export const devTasksRouter = router({
         patch: z.object({
           title: z.string().trim().min(2).max(160).optional(),
           description: z.string().max(2000).nullable().optional(),
+          context: z.string().max(8000).nullable().optional(),
           phase: z.enum(PHASES).optional(),
           task_type: z.enum(TYPES).optional(),
           agent: z.string().trim().min(2).max(60).optional(),
