@@ -30,7 +30,7 @@ const STATUSES = [
 ] as const
 
 const SELECT =
-  'id,seq,title,description,context,branch,work_log,preview_url,phase,task_type,agent,status,blocked_reason,notes,depends_on,created_at,updated_at'
+  'id,seq,title,description,context,branch,work_log,preview_url,phase,task_type,agent,status,blocked_reason,notes,depends_on,system_area,user_persona,acceptance_criteria,do_not_break,size,reference_links,created_at,updated_at'
 
 export interface DevTask {
   id: string
@@ -48,6 +48,12 @@ export interface DevTask {
   blocked_reason: string | null
   notes: string | null
   depends_on: number[]
+  system_area: string | null
+  user_persona: string | null
+  acceptance_criteria: string | null
+  do_not_break: string | null
+  size: string | null
+  reference_links: string | null
   created_at: string
   updated_at: string
 }
@@ -130,11 +136,18 @@ export const devTasksRouter = router({
     .input(
       z.object({
         title: z.string().trim().min(2).max(160),
-        description: z.string().max(2000).optional(),
+        description: z.string().max(4000).optional(),
         phase: z.enum(PHASES).default('quickwin'),
         task_type: z.enum(TYPES).default('dev'),
         agent: z.string().trim().min(2).max(60).default('Claude'),
         status: z.enum(STATUSES).default('backlog'),
+        depends_on: z.array(z.number().int().nonnegative()).max(20).optional(),
+        system_area: z.string().max(300).optional(),
+        user_persona: z.string().max(120).optional(),
+        acceptance_criteria: z.string().max(3000).optional(),
+        do_not_break: z.string().max(2000).optional(),
+        size: z.enum(['S', 'M', 'L']).optional(),
+        reference_links: z.string().max(1500).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -160,7 +173,7 @@ export const devTasksRouter = router({
         id: z.string().uuid(),
         patch: z.object({
           title: z.string().trim().min(2).max(160).optional(),
-          description: z.string().max(2000).nullable().optional(),
+          description: z.string().max(4000).nullable().optional(),
           context: z.string().max(8000).nullable().optional(),
           phase: z.enum(PHASES).optional(),
           task_type: z.enum(TYPES).optional(),
@@ -168,6 +181,13 @@ export const devTasksRouter = router({
           status: z.enum(STATUSES).optional(),
           blocked_reason: z.string().max(400).nullable().optional(),
           notes: z.string().max(4000).nullable().optional(),
+          depends_on: z.array(z.number().int().nonnegative()).max(20).nullable().optional(),
+          system_area: z.string().max(300).nullable().optional(),
+          user_persona: z.string().max(120).nullable().optional(),
+          acceptance_criteria: z.string().max(3000).nullable().optional(),
+          do_not_break: z.string().max(2000).nullable().optional(),
+          size: z.enum(['S', 'M', 'L']).nullable().optional(),
+          reference_links: z.string().max(1500).nullable().optional(),
         }),
       }),
     )

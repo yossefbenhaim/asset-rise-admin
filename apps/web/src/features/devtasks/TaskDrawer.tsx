@@ -20,10 +20,22 @@ import {
   PHASE_LABEL,
   TYPE_LABEL,
   TYPE_PILL,
+  SIZE_LABEL,
   type DevTaskRow,
   type DevTaskQuestionRow,
 } from './meta'
 import { Formatted } from './Formatted'
+
+// A labelled block that only renders when the field has content.
+function Field({ label, value }: { label: string; value: string | null }) {
+  if (!value || !value.trim()) return null
+  return (
+    <div>
+      <div className="text-[12px] font-bold text-sc-text-secondary mb-0.5">{label}</div>
+      <div className="text-[13px] text-sc-text leading-relaxed whitespace-pre-wrap">{value}</div>
+    </div>
+  )
+}
 
 const inp =
   'mt-1 w-full bg-sc-bg border border-sc-border rounded-sc-input px-2 py-2 text-[13px] text-sc-text'
@@ -120,6 +132,9 @@ export function TaskDrawer({
     },
     onError: e => toast.show(e.message || 'מחיקה נכשלה'),
   })
+  // Resolve dependency seq numbers → titles for a readable list.
+  const all = trpc.devTasks.list.useQuery(undefined, { staleTime: 30_000 })
+  const titleBySeq = new Map((all.data ?? []).map(x => [x.seq, x.title]))
   if (!task) return <Drawer open={false} onClose={onClose} />
   const t = task
   const taskQs = questions.filter(q => q.task_id === t.id)
@@ -132,17 +147,35 @@ export function TaskDrawer({
           <Pill kind={TYPE_PILL[t.task_type] ?? 'navy'}>
             {TYPE_LABEL[t.task_type] ?? t.task_type}
           </Pill>
+          {t.size && <Pill kind="neutral">{SIZE_LABEL[t.size] ?? t.size}</Pill>}
+          {t.user_persona && <Pill kind="info">{t.user_persona}</Pill>}
           {t.branch && (
             <span className="text-[11px] font-mono text-sc-text-muted" dir="ltr">
               {t.branch}
             </span>
           )}
-          {t.depends_on.length > 0 && (
-            <span className="text-[12px] text-sc-text-muted">
-              תלוי ב: {t.depends_on.map(n => `#${n}`).join(', ')}
-            </span>
-          )}
         </div>
+
+        {t.system_area && (
+          <div className="text-[12px] text-sc-text-secondary">
+            <b className="text-sc-text">חלק במערכת:</b> {t.system_area}
+          </div>
+        )}
+
+        {/* Dependencies resolved to #seq — title so they read at a glance. */}
+        {t.depends_on.length > 0 && (
+          <div className="rounded-lg border border-sc-border bg-sc-bg p-2.5">
+            <div className="text-[12px] font-bold text-sc-text-secondary mb-1">תלוי במשימות</div>
+            <ul className="m-0 p-0 space-y-1">
+              {t.depends_on.map(n => (
+                <li key={n} className="list-none text-[12.5px] text-sc-text">
+                  <span className="font-mono text-sc-text-muted">#{n}</span> —{' '}
+                  {titleBySeq.get(n) ?? '(משימה לא נמצאה)'}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Yossef's review stage — live preview + approve→merge or send back. */}
         {t.status === 'review' && (
@@ -235,7 +268,27 @@ export function TaskDrawer({
         )}
 
         {t.description && (
-          <div className="text-[13px] text-sc-text leading-relaxed">{t.description}</div>
+          <div className="text-[13px] text-sc-text leading-relaxed whitespace-pre-wrap">
+            {t.description}
+          </div>
+        )}
+
+        <Field label="קריטריוני קבלה — מתי זה גמור" value={t.acceptance_criteria} />
+        <Field label="מה אסור לשבור" value={t.do_not_break} />
+        {t.reference_links && (
+          <div>
+            <div className="text-[12px] font-bold text-sc-text-secondary mb-0.5">
+              קישורי ייחוס / מסך
+            </div>
+            <a
+              href={t.reference_links}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-[13px] text-sc-primary break-all"
+            >
+              <ExternalLink size={13} className="shrink-0" /> {t.reference_links}
+            </a>
+          </div>
         )}
 
         {t.context && (

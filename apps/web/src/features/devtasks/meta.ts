@@ -77,8 +77,32 @@ export interface DevTaskRow {
   blocked_reason: string | null
   notes: string | null
   depends_on: number[]
+  system_area: string | null
+  user_persona: string | null
+  acceptance_criteria: string | null
+  do_not_break: string | null
+  size: string | null
+  reference_links: string | null
   created_at: string
   updated_at: string
+}
+
+// Target user of a feature — drives which surface/role the agent builds for.
+export const PERSONA_OPTIONS = [
+  'דייר',
+  'ועד בית',
+  'גורם מלווה',
+  'יזם',
+  'עו״ד',
+  'שמאי',
+  'מנהל מערכת',
+  'כל המשתמשים',
+] as const
+
+export const SIZE_LABEL: Record<string, string> = {
+  S: 'קטן (S)',
+  M: 'בינוני (M)',
+  L: 'גדול (L)',
 }
 
 // Pipeline order for the progress bar. backlog=0%; each agent stage advances;
