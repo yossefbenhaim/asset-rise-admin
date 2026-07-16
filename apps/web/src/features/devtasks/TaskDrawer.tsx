@@ -23,6 +23,7 @@ import {
   type DevTaskRow,
   type DevTaskQuestionRow,
 } from './meta'
+import { Formatted } from './Formatted'
 
 const inp =
   'mt-1 w-full bg-sc-bg border border-sc-border rounded-sc-input px-2 py-2 text-[13px] text-sc-text'
@@ -56,12 +57,11 @@ function QuestionCard({ q }: { q: DevTaskQuestionRow }) {
         </span>
         {open ? <Pill kind="warning">ממתין לתשובה</Pill> : <Pill kind="success">נענתה</Pill>}
       </div>
-      <div className="text-[13px] text-sc-text mt-1.5 leading-relaxed whitespace-pre-wrap">
-        {q.question}
-      </div>
+      <Formatted text={q.question} className="text-sc-text mt-1.5" />
       {q.answer && (
-        <div className="mt-2 text-[13px] text-sc-text-secondary border-t border-sc-border pt-2 whitespace-pre-wrap">
-          <b className="text-sc-text">התשובה שלך:</b> {q.answer}
+        <div className="mt-2 border-t border-sc-border pt-2">
+          <b className="text-[12px] text-sc-text">התשובה שלך:</b>
+          <Formatted text={q.answer} className="text-sc-text-secondary" />
         </div>
       )}
       {open && (
@@ -98,10 +98,12 @@ export function TaskDrawer({
 }) {
   const toast = useToast()
   const [notes, setNotes] = useState('')
+  const [returnReason, setReturnReason] = useState('')
   const [loadedId, setLoadedId] = useState<string | null>(null)
   if (task && task.id !== loadedId) {
     setLoadedId(task.id)
     setNotes(task.notes ?? '')
+    setReturnReason('')
   }
   const update = trpc.devTasks.update.useMutation({
     onSuccess: () => {
@@ -162,30 +164,59 @@ export function TaskDrawer({
                 אין תצוגה מקדימה (שינוי צד-שרת בלבד) — עיין ביומן העבודה ובסיכום למטה.
               </div>
             )}
-            <div className="flex gap-2 flex-wrap">
-              <Button
-                icon={<CheckCircle2 size={15} />}
-                disabled={update.isLoading}
-                onClick={() => {
-                  if (confirm('לאשר? המשימה תמוזג ל-main ותיפרס לפרודקשן.'))
-                    update.mutate({ id: t.id, patch: { status: 'approved' as never } })
-                }}
-              >
-                נבדק על ידי — אשר ומזג לפרודקשן
-              </Button>
+            <Button
+              icon={<CheckCircle2 size={15} />}
+              disabled={update.isLoading}
+              onClick={() => {
+                if (confirm('לאשר? המשימה תמוזג ל-main ותיפרס לפרודקשן.'))
+                  update.mutate({ id: t.id, patch: { status: 'approved' as never } })
+              }}
+            >
+              נבדק על ידי — אשר ומזג לפרודקשן
+            </Button>
+
+            {/* Return-with-reason: ONE action captures the "why" and sends the
+                card back — the factory injects this text at the top of the
+                agent's next brief, so it fixes exactly what Yossef saw. */}
+            <div className="border-t border-sc-border pt-3">
+              <label className="text-[12px] font-bold text-sc-text-secondary block">
+                לא טוב? כתוב מה שבור — וזה יגיע ישירות לסוכן:
+                <textarea
+                  className={`${inp} min-h-[64px]`}
+                  placeholder="לדוגמה: לחצתי על הכפתור וקיבלתי שגיאה אדומה / העיצוב נשבר במובייל…"
+                  value={returnReason}
+                  onChange={e => setReturnReason(e.target.value)}
+                />
+              </label>
               <Button
                 variant="ghost"
                 icon={<Undo2 size={14} />}
-                disabled={update.isLoading}
-                onClick={() =>
+                className="mt-2"
+                disabled={returnReason.trim().length < 5 || update.isLoading}
+                onClick={() => {
+                  const stamp = new Date().toLocaleString('he-IL', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+                  const merged =
+                    `[הוחזר ע"י יוסף · ${stamp}]\n${returnReason.trim()}` +
+                    (t.notes ? `\n\n${t.notes}` : '')
                   update.mutate({
                     id: t.id,
-                    patch: { status: 'in_dev' as never, agent: 'Vision' },
+                    patch: { status: 'in_dev' as never, agent: 'Vision', notes: merged },
                   })
-                }
+                  setReturnReason('')
+                }}
               >
-                החזר לתיקון
+                החזר לתיקון עם ההערה
               </Button>
+              {returnReason.trim().length < 5 && (
+                <div className="text-[11px] text-sc-text-muted mt-1">
+                  חובה לכתוב סיבה — ככה הסוכן יודע בדיוק מה לתקן.
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -212,8 +243,8 @@ export function TaskDrawer({
             <div className="text-[12px] font-bold text-sc-text-secondary mb-1">
               Context לסוכן (הבריף המלא)
             </div>
-            <div className="text-[12.5px] text-sc-text-secondary leading-relaxed whitespace-pre-wrap bg-sc-bg border border-sc-border rounded-lg p-3 max-h-[260px] overflow-y-auto">
-              {t.context}
+            <div className="bg-sc-bg border border-sc-border rounded-lg p-3 max-h-[260px] overflow-y-auto">
+              <Formatted text={t.context} className="text-sc-text-secondary" />
             </div>
           </div>
         )}
