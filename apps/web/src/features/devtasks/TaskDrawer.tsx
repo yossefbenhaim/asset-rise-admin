@@ -160,8 +160,8 @@ export function TaskDrawer({
                 <ExternalLink size={14} /> פתח תצוגה מקדימה חיה של השינוי
               </a>
             ) : (
-              <div className="text-[12px] text-sc-text-secondary">
-                אין תצוגה מקדימה (שינוי צד-שרת בלבד) — עיין ביומן העבודה ובסיכום למטה.
+              <div className="text-[12px] font-bold text-sc-danger">
+                הפיצ'ר לא אומת ב-staging — אל תאשר לפני שהוא מאוחד ומוצג (ראה הערות).
               </div>
             )}
             <Button
