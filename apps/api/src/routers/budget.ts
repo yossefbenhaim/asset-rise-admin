@@ -3,16 +3,13 @@
 // authenticated admin may see it.
 import { router, protectedProcedure } from '../trpc.js'
 
+// Official usage from `claude -p "/usage"` — percentages USED (not estimates).
 export interface ClaudeBudget {
-  session_used_tokens: number
+  session_pct: number
   session_reset_at: string | null
-  session_cap_m: number
-  week_opus_tokens: number
-  week_sonnet_tokens: number
-  week_haiku_tokens: number
-  week_opus_cap_m: number
-  week_sonnet_cap_m: number
-  week_haiku_cap_m: number
+  week_all_pct: number
+  week_fable_pct: number
+  week_reset_at: string | null
   updated_at: string
 }
 
