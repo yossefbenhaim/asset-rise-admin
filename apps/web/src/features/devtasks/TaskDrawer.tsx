@@ -291,6 +291,30 @@ export function TaskDrawer({
           </div>
         )}
 
+        {t.token_rounds.length > 0 && (
+          <div>
+            <div className="text-[12px] font-bold text-sc-text-secondary mb-1">
+              עלות בטוקנים · סה״כ {t.total_tokens.toLocaleString()} טוקנים
+            </div>
+            <div className="rounded-lg border border-sc-border bg-sc-bg divide-y divide-sc-border">
+              {t.token_rounds.map(r => (
+                <div
+                  key={r.round}
+                  className="flex items-center justify-between px-2.5 py-1.5 text-[12px]"
+                >
+                  <span className="text-sc-text">
+                    סבב {r.round} · <b>{r.agent}</b>{' '}
+                    <span className="text-sc-text-muted">({r.stage})</span>
+                  </span>
+                  <span className="tabular-nums text-sc-text-muted" dir="ltr">
+                    {r.tokens.toLocaleString()} tok · ${r.cost_usd.toFixed(2)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {t.context && (
           <div>
             <div className="text-[12px] font-bold text-sc-text-secondary mb-1">

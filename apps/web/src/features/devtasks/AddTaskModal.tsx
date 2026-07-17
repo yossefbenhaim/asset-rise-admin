@@ -65,7 +65,7 @@ export function AddTaskModal({
         </label>
 
         <label className={lbl}>
-          חלק במערכת (לאן זה מתחבר)
+          חלק במערכת · לאן זה מתחבר (חובה)
           <input
             className={inp}
             placeholder="לדוגמה: מנוע המארגן / החתמות · תשלומים · צ׳אט בניין"
@@ -74,7 +74,7 @@ export function AddTaskModal({
           />
         </label>
         <label className={lbl}>
-          סוג משתמש (למי הפיצר)
+          סוג משתמש · למי הפיצר / איך לבדוק (חובה)
           <select className={inp} value={form.user_persona} onChange={set('user_persona')}>
             <option value="">— בחר —</option>
             {PERSONA_OPTIONS.map(p => (
@@ -120,7 +120,7 @@ export function AddTaskModal({
         <div />
 
         <label className={`${lbl} md:col-span-2`}>
-          תיאור מעמיק — מה בונים ולמה
+          תיאור מעמיק — מה בונים ולמה (חובה)
           <textarea
             className={`${inp} min-h-[90px]`}
             placeholder="הסבר מלא: מה המשימה, מה הבעיה שהיא פותרת, איך זה אמור לעבוד."
@@ -198,22 +198,42 @@ export function AddTaskModal({
         </div>
       </div>
 
+      {(() => {
+        const missing = [
+          form.title.trim().length < 2 && 'כותרת',
+          form.description.trim().length < 10 && 'תיאור מעמיק',
+          form.system_area.trim().length < 2 && 'חלק במערכת',
+          form.user_persona.trim().length < 2 && 'סוג משתמש',
+        ].filter(Boolean)
+        return missing.length ? (
+          <div className="mt-3 text-[11.5px] text-sc-warning font-bold">
+            שדות חובה חסרים: {missing.join(' · ')}
+          </div>
+        ) : null
+      })()}
+
       <div className="flex justify-end gap-2 mt-4">
         <Button variant="ghost" onClick={onClose}>
           ביטול
         </Button>
         <Button
-          disabled={form.title.trim().length < 2 || create.isLoading}
+          disabled={
+            form.title.trim().length < 2 ||
+            form.description.trim().length < 10 ||
+            form.system_area.trim().length < 2 ||
+            form.user_persona.trim().length < 2 ||
+            create.isLoading
+          }
           onClick={() =>
             create.mutate({
               title: form.title.trim(),
-              description: opt(form.description),
+              description: form.description.trim(),
+              system_area: form.system_area.trim(),
+              user_persona: form.user_persona.trim(),
               phase: form.phase as never,
               task_type: form.task_type as never,
               agent: 'Jarvis',
               depends_on: deps.length ? deps : undefined,
-              system_area: opt(form.system_area),
-              user_persona: opt(form.user_persona),
               acceptance_criteria: opt(form.acceptance_criteria),
               do_not_break: opt(form.do_not_break),
               size: (opt(form.size) as 'S' | 'M' | 'L' | undefined) ?? undefined,

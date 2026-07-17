@@ -30,7 +30,18 @@ const STATUSES = [
 ] as const
 
 const SELECT =
-  'id,seq,title,description,context,branch,work_log,preview_url,phase,task_type,agent,status,blocked_reason,notes,depends_on,system_area,user_persona,acceptance_criteria,do_not_break,size,reference_links,created_at,updated_at'
+  'id,seq,title,description,context,branch,work_log,preview_url,phase,task_type,agent,status,blocked_reason,notes,depends_on,system_area,user_persona,acceptance_criteria,do_not_break,size,reference_links,token_rounds,total_tokens,created_at,updated_at'
+
+export interface TokenRound {
+  round: number
+  agent: string
+  stage: string
+  in: number
+  out: number
+  tokens: number
+  cost_usd: number
+  at: string
+}
 
 export interface DevTask {
   id: string
@@ -54,6 +65,8 @@ export interface DevTask {
   do_not_break: string | null
   size: string | null
   reference_links: string | null
+  token_rounds: TokenRound[]
+  total_tokens: number
   created_at: string
   updated_at: string
 }
@@ -135,15 +148,17 @@ export const devTasksRouter = router({
   create: requireAction('admin.devtasks.manage')
     .input(
       z.object({
+        // Required so every card is testable: what it is, where it lives, and
+        // which user/role to log in as to check it.
         title: z.string().trim().min(2).max(160),
-        description: z.string().max(4000).optional(),
+        description: z.string().trim().min(10).max(4000),
+        system_area: z.string().trim().min(2).max(300),
+        user_persona: z.string().trim().min(2).max(120),
         phase: z.enum(PHASES).default('quickwin'),
         task_type: z.enum(TYPES).default('dev'),
         agent: z.string().trim().min(2).max(60).default('Claude'),
         status: z.enum(STATUSES).default('backlog'),
         depends_on: z.array(z.number().int().nonnegative()).max(20).optional(),
-        system_area: z.string().max(300).optional(),
-        user_persona: z.string().max(120).optional(),
         acceptance_criteria: z.string().max(3000).optional(),
         do_not_break: z.string().max(2000).optional(),
         size: z.enum(['S', 'M', 'L']).optional(),

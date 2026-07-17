@@ -83,8 +83,21 @@ export interface DevTaskRow {
   do_not_break: string | null
   size: string | null
   reference_links: string | null
+  token_rounds: TokenRound[]
+  total_tokens: number
   created_at: string
   updated_at: string
+}
+
+export interface TokenRound {
+  round: number
+  agent: string
+  stage: string
+  in: number
+  out: number
+  tokens: number
+  cost_usd: number
+  at: string
 }
 
 // Target user of a feature — drives which surface/role the agent builds for.
