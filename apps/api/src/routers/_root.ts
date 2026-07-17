@@ -18,6 +18,7 @@ import { wongRouter } from './wong.js'
 import { pipelineRunsRouter } from './pipelineRuns.js'
 import { outreachRouter } from './outreach.js'
 import { costsRouter } from './costs.js'
+import { budgetRouter } from './budget.js'
 import { devTasksRouter } from './devTasks.js'
 import { agentsRouter } from './agents.js'
 import { contentRouter } from './content.js'
@@ -43,6 +44,7 @@ export const appRouter = router({
   pipelineRuns: pipelineRunsRouter,
   outreach: outreachRouter,
   costs: costsRouter,
+  budget: budgetRouter,
   devTasks: devTasksRouter,
   agents: agentsRouter,
   content: contentRouter,
