@@ -151,6 +151,20 @@
   margin-top: 2px;
 }
 
+/* Full-width Claude usage strip — pinned above the top bar, always visible. */
+.sc-budget-strip {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  padding: 4px 14px;
+  background: var(--sc-card);
+  border-bottom: 1px solid var(--sc-border);
+}
+
 .sc-top {
   display: flex;
   align-items: center;
@@ -159,7 +173,7 @@
   background: #fff;
   border-bottom: 1px solid var(--sc-border);
   position: sticky;
-  top: 0;
+  top: 34px;
   z-index: 5;
 }
 .sc-top__crumbs {

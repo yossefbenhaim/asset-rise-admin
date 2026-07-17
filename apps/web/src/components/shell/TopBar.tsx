@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom'
 import { useUi } from '@/lib/store'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { useNotifCount } from '@/components/notifications/NotificationCenter'
-import { BudgetBar } from '@/components/shell/BudgetBar'
 
 export function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
   const { signOut } = useSession()
@@ -44,7 +43,6 @@ export function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
 
       <div className="sc-top__spacer" />
 
-      <BudgetBar />
       <ThemeToggle />
       <button
         className="sc-top__icon-btn relative"
