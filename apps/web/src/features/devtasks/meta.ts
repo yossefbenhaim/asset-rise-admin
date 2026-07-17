@@ -77,6 +77,7 @@ export interface DevTaskRow {
   blocked_reason: string | null
   notes: string | null
   depends_on: number[]
+  priority: number
   system_area: string | null
   user_persona: string | null
   acceptance_criteria: string | null
@@ -154,3 +155,10 @@ export interface DevTaskQuestionRow {
   asked_at: string
   answered_at: string | null
 }
+
+export const PRIORITY_LABEL: Record<number, string> = {
+  0: 'P0 · קריטי',
+  1: 'P1 · חשוב',
+  2: 'P2 · רגיל',
+}
+export const PRIORITY_PILL: Record<number, PillKind> = { 0: 'danger', 1: 'warning', 2: 'neutral' }

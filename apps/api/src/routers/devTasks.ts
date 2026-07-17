@@ -30,7 +30,7 @@ const STATUSES = [
 ] as const
 
 const SELECT =
-  'id,seq,title,description,context,branch,work_log,preview_url,phase,task_type,agent,status,blocked_reason,notes,depends_on,system_area,user_persona,acceptance_criteria,do_not_break,size,reference_links,token_rounds,total_tokens,created_at,updated_at'
+  'id,seq,title,description,context,branch,work_log,preview_url,phase,task_type,agent,status,blocked_reason,notes,depends_on,priority,system_area,user_persona,acceptance_criteria,do_not_break,size,reference_links,token_rounds,total_tokens,created_at,updated_at'
 
 export interface TokenRound {
   round: number
@@ -59,6 +59,7 @@ export interface DevTask {
   blocked_reason: string | null
   notes: string | null
   depends_on: number[]
+  priority: number
   system_area: string | null
   user_persona: string | null
   acceptance_criteria: string | null
@@ -159,6 +160,7 @@ export const devTasksRouter = router({
         agent: z.string().trim().min(2).max(60).default('Claude'),
         status: z.enum(STATUSES).default('backlog'),
         depends_on: z.array(z.number().int().nonnegative()).max(20).optional(),
+        priority: z.number().int().min(0).max(2).default(2),
         acceptance_criteria: z.string().max(3000).optional(),
         do_not_break: z.string().max(2000).optional(),
         size: z.enum(['S', 'M', 'L']).optional(),
@@ -197,6 +199,7 @@ export const devTasksRouter = router({
           blocked_reason: z.string().max(400).nullable().optional(),
           notes: z.string().max(4000).nullable().optional(),
           depends_on: z.array(z.number().int().nonnegative()).max(20).nullable().optional(),
+          priority: z.number().int().min(0).max(2).optional(),
           system_area: z.string().max(300).nullable().optional(),
           user_persona: z.string().max(120).nullable().optional(),
           acceptance_criteria: z.string().max(3000).nullable().optional(),

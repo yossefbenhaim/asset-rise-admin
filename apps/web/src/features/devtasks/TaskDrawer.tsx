@@ -21,6 +21,8 @@ import {
   TYPE_LABEL,
   TYPE_PILL,
   SIZE_LABEL,
+  PRIORITY_LABEL,
+  PRIORITY_PILL,
   type DevTaskRow,
   type DevTaskQuestionRow,
 } from './meta'
@@ -146,6 +148,9 @@ export function TaskDrawer({
           <Pill kind="neutral">{PHASE_LABEL[t.phase] ?? t.phase}</Pill>
           <Pill kind={TYPE_PILL[t.task_type] ?? 'navy'}>
             {TYPE_LABEL[t.task_type] ?? t.task_type}
+          </Pill>
+          <Pill kind={PRIORITY_PILL[t.priority] ?? 'neutral'}>
+            {PRIORITY_LABEL[t.priority] ?? `P${t.priority}`}
           </Pill>
           {t.size && <Pill kind="neutral">{SIZE_LABEL[t.size] ?? t.size}</Pill>}
           {t.user_persona && <Pill kind="info">{t.user_persona}</Pill>}
@@ -370,6 +375,21 @@ export function TaskDrawer({
             </select>
           </label>
         </div>
+
+        <label className="text-[12px] font-bold text-sc-text-secondary block">
+          עדיפות
+          <select
+            className={inp}
+            value={t.priority}
+            onChange={e => update.mutate({ id: t.id, patch: { priority: Number(e.target.value) } })}
+          >
+            {Object.entries(PRIORITY_LABEL).map(([v, l]) => (
+              <option key={v} value={v}>
+                {l}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <label className="text-[12px] font-bold text-sc-text-secondary block">
           הערות

@@ -7,7 +7,7 @@ import { trpc } from '@/lib/api/trpc'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useToast } from '@/components/ui/Toast'
-import { PHASE_LABEL, TYPE_LABEL, SIZE_LABEL, PERSONA_OPTIONS } from './meta'
+import { PHASE_LABEL, TYPE_LABEL, SIZE_LABEL, PERSONA_OPTIONS, PRIORITY_LABEL } from './meta'
 
 const inp =
   'mt-1 w-full bg-sc-bg border border-sc-border rounded-sc-input px-2 py-2 text-[13px] text-sc-text'
@@ -34,6 +34,7 @@ export function AddTaskModal({
     do_not_break: '',
     size: '',
     reference_links: '',
+    priority: '2',
   }
   const [form, setForm] = useState(empty)
   const [deps, setDeps] = useState<number[]>([])
@@ -117,7 +118,16 @@ export function AddTaskModal({
             ))}
           </select>
         </label>
-        <div />
+        <label className={lbl}>
+          עדיפות עסקית
+          <select className={inp} value={form.priority} onChange={set('priority')}>
+            {Object.entries(PRIORITY_LABEL).map(([v, l]) => (
+              <option key={v} value={v}>
+                {l}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <label className={`${lbl} md:col-span-2`}>
           תיאור מעמיק — מה בונים ולמה (חובה)
@@ -234,6 +244,7 @@ export function AddTaskModal({
               task_type: form.task_type as never,
               agent: 'Jarvis',
               depends_on: deps.length ? deps : undefined,
+              priority: Number(form.priority),
               acceptance_criteria: opt(form.acceptance_criteria),
               do_not_break: opt(form.do_not_break),
               size: (opt(form.size) as 'S' | 'M' | 'L' | undefined) ?? undefined,
