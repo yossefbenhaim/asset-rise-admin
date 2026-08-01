@@ -73,6 +73,13 @@ export const ADMIN_NAV: NavGroup[] = [
         requires: ['admin.sources.view'],
       },
       {
+        id: 'test-runs',
+        label: 'בדיקות אוטומטיות',
+        to: '/test-runs',
+        icon: 'ShieldCheck',
+        requires: ['admin.sources.view'],
+      },
+      {
         id: 'outreach',
         label: 'מרכז מכירות',
         to: '/outreach',

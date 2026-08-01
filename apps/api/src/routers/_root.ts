@@ -16,6 +16,7 @@ import { aiRouter } from './ai.js'
 import { logsRouter } from './logs.js'
 import { wongRouter } from './wong.js'
 import { pipelineRunsRouter } from './pipelineRuns.js'
+import { testRunsRouter } from './testRuns.js'
 import { outreachRouter } from './outreach.js'
 import { costsRouter } from './costs.js'
 import { budgetRouter } from './budget.js'
@@ -42,6 +43,7 @@ export const appRouter = router({
   logs: logsRouter,
   wong: wongRouter,
   pipelineRuns: pipelineRunsRouter,
+  testRuns: testRunsRouter,
   outreach: outreachRouter,
   costs: costsRouter,
   budget: budgetRouter,

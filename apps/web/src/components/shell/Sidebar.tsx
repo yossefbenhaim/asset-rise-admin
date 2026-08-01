@@ -30,6 +30,8 @@ import {
   Bot,
   Scale,
   Newspaper,
+  Server,
+  ShieldCheck,
   ChevronDown,
 } from 'lucide-react'
 import { ADMIN_NAV } from '@/lib/nav/config'
@@ -68,6 +70,8 @@ const ICONS: Record<string, any> = {
   Bot,
   Scale,
   Newspaper,
+  Server,
+  ShieldCheck,
 }
 function Ic({ name }: { name: string }) {
   const C = ICONS[name] ?? Circle
