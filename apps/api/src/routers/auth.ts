@@ -1,4 +1,5 @@
 import { router, publicProcedure } from '../trpc.js'
+import { allowedActions } from '../lib/permissions.js'
 
 // Whoami — used by SessionProvider on the frontend. Mirrors Silver Castle's
 // auth.me shape so the frontend integration is familiar.
@@ -15,6 +16,11 @@ export const authRouter = router({
       state: 'authenticated' as const,
       user: ctx.user,
       role_keys: ctx.roleKeys,
+      // Effective actions resolved from sc_permissions. Additive field: the
+      // existing web ignores it, while a new client can gate its UI against
+      // the real table instead of a hand-maintained mirror of the seed
+      // migrations. Advisory only — every procedure still checks server-side.
+      actions: await allowedActions(ctx.db, ctx.roleKeys),
     }
   }),
 })

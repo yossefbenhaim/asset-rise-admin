@@ -26,3 +26,15 @@ export async function can(
   }
   return false
 }
+
+// The union of everything these role-keys allow, straight from sc_permissions.
+// Returned by auth.me so a client can gate its UI against the real table
+// instead of a hand-maintained mirror that drifts from the seed migrations.
+// Still advisory only — every procedure re-checks server-side.
+export async function allowedActions(db: SupabaseClient, roleKeys: RoleKey[]): Promise<Action[]> {
+  const out = new Set<string>()
+  for (const rk of roleKeys) {
+    for (const a of await loadAllowed(db, rk)) out.add(a)
+  }
+  return [...out].sort() as Action[]
+}
