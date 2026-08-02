@@ -15,6 +15,18 @@ export const AGENT_MODELS = [
   'claude/haiku',
 ] as const
 
+export interface CronOverrideRow {
+  job_id: string
+  job_name: string
+  schedule: string | null
+  enabled: boolean | null
+  requested_by: string
+  requested_at: string
+  applied_at: string | null
+  apply_status: string
+  apply_error: string | null
+}
+
 export interface AgentModelConfigRow {
   agent_id: string
   desired_model: string
@@ -174,6 +186,66 @@ export const agentsRouter = router({
           applied_at: null,
         },
         { onConflict: 'agent_id' },
+      )
+      if (error) throw error
+      return { ok: true }
+    }),
+
+  /* ------------------------------------------------------ scheduled jobs --
+   * Same shape as setModel and for the same reason: this API cannot reach the
+   * host. A request lands as 'pending' in sc_cron_overrides and
+   * ~/cron-override-apply.sh drains it, calling `openclaw cron edit/enable`.
+   *
+   * Deliberately narrow. Only gateway-scheduled jobs can be touched — the
+   * system crontab is not reachable from here at all — and only WHEN a job
+   * runs, never WHAT it runs. The applier re-checks the job exists and
+   * re-validates the expression before it acts, so this validation is the
+   * first of two gates rather than the only one.
+   */
+  cronOverrides: requireAction('admin.agents.view').query(async ({ ctx }) => {
+    const { data, error } = await ctx.db
+      .from('sc_cron_overrides')
+      .select('job_id,job_name,schedule,enabled,requested_by,requested_at,applied_at,apply_status,apply_error')
+      .order('requested_at', { ascending: false })
+      .limit(100)
+    if (error) throw error
+    return (data ?? []) as unknown as CronOverrideRow[]
+  }),
+
+  setCronSchedule: requireAction('admin.agents.manage')
+    .input(
+      z.object({
+        jobId: z.string().uuid(),
+        jobName: z.string().min(1).max(200),
+        // Five plain cron fields. Anything that could carry a shell argument is
+        // rejected here and again on the host.
+        schedule: z
+          .string()
+          .trim()
+          .max(100)
+          .regex(/^[-0-9*/, ]+$/, 'only digits and * , - / are allowed')
+          .refine((s) => s.split(/\s+/).length === 5, 'a schedule has exactly five fields')
+          .nullable(),
+        enabled: z.boolean().nullable(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (input.schedule === null && input.enabled === null) {
+        throw new Error('nothing to change')
+      }
+      const { error } = await ctx.db.from('sc_cron_overrides').upsert(
+        {
+          job_id: input.jobId,
+          job_name: input.jobName,
+          schedule: input.schedule,
+          enabled: input.enabled,
+          requested_by: ctx.user?.email ?? 'unknown',
+          requested_at: new Date().toISOString(),
+          applied_at: null,
+          apply_status: 'pending',
+          apply_error: null,
+        },
+        { onConflict: 'job_id' },
       )
       if (error) throw error
       return { ok: true }
