@@ -8,6 +8,7 @@ import { summaryRouter } from './summary.js'
 import { godRouter } from './god/_index.js'
 // Control Center modules
 import { analyticsRouter } from './analytics.js'
+import { developerReportsRouter } from './developerReports.js'
 import { reportsRouter } from './reports.js'
 import { processingRouter } from './processing.js'
 import { paymentsRouter } from './payments.js'
@@ -36,6 +37,7 @@ export const appRouter = router({
   // Control Center
   analytics: analyticsRouter,
   reports: reportsRouter,
+  developerReports: developerReportsRouter,
   processing: processingRouter,
   payments: paymentsRouter,
   sources: sourcesRouter,
