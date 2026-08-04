@@ -205,7 +205,9 @@ export const agentsRouter = router({
   cronOverrides: requireAction('admin.agents.view').query(async ({ ctx }) => {
     const { data, error } = await ctx.db
       .from('sc_cron_overrides')
-      .select('job_id,job_name,schedule,enabled,requested_by,requested_at,applied_at,apply_status,apply_error')
+      .select(
+        'job_id,job_name,schedule,enabled,requested_by,requested_at,applied_at,apply_status,apply_error',
+      )
       .order('requested_at', { ascending: false })
       .limit(100)
     if (error) throw error
@@ -224,7 +226,7 @@ export const agentsRouter = router({
           .trim()
           .max(100)
           .regex(/^[-0-9*/, ]+$/, 'only digits and * , - / are allowed')
-          .refine((s) => s.split(/\s+/).length === 5, 'a schedule has exactly five fields')
+          .refine(s => s.split(/\s+/).length === 5, 'a schedule has exactly five fields')
           .nullable(),
         enabled: z.boolean().nullable(),
       }),
